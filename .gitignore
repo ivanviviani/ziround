@@ -3,6 +3,11 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+# Ignore miplib2003 folder and mps/txt files
+miplib2003/*
+*.mps
+*.txt
+
 # User-specific files
 *.rsuser
 *.suo
