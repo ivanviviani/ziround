@@ -87,8 +87,8 @@
  */
 typedef struct {
     // Variables
-    int cur_numrows; 		/**< Number of rows of the coefficients matrix. */
-    int cur_numcols; 		/**< Number of variables, also columns of the coefficients matrix. */
+    int nrows; 		/**< Number of rows of the coefficients matrix. */
+    int ncols; 		/**< Number of variables, also columns of the coefficients matrix. */
     double* x; 				/**< Current problem solution. Will be rounded. */
     double* obj; 			/**< Objective function coefficients. */
     double* lb; 			/**< Variable lower bounds. */
@@ -108,16 +108,16 @@ typedef struct {
     char* sense; 			/**< Constraint (row) senses, 'L' (<=) or 'G' (>=) or 'E' (=). */
     double* rhs; 			/**< Constraint right hand sides (rhs). */
     // ZI-Round variables
-    double* UB; 			/**< Maximum variable up-shifts. */
-    double* LB; 			/**< Maximum variable down-shifts. */
-    double ZI; 				/**< Fractionality of a variable (used in function zi_round). */
-    double ZIplus; 			/**< Fractionality of a shifted up variable (used in function zi_round). */
-    double ZIminus; 		/**< Fractionality of a shifted down variable (used in fucntion zi_round). */
-    double obj_plusUBj; 	/**< Objective value for a shifted up variable (used in function zi_round). */
-    double obj_minusLBj; 	/**< Objective value for a shifted down variable (used in function zi_round). */
+    //double* UB; 			/**< Maximum variable up-shifts. */
+    //double* LB; 			/**< Maximum variable down-shifts. */
+    //double ZI; 				/**< Fractionality of a variable (used in function zi_round). */
+    //double ZIplus; 			/**< Fractionality of a shifted up variable (used in function zi_round). */
+    //double ZIminus; 		/**< Fractionality of a shifted down variable (used in fucntion zi_round). */
+    //double obj_plusUBj; 	/**< Objective value for a shifted up variable (used in function zi_round). */
+    //double obj_minusLBj; 	/**< Objective value for a shifted down variable (used in function zi_round). */
     // double* x_prev; 		/**< Solution before a single rounding (up/down shifting). */
     // double* x_updated; 	/**< Support copy needed to calculate obj_plusUBj and obj_minusLBj. */
-    int updated; 			/**< Flag set to 1 whenever a solution has been rounded (in multiple rounds). */
+    //int updated; 			/**< Flag set to 1 whenever a solution has been rounded (in multiple rounds). */
     // Parameters
     int status; 			/**< Error status flag set to 1 whenever any error occurs. */
     CPXENVptr env; 			/**< CPLEX environment pointer. */
@@ -290,10 +290,14 @@ int zi_round(instance* inst);
  * of UBj and LBj calculated before. Also update the row slacks.
  *
  * @param inst Pointer to the already populated instance.
+ * @param objval
  * @param j Column (variable xj) index.
+ * @param delta_up
+ * @param delta_down
+ * @param updated
  * @param is_fractional Flag that indicates whether xj is fractional or integer.
  */
-void update_xj_to_improve_objective(instance* inst, int j, int is_fractional);
+void update_xj_to_improve_objective(instance* inst, double* objval, int j, double* delta_up, double* delta_down, int* updated, int is_fractional);
 
 /**
  * @brief Calculate the activity of the row of index i, for the solution x.
@@ -323,19 +327,22 @@ void update_slacks(instance* inst, int j, double signed_delta);
  * @details Whenever it is called, only one variable xj has been updated.
  *
  * @param inst Pointer to the already populated instance.
+ * @param objval
  * @param j Index of the (only) variable just updated.
  * @param signed_delta Signed delta xj.
  */
-void update_objective_value(instance* inst, int j, double signed_delta);
+void update_objective_value(instance* inst, double* objval, int j, double signed_delta);
 
 /**
  * @brief
  *
  * @param inst
  * @param j
+ * @param delta_up
+ * @param delta_down
  * @param epsilon
  */
-void calculate_UBjLBj(instance* inst, int j, const double epsilon);
+void calculate_UBjLBj(instance* inst, int j, double* delta_up, double* delta_down, const double epsilon);
 
 /**
  * @brief Check that all the variable bounds are satisfied, for the

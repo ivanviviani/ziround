@@ -32,7 +32,7 @@ void print_verbose(int msg_verb, const char* format, ...) {
 
 void print_problem_info(instance* inst, int sol_available, int to_file) {
 	FILE* out_stream = (to_file) ? fopen("problem_info.txt", "w") : stdout;
-	// cur_numrows, cur_numcols
+	// nrows, ncols
 	int nrows = CPXgetnumrows(inst->env, inst->lp);
 	int ncols = CPXgetnumcols(inst->env, inst->lp);
 	// variable bounds

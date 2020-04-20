@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
 	print_problem_info(&inst, 1, 1); // flags solution available (1) and print problem to file (1)
 
 	fprintf(output, "[INFO]: Solution of continuous relaxation: ");
-	for (int j = 0; j < inst.cur_numcols; j++) fprintf(output, "%f ", inst.x[j]);
+	for (int j = 0; j < inst.ncols; j++) fprintf(output, "%f ", inst.x[j]);
 	fprintf(stdout, "\n[INFO]: Continuous relaxation objective value: %.10g.\n", inst.objval);
 	fprintf(output, "\n[INFO]: Continuous relaxation objective value: %.10g.\n", inst.objval);
 	fprintf(stdout, "[INFO][OK]: Problem data read.\n[INFO]: ... Starting ZI-Round ...\n");
@@ -52,7 +52,7 @@ int main(int argc, char** argv) {
 
 	// Print candidate solution found
 	fprintf(output, "[INFO]: Candidate rounded x: ");
-	for (int j = 0; j < inst.cur_numcols; j++) fprintf(output, "%f ", inst.x[j]);
+	for (int j = 0; j < inst.ncols; j++) fprintf(output, "%f ", inst.x[j]);
 	fprintf(stdout, "\n");
 	fprintf(stdout, "[INFO]: Candidate objective value: %f\n", inst.objval);
 	fprintf(output, "\n\n\n\n[INFO]: Candidate objective value: %f\n", inst.objval);
@@ -66,7 +66,7 @@ int main(int argc, char** argv) {
 
 	// Verify whether all integer variables of the original MIP have been rounded
 	fprintf(stdout, "[INFO]: ... verifying whether all integer variables of the original MIP have been rounded ...\n");
-	for (int j = 0; j < inst.cur_numcols; j++) {
+	for (int j = 0; j < inst.ncols; j++) {
 		if (inst.int_var[j] && is_fractional(inst.x[j])) {
 			fprintf(stdout, "[INFO]: Integer variable x_%d = %f has not been rounded!\n", j + 1, inst.x[j]);
 			rounded = 0;
@@ -77,7 +77,7 @@ int main(int argc, char** argv) {
 	if (!rounded) { fprintf(stdout, "[INFO][FINAL RESULT]: All the integer variables have NOT been rounded! :(\n"); goto TERMINATE; }
 	fprintf(stdout, "[INFO][FINAL ROUNDED SOLUTION]: Rounded x in output.txt");
 	fprintf(output, "[INFO][FINAL ROUNDED SOLUTION]: Rounded x: ");
-	for (int j = 0; j < inst.cur_numcols; j++) fprintf(output, "%f ", inst.x[j]);
+	for (int j = 0; j < inst.ncols; j++) fprintf(output, "%f ", inst.x[j]);
 	fprintf(stdout, "\n\n");
 
 	/*

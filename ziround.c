@@ -4,13 +4,29 @@
 //*************************************** ZI-ROUND *************************************************************************************************************
 //**************************************************************************************************************************************************************
 int zi_round(instance* inst) {
+	int status = 0;
 
-	int status = inst->status;
-	// inst->x_prev = (double*)malloc(inst->cur_numcols * sizeof(double));
-	// inst->x_updated = (double*)malloc(inst->cur_numcols * sizeof(double));
-	inst->UB = (double*)malloc(inst->cur_numcols * sizeof(double));
-	inst->LB = (double*)malloc(inst->cur_numcols * sizeof(double));
-	if (/*inst->x_prev == NULL || inst->x_updated == NULL ||*/ inst->UB == NULL || inst->LB == NULL) {
+	// Local variables
+	double* UB; 		 /**< Maximum variable up-shifts. */
+	double* LB; 		 /**< Maximum variable down-shifts. */
+	double ZI; 			 /**< Fractionality of a variable (used in function zi_round). */
+	double ZIplus; 		 /**< Fractionality of a shifted up variable (used in function zi_round). */
+	double ZIminus; 	 /**< Fractionality of a shifted down variable (used in fucntion zi_round). */
+	double objval;		 /**< Objective value of the initial continuous relaxation solution. */
+	double obj_plusUBj;  /**< Objective value for a shifted up variable (used in function zi_round). */
+	double obj_minusLBj; /**< Objective value for a shifted down variable (used in function zi_round). */
+	int updated;		 /**< Flag set to 1 when at least one variable shift has been made. */
+	
+	// Allocate / Initialize
+	UB = (double*)malloc(inst->ncols * sizeof(double));
+	LB = (double*)malloc(inst->ncols * sizeof(double));
+	objval = inst->objval;
+	updated = 0;
+
+	// inst->x_prev = (double*)malloc(inst->ncols * sizeof(double));
+	// inst->x_updated = (double*)malloc(inst->ncols * sizeof(double));
+	
+	if (/*inst->x_prev == NULL || inst->x_updated == NULL ||*/ UB == NULL || LB == NULL) {
 		fprintf(stderr, "[ERR][zi_round]: Failed to allocate x_prev, x_updated or row_infeas.\n"); return 1;
 	}
 
@@ -18,11 +34,11 @@ int zi_round(instance* inst) {
 	do {
 
 		// Initialize update flag and save current solution
-		inst->updated = 0;
-		// clone_array(inst->x, inst->x_prev, inst->cur_numcols);
+		updated = 0;
+		// clone_array(inst->x, inst->x_prev, inst->ncols);
 
 		// Inner loop (for each variable xj that was integer/binary in the original MIP)
-		for (int j = 0; j < inst->cur_numcols; j++) {
+		for (int j = 0; j < inst->ncols; j++) {
 			// Skip xj if it's continuous in the original MIP
 			if (!(inst->int_var)) continue;
 
@@ -31,16 +47,16 @@ int zi_round(instance* inst) {
 				if (VERBOSE > 10) fprintf(stdout, "[DEBUG][zi_round]: -x- x_%d is non-fractional\n", j + 1);
 
 				// Calculate UBj and LBj (with epsilon = 1.0)
-				calculate_UBjLBj(inst, j, 1.0);
+				calculate_UBjLBj(inst, j, UB, LB, 1.0);
 				// Skip xj if both UBj and LBj are equal to zero (--> no shift necessary)
-				if (fabs(inst->UB[j]) < TOLERANCE && fabs(inst->LB[j]) < TOLERANCE) continue;
+				if (fabs(UB[j]) < TOLERANCE && fabs(LB[j]) < TOLERANCE) continue;
 
 				// Condition(s) for rounding of xj
 				// (>= to include the case of a zero obj coefficient)
-				if ((inst->obj[j] >= 0 && fabs(inst->LB[j] - 1.0) < TOLERANCE) ||
-					(inst->obj[j] <= 0 && fabs(inst->UB[j] - 1.0) < TOLERANCE)) {
+				if ((inst->obj[j] >= 0 && fabs(LB[j] - 1.0) < TOLERANCE) ||
+					(inst->obj[j] <= 0 && fabs(UB[j] - 1.0) < TOLERANCE)) {
 					// Update xj to improve objective and update slacks
-					update_xj_to_improve_objective(inst, j, 0); // flag xj non-fractional (0)
+					update_xj_to_improve_objective(inst, &objval, j, UB, LB, &updated, 0); // flag xj non-fractional (0)
 				}
 			} // end if xj non-fractional
 
@@ -49,40 +65,40 @@ int zi_round(instance* inst) {
 				if (VERBOSE > 10) fprintf(stdout, "[DEBUG][zi_round]: -x- x_%d is fractional\n", j + 1);
 
 				// Calculate UBj and LBj
-				calculate_UBjLBj(inst, j, EPSILON);
+				calculate_UBjLBj(inst, j, UB, LB, EPSILON);
 				// Skip xj if both UBj and LBj are equal to zero (--> no shift necessary)
-				if (fabs(inst->UB[j]) < TOLERANCE && fabs(inst->LB[j]) < TOLERANCE) continue;
+				if (fabs(UB[j]) < TOLERANCE && fabs(LB[j]) < TOLERANCE) continue;
 
 				// ZI-Round (version 1) core (3 cases). First, calculate the fractionalities needed.
-				inst->ZI = fractionality(inst->x[j]);
-				inst->ZIplus = fractionality(inst->x[j] + inst->UB[j]);
-				inst->ZIminus = fractionality(inst->x[j] - inst->LB[j]);
+				ZI = fractionality(inst->x[j]);
+				ZIplus = fractionality(inst->x[j] + UB[j]);
+				ZIminus = fractionality(inst->x[j] - LB[j]);
 
 				// First case
-				if (fabs(inst->ZIplus - inst->ZIminus) < TOLERANCE &&
-					(inst->ZIplus - inst->ZI) < -(TOLERANCE)) { // was inst->ZIplus < inst->ZI
+				if (fabs(ZIplus - ZIminus) < TOLERANCE &&
+					(ZIplus - ZI) < -(TOLERANCE)) { // was inst->ZIplus < inst->ZI
 					// Update xj to improve objective and update slacks
-					update_xj_to_improve_objective(inst, j, 1); // flag xj fractional (1)
+					update_xj_to_improve_objective(inst, &objval, j, UB, LB, &updated, 1); // flag xj fractional (1)
 				} // end first case
 
 				// Second case
-				else if ((inst->ZIplus - inst->ZIminus) < -(TOLERANCE) && // was inst->ZIplus < inst->ZIminus
-					(inst->ZIplus - inst->ZI) < -(TOLERANCE)) {      // was inst->ZIplus < inst->ZI
-					if (VERBOSE > 10) fprintf(stdout, "[DEBUG][zi_round]: >>> Set x_%d = x_%d + UB_%d = %f + %f = %f\n", j + 1, j + 1, j + 1, inst->x[j], inst->UB[j], inst->x[j] + inst->UB[j]);
-					inst->x[j] += inst->UB[j];
-					inst->updated = 1;
-					update_slacks(inst, j, inst->UB[j]);
-					update_objective_value(inst, j, inst->UB[j]);
+				else if ((ZIplus - ZIminus) < -(TOLERANCE) && // was inst->ZIplus < inst->ZIminus
+					(ZIplus - ZI) < -(TOLERANCE)) {      // was inst->ZIplus < inst->ZI
+					if (VERBOSE > 10) fprintf(stdout, "[DEBUG][zi_round]: >>> Set x_%d = x_%d + UB_%d = %f + %f = %f\n", j + 1, j + 1, j + 1, inst->x[j], UB[j], inst->x[j] + UB[j]);
+					inst->x[j] += UB[j];
+					updated = 1;
+					update_slacks(inst, j, UB[j]);
+					update_objective_value(inst, &objval, j, UB[j]);
 				} // end second case
 
 				// Third case
-				else if ((inst->ZIminus - inst->ZIplus) < -(TOLERANCE) && // was inst->ZIminus < inst->ZIplus
-					(inst->ZIminus - inst->ZI) < -(TOLERANCE)) {     // was inst->ZIminus < inst->ZI
-					if (VERBOSE > 10) fprintf(stdout, "[DEBUG][zi_round]: >>> Set x_%d = x_%d - LB_%d = %f - %f = %f\n", j + 1, j + 1, j + 1, inst->x[j], inst->LB[j], inst->x[j] - inst->LB[j]);
-					inst->x[j] -= inst->LB[j];
-					inst->updated = 1;
-					update_slacks(inst, j, -(inst->LB[j]));
-					update_objective_value(inst, j, -(inst->LB[j]));
+				else if ((ZIminus - ZIplus) < -(TOLERANCE) && // was inst->ZIminus < inst->ZIplus
+					(ZIminus - ZI) < -(TOLERANCE)) {     // was inst->ZIminus < inst->ZI
+					if (VERBOSE > 10) fprintf(stdout, "[DEBUG][zi_round]: >>> Set x_%d = x_%d - LB_%d = %f - %f = %f\n", j + 1, j + 1, j + 1, inst->x[j], LB[j], inst->x[j] - LB[j]);
+					inst->x[j] -= LB[j];
+					updated = 1;
+					update_slacks(inst, j, -(LB[j]));
+					update_objective_value(inst, &objval, j, -(LB[j]));
 				} // end third case
 
 			} // end if xj fractional
@@ -90,7 +106,7 @@ int zi_round(instance* inst) {
 		} // end inner loop
 
 		if (VERBOSE > 10) {
-			if (inst->updated) fprintf(stdout, "[DEBUG][zi_round] ...Update found, scan variables again...\n");
+			if (updated) fprintf(stdout, "[DEBUG][zi_round] ...Update found, scan variables again...\n");
 			else fprintf(stdout, "[DEBUG][zi_round] ...No updates found, exit outer loop...\n");
 		}
 		// [BRUTE FORCE] [DEBUG ONLY] Check variable bounds and constraints
@@ -99,7 +115,11 @@ int zi_round(instance* inst) {
 			status = check_constraints(inst, inst->x); if (status) { fprintf(stderr, "[ERR][zi_round]: Error inside check_constraints.\n"); return status; }
 		}
 
-	} while (inst->updated); // end outer loop
+	} while (updated); // end outer loop
+
+	// Free
+	free(UB);
+	free(LB);
 
 	return inst->status;
 }
@@ -107,80 +127,80 @@ int zi_round(instance* inst) {
 //**************************************************************************************************************************************************************
 //**************************************************************************************************************************************************************
 
-void update_xj_to_improve_objective(instance* inst, int j, int is_fractional) {
+void update_xj_to_improve_objective(instance* inst, double* objval, int j, double* delta_up, double* delta_down, int* updated, int is_fractional) {
 
 	// First, calculate obj value for both updates. (IMPROVEMENT: inst->objval is just a common offset!)
-	inst->obj_plusUBj = inst->objval + (inst->obj[j] * inst->UB[j]);
-	inst->obj_minusLBj = inst->objval - (inst->obj[j] * inst->LB[j]);
+	double obj_plusUBj = *objval + (inst->obj[j] * delta_up[j]);
+	double obj_minusLBj = *objval - (inst->obj[j] * delta_down[j]);
 	/* was
 	// compare delta * coef (confronto solo tra i due delta * coef_j (+ objval è solo un offset) (tenendo conto della solita float tolerance)
-	clone_array(inst->x, inst->x_updated, inst->cur_numcols);
+	clone_array(inst->x, inst->x_updated, inst->ncols);
 	inst->x_updated[j] = inst->x[j] + inst->UB[j];
-	..inst->obj_plusUBj = dot_product(inst->obj, inst->x_updated, inst->cur_numcols); // brute force!
+	..inst->obj_plusUBj = dot_product(inst->obj, inst->x_updated, inst->ncols); // brute force!
 	inst->x_updated[j] = inst->x[j] - inst->LB[j];
-	..inst->obj_minusLBj = dot_product(inst->obj, inst->x_updated, inst->cur_numcols); // brute force!*/
+	..inst->obj_minusLBj = dot_product(inst->obj, inst->x_updated, inst->ncols); // brute force!*/
 
 	// Check obj sense, then update xj, update slacks and update objective value
 	switch (inst->objsen) {
 	case CPX_MIN:
-		if ((inst->obj_plusUBj - inst->objval) < -(TOLERANCE) &&       // was inst->obj_plusUBj < inst->objval 
-			(inst->obj_plusUBj - inst->obj_minusLBj) < -(TOLERANCE)) { // was inst->obj_plusUBj < inst->obj_minusLBj
+		if ((obj_plusUBj - *objval) < -(TOLERANCE) &&       // was inst->obj_plusUBj < inst->objval 
+			(obj_plusUBj - obj_minusLBj) < -(TOLERANCE)) { // was inst->obj_plusUBj < inst->obj_minusLBj
 			// xj = xj + UBj (if xj is not fractional then UBj must be 1.0)
-			if (VERBOSE > 50) fprintf(stdout, "[DEBUG][update_xj_to_improve_objective]: _>_ UBj = %f (must be 1.0)\n", inst->UB[j]);
-			if (VERBOSE > 10) fprintf(stdout, "[DEBUG][update_xj_to_improve_objective]: >>> Set x_%d = x_%d + UB_%d = %f + %f = %f\n", j + 1, j + 1, j + 1, inst->x[j], inst->UB[j], inst->x[j] + inst->UB[j]);
-			if (!is_fractional && VERBOSE > 10 && fabs(inst->UB[j] - 1.0) > TOLERANCE) {
-				fprintf(stderr, "[ERR][update_xj_to_improve_objective]: UB_%d = %f (should be 1.0).\n", j + 1, inst->UB[j]);
+			if (VERBOSE > 50) fprintf(stdout, "[DEBUG][update_xj_to_improve_objective]: _>_ UBj = %f (must be 1.0)\n", delta_up[j]);
+			if (VERBOSE > 10) fprintf(stdout, "[DEBUG][update_xj_to_improve_objective]: >>> Set x_%d = x_%d + UB_%d = %f + %f = %f\n", j + 1, j + 1, j + 1, inst->x[j], delta_up[j], inst->x[j] + delta_up[j]);
+			if (!is_fractional && VERBOSE > 10 && fabs(delta_up[j] - 1.0) > TOLERANCE) {
+				fprintf(stderr, "[ERR][update_xj_to_improve_objective]: UB_%d = %f (should be 1.0).\n", j + 1, delta_up[j]);
 				exit(EXIT_FAILURE);
 			}
-			inst->x[j] += inst->UB[j];
-			inst->updated = 1;
-			update_slacks(inst, j, inst->UB[j]);
-			update_objective_value(inst, j, inst->UB[j]);
+			inst->x[j] += delta_up[j];
+			*updated = 1;
+			update_slacks(inst, j, delta_up[j]);
+			update_objective_value(inst, objval, j, delta_up[j]);
 		}
-		else if ((inst->obj_minusLBj - inst->objval) < -(TOLERANCE) &&      // was inst->obj_minusLBj < inst->objval
-			(inst->obj_minusLBj - inst->obj_plusUBj) < -(TOLERANCE)) { // was inst->obj_minusLBj < inst->obj_plusUBj
+		else if ((obj_minusLBj - *objval) < -(TOLERANCE) &&      // was inst->obj_minusLBj < inst->objval
+			(obj_minusLBj - obj_plusUBj) < -(TOLERANCE)) { // was inst->obj_minusLBj < inst->obj_plusUBj
 	   // xj = xj - LBj (if xj is not fractional then LBj must be 1.0)
-			if (VERBOSE > 50) fprintf(stdout, "[DEBUG][update_xj_to_improve_objective]: _>_ LBj = %f (must be 1.0)\n", inst->LB[j]);
-			if (VERBOSE > 10) fprintf(stdout, "[DEBUG][update_xj_to_improve_objective]: >>> Set x_%d = x_%d - LB_%d = %f - %f = %f\n", j + 1, j + 1, j + 1, inst->x[j], inst->LB[j], inst->x[j] - inst->LB[j]);
-			if (!is_fractional && VERBOSE > 10 && fabs(inst->LB[j] - 1.0) > TOLERANCE) {
-				fprintf(stderr, "[ERR][update_xj_to_improve_objective]: LB_%d = %f (should be 1.0).\n", j + 1, inst->LB[j]);
+			if (VERBOSE > 50) fprintf(stdout, "[DEBUG][update_xj_to_improve_objective]: _>_ LBj = %f (must be 1.0)\n", delta_down[j]);
+			if (VERBOSE > 10) fprintf(stdout, "[DEBUG][update_xj_to_improve_objective]: >>> Set x_%d = x_%d - LB_%d = %f - %f = %f\n", j + 1, j + 1, j + 1, inst->x[j], delta_down[j], inst->x[j] - delta_down[j]);
+			if (!is_fractional && VERBOSE > 10 && fabs(delta_down[j] - 1.0) > TOLERANCE) {
+				fprintf(stderr, "[ERR][update_xj_to_improve_objective]: LB_%d = %f (should be 1.0).\n", j + 1, delta_down[j]);
 				exit(EXIT_FAILURE);
 			}
-			inst->x[j] -= inst->LB[j];
-			inst->updated = 1;
-			update_slacks(inst, j, -(inst->LB[j]));
-			update_objective_value(inst, j, -(inst->LB[j]));
+			inst->x[j] -= delta_down[j];
+			*updated = 1;
+			update_slacks(inst, j, -(delta_down[j]));
+			update_objective_value(inst, objval, j, -(delta_down[j]));
 		}
 		break;
 		// (problems from mps files should always be MIN)
 	case CPX_MAX:
-		if ((inst->obj_plusUBj - inst->objval) > TOLERANCE &&       // was inst->obj_plusUBj > inst->objval
-			(inst->obj_plusUBj - inst->obj_minusLBj) > TOLERANCE) { // was inst->obj_plusUBj > inst->obj_minusLBj
+		if ((obj_plusUBj - *objval) > TOLERANCE &&       // was inst->obj_plusUBj > inst->objval
+			(obj_plusUBj - obj_minusLBj) > TOLERANCE) { // was inst->obj_plusUBj > inst->obj_minusLBj
 			// xj = xj + UBj (if xj is not fractional then UBj must be 1.0)
-			if (VERBOSE > 50) fprintf(stdout, "[DEBUG][update_xj_to_improve_objective]: _>_ UBj = %f (must be 1.0)\n", inst->UB[j]);
-			if (VERBOSE > 10) fprintf(stdout, "[DEBUG][update_xj_to_improve_objective]: >>> Set x_%d = x_%d + UB_%d = %f + %f = %f\n", j + 1, j + 1, j + 1, inst->x[j], inst->UB[j], inst->x[j] + inst->UB[j]);
-			if (!is_fractional && VERBOSE > 10 && fabs(inst->UB[j] - 1.0) > TOLERANCE) {
-				fprintf(stderr, "[ERR][update_xj_to_improve_objective]: UB_%d = %f (should be 1.0).\n", j + 1, inst->UB[j]);
+			if (VERBOSE > 50) fprintf(stdout, "[DEBUG][update_xj_to_improve_objective]: _>_ UBj = %f (must be 1.0)\n", delta_up[j]);
+			if (VERBOSE > 10) fprintf(stdout, "[DEBUG][update_xj_to_improve_objective]: >>> Set x_%d = x_%d + UB_%d = %f + %f = %f\n", j + 1, j + 1, j + 1, inst->x[j], delta_up[j], inst->x[j] + delta_up[j]);
+			if (!is_fractional && VERBOSE > 10 && fabs(delta_up[j] - 1.0) > TOLERANCE) {
+				fprintf(stderr, "[ERR][update_xj_to_improve_objective]: UB_%d = %f (should be 1.0).\n", j + 1, delta_up[j]);
 				exit(EXIT_FAILURE);
 			}
-			inst->x[j] += inst->UB[j];
-			inst->updated = 1;
-			update_slacks(inst, j, inst->UB[j]);
-			update_objective_value(inst, j, inst->UB[j]);
+			inst->x[j] += delta_up[j];
+			*updated = 1;
+			update_slacks(inst, j, delta_up[j]);
+			update_objective_value(inst, objval, j, delta_up[j]);
 		}
-		else if ((inst->obj_minusLBj - inst->objval) > TOLERANCE &&      // was inst->obj_minusLBj > inst->objval
-			(inst->obj_minusLBj - inst->obj_plusUBj) > TOLERANCE) { // was inst->obj_minusLBj > inst->obj_plusUBj
+		else if ((obj_minusLBj - *objval) > TOLERANCE &&      // was inst->obj_minusLBj > inst->objval
+			(obj_minusLBj - obj_plusUBj) > TOLERANCE) { // was inst->obj_minusLBj > inst->obj_plusUBj
 	   // xj = xj - LBj (if xj is not fractional then LBj must be 1.0)
-			if (VERBOSE > 50) fprintf(stdout, "[DEBUG][update_xj_to_improve_objective]: _>_ LBj = %f (must be 1.0)\n", inst->LB[j]);
-			if (VERBOSE > 10) fprintf(stdout, "[DEBUG][update_xj_to_improve_objective]: >>> Set x_%d = x_%d - LB_%d = %f - %f = %f\n", j + 1, j + 1, j + 1, inst->x[j], inst->LB[j], inst->x[j] - inst->LB[j]);
-			if (!is_fractional && VERBOSE > 10 && fabs(inst->LB[j] - 1.0) > TOLERANCE) {
-				fprintf(stderr, "[ERR][update_xj_to_improve_objective]: LB_%d = %f (should be 1.0).\n", j + 1, inst->LB[j]);
+			if (VERBOSE > 50) fprintf(stdout, "[DEBUG][update_xj_to_improve_objective]: _>_ LBj = %f (must be 1.0)\n", delta_down[j]);
+			if (VERBOSE > 10) fprintf(stdout, "[DEBUG][update_xj_to_improve_objective]: >>> Set x_%d = x_%d - LB_%d = %f - %f = %f\n", j + 1, j + 1, j + 1, inst->x[j], delta_down[j], inst->x[j] - delta_down[j]);
+			if (!is_fractional && VERBOSE > 10 && fabs(delta_down[j] - 1.0) > TOLERANCE) {
+				fprintf(stderr, "[ERR][update_xj_to_improve_objective]: LB_%d = %f (should be 1.0).\n", j + 1, delta_down[j]);
 				exit(EXIT_FAILURE);
 			}
-			inst->x[j] -= inst->LB[j];
-			inst->updated = 1;
-			update_slacks(inst, j, -(inst->LB[j]));
-			update_objective_value(inst, j, -(inst->LB[j]));
+			inst->x[j] -= delta_down[j];
+			*updated = 1;
+			update_slacks(inst, j, -(delta_down[j]));
+			update_objective_value(inst, objval, j, -(delta_down[j]));
 		}
 		break;
 	default:
@@ -194,7 +214,7 @@ void update_xj_to_improve_objective(instance* inst, int j, int is_fractional) {
 // Whenever it is called, only one variable xj has been updated
 void update_slacks(instance* inst, int j, double signed_delta) {
 	double aij; int row_index; char sense;
-	int end_col = (j < inst->cur_numcols - 1) ? inst->cmatbeg[j + 1] : inst->nzcnt;
+	int end_col = (j < inst->ncols - 1) ? inst->cmatbeg[j + 1] : inst->nzcnt;
 	// Scan non-zero coefficients of column j
 	/*
 		For variable xj:
@@ -225,11 +245,11 @@ void update_slacks(instance* inst, int j, double signed_delta) {
 
 // Incremental update of the objective value
 // Whenever it is called, only one variable xj has been updated
-void update_objective_value(instance* inst, int j, double signed_delta) {
-	inst->objval += (inst->obj[j] * signed_delta);
+void update_objective_value(instance* inst, double* objval, int j, double signed_delta) {
+	*objval += (inst->obj[j] * signed_delta);
 }
 
-void calculate_UBjLBj(instance* inst, int j, const double epsilon) {
+void calculate_UBjLBj(instance* inst, int j, double* delta_up, double* delta_down, const double epsilon) {
 	/*
 		For 'L' (<=) constraints: (si non-negative)
 			firstUBj_L = min_i{si/aij : aij > 0}
@@ -245,7 +265,7 @@ void calculate_UBjLBj(instance* inst, int j, const double epsilon) {
 	double aij; int row_index; char sense;
 	double ratioUBj, ratioLBj;
 	double newUBj, newLBj;
-	int end_col = (j < inst->cur_numcols - 1) ? inst->cmatbeg[j + 1] : inst->nzcnt;
+	int end_col = (j < inst->ncols - 1) ? inst->cmatbeg[j + 1] : inst->nzcnt;
 
 	double secondUBj = inst->ub[j] - inst->x[j];
 	double secondLBj = inst->x[j] - inst->lb[j];
@@ -324,8 +344,8 @@ void calculate_UBjLBj(instance* inst, int j, const double epsilon) {
 	// If newLBj < epsilon clip it to 0
 	if (newLBj < epsilon) newLBj = 0.0;
 	// Update both no matter what
-	inst->UB[j] = newUBj;
-	inst->LB[j] = newLBj;
+	delta_up[j] = newUBj;
+	delta_down[j] = newLBj;
 	/* was
 	// Update UBj and LBj iff [ (they both do not fall below epsilon) || (they should both be set to zero due to an equality constraint) ]
 	if (!(newUBj < epsilon && newLBj < epsilon) || (newUBj == 0.0 && newLBj == 0.0)) {

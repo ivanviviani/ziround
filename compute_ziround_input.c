@@ -29,14 +29,14 @@ int read_MIP_problem(instance* inst, char* filename) {
 
 int save_integer_variables(instance* inst) {
 	// Get MIP variable types {CPX_CONTINUOUS, CPX_BINARY, CPX_INTEGER, CPX_SEMICONT, CPX_SEMIINT}
-	inst->mip_ctype = (char*)malloc(inst->cur_numcols * sizeof(char));
+	inst->mip_ctype = (char*)malloc(inst->ncols * sizeof(char));
 	if (inst->mip_ctype == NULL) { fprintf(stderr, "[ERR][save_integer_variables]: Failed to allocate mip_ctype.\n"); return 1; }
-	inst->status = CPXgetctype(inst->env, inst->lp, inst->mip_ctype, 0, inst->cur_numcols - 1);
+	inst->status = CPXgetctype(inst->env, inst->lp, inst->mip_ctype, 0, inst->ncols - 1);
 	if (inst->status) { fprintf(stderr, "[ERR][save_integer_variables]: Failed to obtain MIP variable types.\n"); return inst->status; }
 	// Remember integer variables {CPX_BINARY, CPX_INTEGER}
-	inst->int_var = (int*)malloc(inst->cur_numcols * sizeof(int));
+	inst->int_var = (int*)malloc(inst->ncols * sizeof(int));
 	if (inst->int_var == NULL) { fprintf(stderr, "[ERR][save_integer_variables]: Failed to allocate int_var.\n"); return 1; }
-	for (int j = 0; j < inst->cur_numcols; j++) {
+	for (int j = 0; j < inst->ncols; j++) {
 		inst->int_var[j] = (inst->mip_ctype[j] == CPX_BINARY) || (inst->mip_ctype[j] == CPX_INTEGER);
 	}
 	return inst->status;

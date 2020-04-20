@@ -2,7 +2,7 @@
 
 int check_bounds(instance* inst, double* x) {
 	// Check variable bounds
-	for (int j = 0; j < inst->cur_numcols; j++)
+	for (int j = 0; j < inst->ncols; j++)
 		// was x[j] < inst->lb[j] || x[j] > inst->ub[j]
 		if ((x[j] - inst->lb[j]) < -(TOLERANCE) || (x[j] - inst->ub[j]) > TOLERANCE) { fprintf(stderr, "[ERR][check_bounds][!!!]: Bound %d violated!\n", j + 1); return 1; }
 	return 0;
@@ -10,11 +10,11 @@ int check_bounds(instance* inst, double* x) {
 
 int check_constraints(instance* inst, double* x) {
 	// Check constraints
-	double* row_infeas = (double*)malloc(inst->cur_numrows * sizeof(double));
+	double* row_infeas = (double*)malloc(inst->nrows * sizeof(double));
 	if (row_infeas == NULL) { fprintf(stderr, "[ERR][check_constraints]: Failed to allocate row_infeas.\n"); return 1; }
-	inst->status = CPXgetrowinfeas(inst->env, inst->lp, x, row_infeas, 0, inst->cur_numrows - 1);
+	inst->status = CPXgetrowinfeas(inst->env, inst->lp, x, row_infeas, 0, inst->nrows - 1);
 	if (inst->status) { fprintf(stderr, "[ERR][check_constraints]: Failed to obtain row infeasibilities.\n"); free_and_null((char**)&row_infeas); return inst->status; }
-	for (int i = 0; i < inst->cur_numrows; i++)
+	for (int i = 0; i < inst->nrows; i++)
 		if (fabs(row_infeas[i]) > TOLERANCE) { fprintf(stdout, "[ERR][check_constraints][!!!]: Constraint %d violated!\n", i + 1); free_and_null((char**)&row_infeas); return 1; }
 	free_and_null((char**)&row_infeas);
 	return inst->status;
@@ -22,7 +22,7 @@ int check_constraints(instance* inst, double* x) {
 
 double row_activity(instance* inst, int i, double* x) {
 	double sum = 0; double aij; int col_index;
-	int end_row = (i < inst->cur_numrows - 1) ? inst->rmatbeg[i + 1] : inst->nzcnt;
+	int end_row = (i < inst->nrows - 1) ? inst->rmatbeg[i + 1] : inst->nzcnt;
 	// Scan non-zero coefficients of row i
 	/*
 		For constraint i:
