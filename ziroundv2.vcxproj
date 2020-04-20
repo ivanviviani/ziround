@@ -23,6 +23,7 @@
     <ProjectGuid>{57486C87-46A5-407F-9FC2-F85F6DEF5442}</ProjectGuid>
     <RootNamespace>ziroundv2</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>ziround</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -144,7 +145,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="ziroundv2.c" />
+    <ClCompile Include="cmd_interface.c" />
+    <ClCompile Include="compute_ziround_input.c" />
+    <ClCompile Include="instance.c" />
+    <ClCompile Include="print.c" />
+    <ClCompile Include="util.c" />
+    <ClCompile Include="ziround.c" />
+    <ClCompile Include="read_ziround_input.c" />
+    <ClCompile Include="main.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ziround.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

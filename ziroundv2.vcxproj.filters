@@ -15,8 +15,34 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ziroundv2.c">
+    <ClCompile Include="cmd_interface.c">
       <Filter>File di origine</Filter>
     </ClCompile>
+    <ClCompile Include="instance.c">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="util.c">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="main.c">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="ziround.c">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="compute_ziround_input.c">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="read_ziround_input.c">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="print.c">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ziround.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
