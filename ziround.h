@@ -107,24 +107,10 @@ typedef struct {
     double* cmatval; 		/**< Non-zero coefficients (column major). */
     char* sense; 			/**< Constraint (row) senses, 'L' (<=) or 'G' (>=) or 'E' (=). */
     double* rhs; 			/**< Constraint right hand sides (rhs). */
-    // ZI-Round variables
-    //double* UB; 			/**< Maximum variable up-shifts. */
-    //double* LB; 			/**< Maximum variable down-shifts. */
-    //double ZI; 				/**< Fractionality of a variable (used in function zi_round). */
-    //double ZIplus; 			/**< Fractionality of a shifted up variable (used in function zi_round). */
-    //double ZIminus; 		/**< Fractionality of a shifted down variable (used in fucntion zi_round). */
-    //double obj_plusUBj; 	/**< Objective value for a shifted up variable (used in function zi_round). */
-    //double obj_minusLBj; 	/**< Objective value for a shifted down variable (used in function zi_round). */
-    // double* x_prev; 		/**< Solution before a single rounding (up/down shifting). */
-    // double* x_updated; 	/**< Support copy needed to calculate obj_plusUBj and obj_minusLBj. */
-    //int updated; 			/**< Flag set to 1 whenever a solution has been rounded (in multiple rounds). */
     // Parameters
     int status; 			/**< Error status flag set to 1 whenever any error occurs. */
     CPXENVptr env; 			/**< CPLEX environment pointer. */
     CPXLPptr lp; 			/**< CPLEX lp pointer. */
-    int solnstat; 			/**< Solution status according to CPLEX. */
-    int solnmethod; 		/**< Solution method according to CPLEX. */
-    int solntype; 			/**< Solution type according to CPLEX. */
     int nzcnt; 				/**< Number of non-zero coefficients. */
     int surplus; 			/**< CPLEX parameter. */
     char* input_file; 		/**< Input filename (mps format, specified from command line). */
@@ -135,7 +121,7 @@ typedef struct {
  *
  * @param inst Pointer to the instance.
  */
-void initialize_instance(instance* inst);
+void init_inst(instance* inst);
 
 /**
  * @brief Parse the arguments from the command line and populate the
@@ -145,7 +131,7 @@ void initialize_instance(instance* inst);
  * @param argv Program arguments (strings).
  * @param inst Pointer to the instance.
  */
-void parse_command_line(int argc, char** argv, instance* inst);
+void parse_cmd(int argc, char** argv, instance* inst);
 
 /**
  * @brief Setup the CPLEX environment for the problem represented by the instance.
@@ -294,20 +280,10 @@ int zi_round(instance* inst);
  * @param j Column (variable xj) index.
  * @param delta_up
  * @param delta_down
- * @param updated
  * @param is_fractional Flag that indicates whether xj is fractional or integer.
+ * @return
  */
-void update_xj_to_improve_objective(instance* inst, double* objval, int j, double* delta_up, double* delta_down, int* updated, int is_fractional);
-
-/**
- * @brief Calculate the activity of the row of index i, for the solution x.
- *
- * @param inst Pointer to the already populated instance.
- * @param i Row index.
- * @param x Solution to be used for calculating the row activity.
- * @return The row activity.
- */
-double row_activity(instance* inst, int i, double* x);
+int round_xj_bestobj(instance* inst, double* objval, int j, double* delta_up, double* delta_down, int is_fractional);
 
 /**
  * @brief Update the slack array field of the instance (incrementally)
@@ -331,7 +307,7 @@ void update_slacks(instance* inst, int j, double signed_delta);
  * @param j Index of the (only) variable just updated.
  * @param signed_delta Signed delta xj.
  */
-void update_objective_value(instance* inst, double* objval, int j, double signed_delta);
+void update_objval(instance* inst, double* objval, int j, double signed_delta);
 
 /**
  * @brief
@@ -342,7 +318,7 @@ void update_objective_value(instance* inst, double* objval, int j, double signed
  * @param delta_down
  * @param epsilon
  */
-void calculate_UBjLBj(instance* inst, int j, double* delta_up, double* delta_down, const double epsilon);
+void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, const double epsilon);
 
 /**
  * @brief Check that all the variable bounds are satisfied, for the
@@ -350,9 +326,8 @@ void calculate_UBjLBj(instance* inst, int j, double* delta_up, double* delta_dow
  *
  * @param inst Pointer to the already populated instance.
  * @param x Solution to be used for evaluating bounds satisfiability.
- * @return Error status (1 if any error occured, 0 otherwise).
  */
-int check_bounds(instance* inst, double* x);
+void check_bounds(instance* inst, double* x);
 
 /**
  * @brief Check that all the constraints are satisfied, for the
@@ -360,9 +335,8 @@ int check_bounds(instance* inst, double* x);
  *
  * @param inst Pointer to the already populated instance.
  * @param x Solution to be used for evaluating constraints satisfiability.
- * @return Error status (1 if any error occured, 0 otherwise).
  */
-int check_constraints(instance* inst, double* x);
+void check_constraints(instance* inst, double* x);
 
 /**
  * @brief Deallocate all the fields of the instance.
@@ -413,17 +387,6 @@ int is_fractional(double num);
  * @return Dot product of the two arrays.
  */
 double dot_product(double* coef, double* var_value, int len);
-
-/**
- * @brief Check whether two arrays (of the same length) are equal,
- * 		  according to an integer threshold (see macros).
- *
- * @param prev First array.
- * @param new Second array.
- * @param len Length of both arrays
- * @return 1 if the two arrays are different, 0 otherwise.
- */
-int different_arr(double* prev, double* new, int len);
 
 /**
  * @brief Clone an array into a copy (both already allocated).

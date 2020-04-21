@@ -9,14 +9,20 @@
  */
 int main(int argc, char** argv) {
 
-	int status = 0;
+	// Local variables
+	int status;
 	instance inst;
-	int rounded = 1;
-	FILE* output = fopen("output.txt", "w");
+	int rounded;
+	FILE* output;
+
+	// Allocate / Initialize
+	status = 0;
+	rounded = 1;
+	output = fopen("output.txt", "w");
 	
-	initialize_instance(&inst);
+	init_inst(&inst);
 	
-	parse_command_line(argc, argv, &inst);
+	parse_cmd(argc, argv, &inst);
 	
 	status = setup_CPLEX_env(&inst); if (status) { fprintf(stderr, "[ERR]: Error inside setup_CPLEX_env.\n"); goto TERMINATE; }
 	fprintf(stdout, "[INFO][OK]: CPLEX env setup.\n");
@@ -59,9 +65,9 @@ int main(int argc, char** argv) {
 
 	// Verify variable bounds and constraints
 	fprintf(stdout, "[INFO]: ... verifying variable bounds and constraints ...\n");
-	status = check_bounds(&inst, inst.x);
+	check_bounds(&inst, inst.x);
 	if (status) { fprintf(stderr, "[ERR]: Error inside check_bounds.\n"); goto TERMINATE; }
-	status = check_constraints(&inst, inst.x);
+	check_constraints(&inst, inst.x);
 	if (status) { fprintf(stderr, "[ERR]: Error inside check_constraints.\n"); goto TERMINATE; }
 
 	// Verify whether all integer variables of the original MIP have been rounded

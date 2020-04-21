@@ -1,26 +1,72 @@
 #include "ziround.h"
 
 void read_problem_sizes(instance* inst) {
-	inst->objsen = CPXgetobjsen(inst->env, inst->lp);
-	inst->nrows = CPXgetnumrows(inst->env, inst->lp);
-	inst->ncols = CPXgetnumcols(inst->env, inst->lp);
+
+	// External variables
+	CPXENVptr env; /**< CPLEX environment pointer. */
+	CPXLPptr lp;   /**< CPLEX lp pointer. */
+
+	// Initialize
+	env = inst->env;
+	lp = inst->lp;
+
+	inst->objsen = CPXgetobjsen(env, lp);
+	inst->nrows = CPXgetnumrows(env, lp);
+	inst->ncols = CPXgetnumcols(env, lp);
 }
 
 int read_solution(instance* inst) {
+
+	// External variables
+	CPXENVptr env; /**< CPLEX environment pointer. */
+	CPXLPptr lp;   /**< CPLEX lp pointer. */
+	int ncols;     /**< Number of variables (columns) of the MIP problem. */
+	double* x;     /**< Initial continuous relaxation solution. */
+	// Local variables
+	int solstat;   /**< Solution status according to CPLEX. */
+	int solmethod; /**< Solution method according to CPLEX. */
+	int soltype;   /**< Solution type according to CPLEX. */
+	int status;    /**< Support status flag. */
+
+	// Initialize
+	env = inst->env;
+	lp = inst->lp;
+	ncols = inst->ncols;
+	x = NULL;
+	status = 0;
+
+	// Allocate on the instance, assign to locals
+	inst->x = (double*)malloc(ncols * sizeof(double));
+	x = inst->x;
+	if (x == NULL) print_error("[read_solution]: Failed to allocate solution.\n");
+
+	// Get solution status
+	solstat = CPXgetstat(env, lp);
+	switch (solstat) {
+		case CPX_STAT_UNBOUNDED:
+			print_warning("[read_solution]: Model is unbounded.\n"); 
+			return 1;
+		case CPX_STAT_INFEASIBLE:
+			print_warning("[read_solution]: Model is infeasible.\n"); 
+			return 1;
+		case CPX_STAT_INForUNBD:
+			print_warning("[read_solution]: Model is infeasible or unbounded.\n"); 
+			return 1;
+		default:
+			break;
+	}
+
+	// Get solution info
+	status = CPXsolninfo(env, lp, &(solmethod), &(soltype), NULL, NULL);
+	if (status)                 print_error("[read_solution]: Failed to obtain solution info.\n");
+	if (soltype == CPX_NO_SOLN) print_error("[read_solution]: Solution not available.\n");
+	print_verbose(150, "Solution status %d, solution method %d.\n", solstat, solmethod);
+
 	// Get solution
-	inst->solnstat = CPXgetstat(inst->env, inst->lp);
-	if (inst->solnstat == CPX_STAT_UNBOUNDED) { fprintf(stdout, "[INFO][read_solution]: Model is unbounded.\n"); return inst->status; }
-	else if (inst->solnstat == CPX_STAT_INFEASIBLE) { fprintf(stdout, "[INFO][read_solution]: Model is infeasible.\n"); return inst->status; }
-	else if (inst->solnstat == CPX_STAT_INForUNBD) { fprintf(stdout, "[INFO][read_solution]: Model is infeasible or unbounded.\n"); return inst->status; }
-	inst->status = CPXsolninfo(inst->env, inst->lp, &(inst->solnmethod), &(inst->solntype), NULL, NULL);
-	if (inst->status) { fprintf(stderr, "[ERR][read_solution]: Failed to obtain solution info.\n"); return inst->status; }
-	if (inst->solntype == CPX_NO_SOLN) { fprintf(stderr, "[ERR][read_solution]: Solution not available.\n"); return inst->status; }
-	// fprintf(stdout, "Solution status %d, solution method %d.\n", inst->solnstat, inst->solnmethod);
-	inst->x = (double*)malloc(inst->ncols * sizeof(double));
-	if (inst->x == NULL) { fprintf(stderr, "[ERR][read_solution]: Failed to allocate solution.\n"); return 1; }
-	inst->status = CPXgetx(inst->env, inst->lp, inst->x, 0, inst->ncols - 1);
-	if (inst->status) { fprintf(stderr, "[ERR][read_solution]: Failed to obtain primal solution.\n"); return inst->status; }
-	return inst->status;
+	status = CPXgetx(env, lp, x, 0, ncols - 1);
+	if (status) print_error("[read_solution]: Failed to obtain primal solution.\n");
+
+	return status;
 }
 
 int read_variable_bounds(instance* inst) {
@@ -101,14 +147,20 @@ int read_row_slacks(instance* inst) {
 }
 
 int read_problem_data(instance* inst) {
-	int status = inst->status;
-	status = read_solution(inst);                     if (status) { fprintf(stderr, "[ERR][read_problem_data]: Error inside read_solution.\n"); return status; }
-	status = read_variable_bounds(inst);              if (status) { fprintf(stderr, "[ERR][read_problem_data]: Error inside read_variable_bounds.\n"); return status; }
-	status = read_objective_value(inst);              if (status) { fprintf(stderr, "[ERR][read_problem_data]: Error inside read_objective_value.\n"); return status; }
-	status = read_objective_coefficients(inst);       if (status) { fprintf(stderr, "[ERR][read_problem_data]: Error inside read_objective_coefficients.\n"); return status; }
-	status = read_constraints_coefficients(inst);     if (status) { fprintf(stderr, "[ERR][read_problem_data]: Error inside read_constraints_coefficients.\n"); return status; }
-	status = read_constraints_senses(inst);           if (status) { fprintf(stderr, "[ERR][read_problem_data]: Error inside read_constraints_senses.\n"); return status; }
-	status = read_constraints_right_hand_sides(inst); if (status) { fprintf(stderr, "[ERR][read_problem_data]: Error inside read_constraints_right_hand_sides.\n"); return status; }
-	status = read_row_slacks(inst);                   if (status) { fprintf(stderr, "[ERR][read_problem_data]: Error inside read_row_slacks.\n"); return status; }
+
+	// Local variables
+	int status; /**< Support status flag. */
+
+	// Initialize
+	status = 0;
+														// TOLTE SE PRINT ERROR USATA INSIDE...
+	status = read_solution(inst);                     if (status) print_error("[read_problem_data]: Error inside read_solution.\n"); return status; }
+	status = read_variable_bounds(inst);              if (status) print_error("[read_problem_data]: Error inside read_variable_bounds.\n"); return status; }
+	status = read_objective_value(inst);              if (status) print_error("[read_problem_data]: Error inside read_objective_value.\n"); return status; }
+	status = read_objective_coefficients(inst);       if (status) print_error("[read_problem_data]: Error inside read_objective_coefficients.\n"); return status; }
+	status = read_constraints_coefficients(inst);     if (status) print_error("[read_problem_data]: Error inside read_constraints_coefficients.\n"); return status; }
+	status = read_constraints_senses(inst);           if (status) print_error("[read_problem_data]: Error inside read_constraints_senses.\n"); return status; }
+	status = read_constraints_right_hand_sides(inst); if (status) print_error("[read_problem_data]: Error inside read_constraints_right_hand_sides.\n"); return status; }
+	status = read_row_slacks(inst);                   if (status) print_error("[read_problem_data]: Error inside read_row_slacks.\n"); return status; }
 	return status;
 }

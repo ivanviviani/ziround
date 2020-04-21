@@ -1,44 +1,56 @@
 #include "ziround.h"
 
-int check_bounds(instance* inst, double* x) {
-	// Check variable bounds
-	for (int j = 0; j < inst->ncols; j++)
-		// was x[j] < inst->lb[j] || x[j] > inst->ub[j]
-		if ((x[j] - inst->lb[j]) < -(TOLERANCE) || (x[j] - inst->ub[j]) > TOLERANCE) { fprintf(stderr, "[ERR][check_bounds][!!!]: Bound %d violated!\n", j + 1); return 1; }
-	return 0;
-}
+void check_bounds(instance* inst, double* x) {
 
-int check_constraints(instance* inst, double* x) {
-	// Check constraints
-	double* row_infeas = (double*)malloc(inst->nrows * sizeof(double));
-	if (row_infeas == NULL) { fprintf(stderr, "[ERR][check_constraints]: Failed to allocate row_infeas.\n"); return 1; }
-	inst->status = CPXgetrowinfeas(inst->env, inst->lp, x, row_infeas, 0, inst->nrows - 1);
-	if (inst->status) { fprintf(stderr, "[ERR][check_constraints]: Failed to obtain row infeasibilities.\n"); free_and_null((char**)&row_infeas); return inst->status; }
-	for (int i = 0; i < inst->nrows; i++)
-		if (fabs(row_infeas[i]) > TOLERANCE) { fprintf(stdout, "[ERR][check_constraints][!!!]: Constraint %d violated!\n", i + 1); free_and_null((char**)&row_infeas); return 1; }
-	free_and_null((char**)&row_infeas);
-	return inst->status;
-}
+	// External variables
+	int ncols;  /**< Number of variables (columns) of the MIP problem. */
+	double* lb; /**< Lower bounds array. */
+	double* ub; /**< Upper bounds array. */
 
-double row_activity(instance* inst, int i, double* x) {
-	double sum = 0; double aij; int col_index;
-	int end_row = (i < inst->nrows - 1) ? inst->rmatbeg[i + 1] : inst->nzcnt;
-	// Scan non-zero coefficients of row i
-	/*
-		For constraint i:
-			rmatbeg[i] is the first index of rmatind and rmatval for row i
-			--> Row i in range [ rmatbeg[i];rmatbeg[i+1] ) except for the last one (see end_row)
-			rmatval contains coefficient values
-			rmatind contains the column indices of coefficient values
-	*/
-	for (int k = inst->rmatbeg[i]; k < end_row; k++) {
-		// Get current non-zero aij and its column index
-		aij = inst->rmatval[k];
-		col_index = inst->rmatind[k];
-		// Update row activity
-		sum += (aij * x[col_index]);
+	// Initialize
+	ncols = inst->ncols;
+	lb = inst->lb;
+	ub = inst->ub;
+
+	// Scan xj variables
+	for (int j = 0; j < ncols; j++) {
+		if ((x[j] - lb[j]) < -(TOLERANCE) || (x[j] - ub[j]) > TOLERANCE) {
+			print_error("[check_bounds][!!!]: Bound %d violated!\n", j + 1);
+		}
 	}
-	return sum;
+}
+
+void check_constraints(instance* inst, double* x) {
+
+	// External variables
+	int nrows;			/**< Number of constraints (rows) of the MIP problem.*/
+	CPXLPptr lp;		/**< CPLEX lp pointer. */
+	CPXENVptr env;		/**< CPLEX environment pointer. */
+	// Local variables
+	double* row_infeas; /**< Row infeasibilities array. */
+	int status;			/**< Support status flag. */
+
+	// Allocate / Initialize
+	nrows = inst->nrows;
+	lp = inst->lp;
+	env = inst->env;
+	row_infeas = (double*)malloc(nrows * sizeof(double));
+	if (row_infeas == NULL) print_error("[check_constraints]: Failed to allocate row_infeas.\n");
+	status = 0;
+
+	// Compute row infeasibilities
+	status = CPXgetrowinfeas(env, lp, x, row_infeas, 0, nrows - 1);
+	if (status) print_error("[check_constraints]: Failed to obtain row infeasibilities.\n");
+
+	// Scan rows
+	for (int i = 0; i < nrows; i++) {
+		if (fabs(row_infeas[i]) > TOLERANCE) {
+			print_error("[check_constraints][!!!]: Constraint %d violated!\n", i + 1);
+		}
+	}
+	
+	// Free
+	free(row_infeas);
 }
 
 void free_and_null(char** ptr) { if (*ptr != NULL) { free(*ptr); *ptr = NULL; } }
@@ -55,17 +67,6 @@ double dot_product(double* coef, double* var_value, int len) {
 	double dotprod = 0;
 	for (int j = 0; j < len; j++) dotprod += (coef[j]) * (var_value[j]);
 	return dotprod;
-}
-
-int different_arr(double* prev, double* new, int len) {
-	int dif = 0;
-	for (int i = 0; i < len; i++) {
-		if (fabs(prev[i] - new[i]) > TOLERANCE) {
-			dif = 1;
-			break;
-		}
-	}
-	return dif;
 }
 
 void clone_array(double* arr, double* clo, int len) { for (int i = 0; i < len; i++) clo[i] = arr[i]; }
