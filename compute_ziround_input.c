@@ -1,6 +1,12 @@
+/**
+ * @file compute_ziround_input.c
+ * @author Ivan Viviani
+ * @copyright Copyright (c) 2020
+ */
+
 #include "ziround.h"
 
-int setup_CPLEX_env(instance* inst) {
+void setup_CPLEX_env(instance* inst) {
 
 	// External variables
 	CPXENVptr env; /**< CPLEX environment pointer. */
@@ -29,11 +35,9 @@ int setup_CPLEX_env(instance* inst) {
 
 	// Free
 	free(errmsg);
-
-	return status;
 }
 
-int read_MIP_problem(instance* inst, char* filename) {
+void read_MIP_problem(instance* inst, char* filename) {
 
 	// External variables
 	CPXENVptr env; /**< CPLEX environment pointer. */
@@ -50,12 +54,11 @@ int read_MIP_problem(instance* inst, char* filename) {
 	lp = CPXcreateprob(env, &status, filename);
 	inst->lp = lp;
 	if (lp == NULL) print_error("[read_MIP_problem]: Failed to create MIP.\n");
-	status = CPXreadcopyprob(env, lp, filename, NULL); if (status) print_error("[read_MIP_problem]: Failed to read and copy the problem data.\n");
-	
-	return status;
+	status = CPXreadcopyprob(env, lp, filename, NULL); 
+	if (status) print_error("[read_MIP_problem]: Failed to read and copy the problem data.\n");
 }
 
-int save_integer_variables(instance* inst) {
+void save_integer_variables(instance* inst) {
 	
 	// External variables
 	CPXENVptr env; /**< CPLEX environment pointer. */
@@ -90,11 +93,9 @@ int save_integer_variables(instance* inst) {
 	for (int j = 0; j < ncols; j++) {
 		int_var[j] = (vartype[j] == CPX_BINARY) || (vartype[j] == CPX_INTEGER);
 	}
-
-	return status;
 }
 
-int solve_continuous_relaxation(instance* inst) {
+void solve_continuous_relaxation(instance* inst) {
 
 	// External variables
 	CPXENVptr env; /**< CPLEX environment pointer. */
@@ -114,6 +115,4 @@ int solve_continuous_relaxation(instance* inst) {
 	// Optimize LP
 	status = CPXlpopt(env, lp);
 	if (status) print_error("[solve_continuous_relaxation]: Failed to optimize LP.\n");
-
-	return status;
 }

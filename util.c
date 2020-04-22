@@ -1,3 +1,9 @@
+/**
+ * @file util.c
+ * @author Ivan Viviani
+ * @copyright Copyright (c) 2020
+ */
+
 #include "ziround.h"
 
 void check_bounds(instance* inst, double* x) {
@@ -52,8 +58,6 @@ void check_constraints(instance* inst, double* x) {
 	// Free
 	free(row_infeas);
 }
-
-void free_and_null(char** ptr) { if (*ptr != NULL) { free(*ptr); *ptr = NULL; } }
 
 double fractionality(double xj) {
 	double minusfloor = xj - floor(xj);

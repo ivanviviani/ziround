@@ -1,3 +1,9 @@
+/**
+ * @file cmd_interface.c
+ * @author Ivan Viviani
+ * @copyright Copyright (c) 2020
+ */
+
 #include "ziround.h"
 
 void parse_cmd(int argc, char** argv, instance* inst) {

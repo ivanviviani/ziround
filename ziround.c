@@ -1,9 +1,15 @@
+/**
+ * @file ziround.c
+ * @author Ivan Viviani
+ * @copyright Copyright (c) 2020
+ */
+
 #include "ziround.h"
 
 //**************************************************************************************************************************************************************
 //*************************************** ZI-ROUND *************************************************************************************************************
 //**************************************************************************************************************************************************************
-int zi_round(instance* inst) {
+void zi_round(instance* inst) {
 
 	// External variables
 	int ncols;			 /**< Number of variables (columns) of the MIP problem. */
@@ -20,7 +26,6 @@ int zi_round(instance* inst) {
 	double obj_plusUBj;  /**< Objective value for a shifted up variable (used in function zi_round). */
 	double obj_minusLBj; /**< Objective value for a shifted down variable (used in function zi_round). */
 	int updated;		 /**< Flag set to 1 when at least one variable shift has been made. */
-	int status;			 /**< Support status flag. */
 
 	// Allocate / Initialize
 	ncols = inst->ncols;
@@ -32,7 +37,6 @@ int zi_round(instance* inst) {
 	delta_down = (double*)malloc(ncols * sizeof(double));
 	if (delta_up == NULL || delta_down == NULL) print_error("[zi_round]: Failed to allocate delta arrays.\n");
 	updated = 0;
-	status = 0;
 
 	// Outer loop (repeat until no more updates found)
 	do {
@@ -135,8 +139,6 @@ int zi_round(instance* inst) {
 	// Free
 	free(delta_up);
 	free(delta_down);
-
-	return status;
 }
 //**************************************************************************************************************************************************************
 //**************************************************************************************************************************************************************

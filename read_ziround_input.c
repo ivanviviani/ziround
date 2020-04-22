@@ -1,3 +1,9 @@
+/**
+ * @file read_ziround_input.c
+ * @author Ivan Viviani
+ * @copyright Copyright (c) 2020
+ */
+
 #include "ziround.h"
 
 void read_problem_sizes(instance* inst) {
@@ -15,7 +21,7 @@ void read_problem_sizes(instance* inst) {
 	inst->ncols = CPXgetnumcols(env, lp);
 }
 
-void read_problem_data(instance* inst) {
+void populate_inst(instance* inst) {
 
 	read_solution(inst);
 	read_variable_bounds(inst);

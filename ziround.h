@@ -1,7 +1,7 @@
 /**
- * @file ziroundv2.c
+ * @file ziround.h
  * @author Ivan Viviani
- * @brief main file for testing the ZI-Round MIP rounding heuristic.
+ * @copyright Copyright (c) 2020
  */
 
 #pragma once
@@ -86,9 +86,10 @@
  * 	      problem instance, parameters included.
  */
 typedef struct {
+
     // Variables
-    int nrows; 		/**< Number of rows of the coefficients matrix. */
-    int ncols; 		/**< Number of variables, also columns of the coefficients matrix. */
+    int nrows; 		        /**< Number of rows of the coefficients matrix. */
+    int ncols; 		        /**< Number of variables, also columns of the coefficients matrix. */
     double* x; 				/**< Current problem solution. Will be rounded. */
     double* obj; 			/**< Objective function coefficients. */
     double* lb; 			/**< Variable lower bounds. */
@@ -98,7 +99,9 @@ typedef struct {
     int objsen; 			/**< Objective function sense, CPX_MIN (default) or CPX_MAX (specified from command line). */
     char* mip_ctype; 		/**< Variable types (before converting MIP to LP), integer/binary or continuous. */
     int* int_var; 			/**< Flags array that keeps track of integer/binary (value 1) and continuous (value 0) variables. */
+
     // Coefficient matrix
+    int nzcnt; 				/**< Number of non-zero coefficients. */
     int* rmatbeg; 			/**< Begin row indices of non-zero coefficients for rmatind and rmatval. */
     int* rmatind; 			/**< Column indices of non-zero coefficients. */
     double* rmatval; 		/**< Non-zero coefficients (row major). */
@@ -107,13 +110,12 @@ typedef struct {
     double* cmatval; 		/**< Non-zero coefficients (column major). */
     char* sense; 			/**< Constraint (row) senses, 'L' (<=) or 'G' (>=) or 'E' (=). */
     double* rhs; 			/**< Constraint right hand sides (rhs). */
+
     // Parameters
-    int status; 			/**< Error status flag set to 1 whenever any error occurs. */
     CPXENVptr env; 			/**< CPLEX environment pointer. */
     CPXLPptr lp; 			/**< CPLEX lp pointer. */
-    int nzcnt; 				/**< Number of non-zero coefficients. */
-    int surplus; 			/**< CPLEX parameter. */
     char* input_file; 		/**< Input filename (mps format, specified from command line). */
+
 } instance;
 
 /**
@@ -138,9 +140,8 @@ void parse_cmd(int argc, char** argv, instance* inst);
  * 		  Also turn on CPLEX screen output.
  *
  * @param inst Pointer to the already initialized and populated instance.
- * @return Error status (1 if any error occured, 0 otherwise).
  */
-int setup_CPLEX_env(instance* inst);
+void setup_CPLEX_env(instance* inst);
 
 /**
  * @brief Create the lp into the CPLEX env of the instance and populate the lp
@@ -148,9 +149,8 @@ int setup_CPLEX_env(instance* inst);
  *
  * @param inst Pointer to the already populated instance.
  * @param filename Name of the input file (mps format).
- * @return Error status (1 if any error occured, 0 otherwise).
  */
-int read_MIP_problem(instance* inst, char* filename);
+void read_MIP_problem(instance* inst, char* filename);
 
 /**
  * @brief Read the current number of rows and columns of the coefficients matrix
@@ -165,17 +165,15 @@ void read_problem_sizes(instance* inst);
  * 		  flags array. Both arrays are fields of the instance.
  *
  * @param inst Pointer to the already populated instance.
- * @return Error status (1 if any error occured, 0 otherwise).
  */
-int save_integer_variables(instance* inst);
+void save_integer_variables(instance* inst);
 
 /**
  * @brief Change the problem type from MIP to LP and solve its continuous relaxation.
  *
  * @param inst Pointer to the already populated instance.
- * @return Error status (1 if any error occured, 0 otherwise).
  */
-int solve_continuous_relaxation(instance* inst);
+void solve_continuous_relaxation(instance* inst);
 
 /**
  * @brief Read the continuous relaxation solution from the CPLEX lp
@@ -250,7 +248,7 @@ void read_row_slacks(instance* inst);
  *
  * @param inst Pointer to the already populated instance.
  */
-void read_problem_data(instance* inst);
+void populate_inst(instance* inst);
 
 /**
  * @brief Use the ZI-Round heuristic to round the continuous relaxation solution
@@ -258,21 +256,20 @@ void read_problem_data(instance* inst);
  * 		  unsuccessfully.
  *
  * @param inst Pointer to the already populated instance.
- * @return Error status (1 if any error occured, 0 otherwise).
  */
-int zi_round(instance* inst);
+void zi_round(instance* inst);
 
 /**
  * @brief Update variable xj to improve objective, according to the values
  * of UBj and LBj calculated before. Also update the row slacks.
  *
  * @param inst Pointer to the already populated instance.
- * @param objval
+ * @param objval Pointer to the objective value.
  * @param j Column (variable xj) index.
- * @param delta_up
- * @param delta_down
+ * @param delta_up Array of possible up-shifts.
+ * @param delta_down Array of possible down-shifts.
  * @param is_fractional Flag that indicates whether xj is fractional or integer.
- * @return
+ * @return 1 if the variable xj has been updated, 0 otherwise.
  */
 int round_xj_bestobj(instance* inst, double* objval, int j, double* delta_up, double* delta_down, int is_fractional);
 
@@ -294,20 +291,21 @@ void update_slacks(instance* inst, int j, double signed_delta);
  * @details Whenever it is called, only one variable xj has been updated.
  *
  * @param inst Pointer to the already populated instance.
- * @param objval
+ * @param objval Pointer to the objective value.
  * @param j Index of the (only) variable just updated.
  * @param signed_delta Signed delta xj.
  */
 void update_objval(instance* inst, double* objval, int j, double signed_delta);
 
 /**
- * @brief
+ * @brief Compute the j-th entries of the arrays of possible up-shifts and down-shifts
+ *        according to the ZI-Round heuristic specifications.
  *
- * @param inst
- * @param j
- * @param delta_up
- * @param delta_down
- * @param epsilon
+ * @param inst Pointer to the already populated instance.
+ * @param j Variable index.
+ * @param delta_up Array of possible up-shifts.
+ * @param delta_down Array of possible down-shifts.
+ * @param epsilon Tolerance for the computed up/down shifts.
  */
 void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, const double epsilon);
 
@@ -333,9 +331,8 @@ void check_constraints(instance* inst, double* x);
  * @brief Deallocate all the fields of the instance.
  *
  * @param inst Pointer to the already populated instance.
- * @return Error status (1 if any error occured, 0 otherwise).
  */
-int free_inst(instance* inst);
+void free_inst(instance* inst);
 
 /**
  * @brief [DEBUG] Print problem information to standard output or file.
@@ -345,13 +342,6 @@ int free_inst(instance* inst);
  * @param to_file Flag set to 1 if the problem info is to be printed to file, 0 otherwise.
  */
 void print_problem_info(instance* inst, int sol_available, int to_file);
-
-/**
- * @brief Deallocate a resource (previously allocated memory area).
- *
- * @param ptr Pointer to the resource to deallocate.
- */
-void free_and_null(char** ptr);
 
 /**
  * @brief Calculate the fractionality of the given value.

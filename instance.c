@@ -1,6 +1,13 @@
+/**
+ * @file instance.c
+ * @author Ivan Viviani
+ * @copyright Copyright (c) 2020
+ */
+
 #include "ziround.h"
 
 void init_inst(instance* inst) {
+
 	inst->x = NULL; 
 	inst->obj = NULL; 
 	inst->lb = NULL; 
@@ -17,13 +24,12 @@ void init_inst(instance* inst) {
 	inst->cmatval = NULL; 
 	inst->sense = NULL; 
 	inst->rhs = NULL;
-	inst->status = 0; 
 	inst->env = NULL; 
 	inst->lp = NULL; 
 	inst->input_file = NULL;
 }
 
-int free_inst(instance* inst) {
+void free_inst(instance* inst) {
 
 	// External variables
 	CPXENVptr env; /**< CPLEX environment pointer. */
@@ -66,6 +72,4 @@ int free_inst(instance* inst) {
 		}
 	}
 	free(errmsg);
-
-	return status;
 }
