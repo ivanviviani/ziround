@@ -23,7 +23,7 @@ void init_inst(instance* inst) {
 	inst->input_file = NULL;
 }
 
-int free_instance(instance* inst) {
+int free_inst(instance* inst) {
 
 	// External variables
 	CPXENVptr env; /**< CPLEX environment pointer. */
@@ -55,14 +55,14 @@ int free_instance(instance* inst) {
 	free(inst->rhs);
 	if (inst->lp != NULL) {
 		status = CPXfreeprob(env, &lp);
-		if (status) print_error("[free_instance]: CPXfreeprob failed, error code %d.\n", status);
+		if (status) print_error("[free_inst]: CPXfreeprob failed, error code %d.\n", status);
 	}
 	if (env != NULL) {
 		status = CPXcloseCPLEX(&env);
 		if (status) {
-			print_warning("[free_instance]: Could not close CPLEX environment.\n");
+			print_warning("[free_inst]: Could not close CPLEX environment.\n");
 			CPXgeterrorstring(env, status, errmsg);
-			print_error(stderr, "[free_instance]: %s", errmsg);
+			print_error(stderr, "[free_inst]: %s", errmsg);
 		}
 	}
 	free(errmsg);

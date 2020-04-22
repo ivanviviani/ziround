@@ -40,8 +40,7 @@ int main(int argc, char** argv) {
 	if (status) { fprintf(stderr, "[ERR]: Error inside solve_continuous_relaxation.\n"); goto TERMINATE; }
 	fprintf(stdout, "[INFO][OK]: Continuous relaxation solved.\n");
 
-	status = read_problem_data(&inst);
-	if (status) { fprintf(stderr, "[ERR]: Error inside read_problem_data.\n"); goto TERMINATE; }
+	read_problem_data(&inst);
 
 	print_problem_info(&inst, 1, 1); // flags solution available (1) and print problem to file (1)
 
@@ -92,6 +91,6 @@ int main(int argc, char** argv) {
 
 TERMINATE:
 	fclose(output);
-	status = free_instance(&inst); if (status) fprintf(stderr, "[ERR]: Error inside free_instance.\n");
+	status = free_inst(&inst); if (status) fprintf(stderr, "[ERR]: Error inside free_inst.\n");
 	return status;
 }

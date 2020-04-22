@@ -15,7 +15,19 @@ void read_problem_sizes(instance* inst) {
 	inst->ncols = CPXgetnumcols(env, lp);
 }
 
-int read_solution(instance* inst) {
+void read_problem_data(instance* inst) {
+
+	read_solution(inst);
+	read_variable_bounds(inst);
+	read_objective_value(inst);
+	read_objective_coefficients(inst);
+	read_constraints_coefficients(inst);
+	read_constraints_senses(inst);
+	read_constraints_right_hand_sides(inst);
+	read_row_slacks(inst);
+}
+
+void read_solution(instance* inst) {
 
 	// External variables
 	CPXENVptr env; /**< CPLEX environment pointer. */
@@ -58,109 +70,236 @@ int read_solution(instance* inst) {
 
 	// Get solution info
 	status = CPXsolninfo(env, lp, &(solmethod), &(soltype), NULL, NULL);
-	if (status)                 print_error("[read_solution]: Failed to obtain solution info.\n");
+	if (status) print_error("[read_solution]: Failed to obtain solution info.\n");
 	if (soltype == CPX_NO_SOLN) print_error("[read_solution]: Solution not available.\n");
 	print_verbose(150, "Solution status %d, solution method %d.\n", solstat, solmethod);
 
 	// Get solution
 	status = CPXgetx(env, lp, x, 0, ncols - 1);
 	if (status) print_error("[read_solution]: Failed to obtain primal solution.\n");
-
-	return status;
 }
 
-int read_variable_bounds(instance* inst) {
-	// Get variable bounds (upper and lower)
-	inst->ub = (double*)malloc(inst->ncols * sizeof(double));
-	inst->lb = (double*)malloc(inst->ncols * sizeof(double));
-	if (inst->ub == NULL || inst->lb == NULL) { fprintf(stderr, "[ERR][read_variable_bounds]: Failed to allocate variable bounds.\n"); return 1; }
-	inst->status = CPXgetub(inst->env, inst->lp, inst->ub, 0, inst->ncols - 1);
-	if (inst->status) { fprintf(stderr, "[ERR][read_variable_bounds]: Failed to obtain upper bounds.\n"); return inst->status; }
-	inst->status = CPXgetlb(inst->env, inst->lp, inst->lb, 0, inst->ncols - 1);
-	if (inst->status) { fprintf(stderr, "[ERR][read_variable_bounds]: Failed to obtain lower bounds.\n"); return inst->status; }
-	return inst->status;
-}
+void read_variable_bounds(instance* inst) {
 
-int read_objective_value(instance* inst) {
-	// Get objective value
-	inst->status = CPXgetobjval(inst->env, inst->lp, &(inst->objval));
-	if (inst->status) { fprintf(stderr, "[ERR][read_objective_value]: Failed to obtain objective value.\n"); return inst->status; }
-	return inst->status;
-}
-
-int read_objective_coefficients(instance* inst) {
-	// Get objective coefficients
-	inst->obj = (double*)malloc(inst->ncols * sizeof(double));
-	if (inst->obj == NULL) { fprintf(stderr, "[ERR][read_objective_coefficients]: Failed to allocate objective coefficients.\n"); return 1; }
-	inst->status = CPXgetobj(inst->env, inst->lp, inst->obj, 0, inst->ncols - 1);
-	if (inst->status) { fprintf(stderr, "[ERR][read_objective_coefficients]: Failed to obtain objective coefficients.\n"); return inst->status; }
-	return inst->status;
-}
-
-int read_constraints_coefficients(instance* inst) {
-	// Get constraint matrix, both by rows and by columns
-	// First, get the number of non zero coefficients of the matrix (nzcnt)
-	int unused = 0;
-	inst->nzcnt = CPXgetnumnz(inst->env, inst->lp);
-	// Get rows
-	inst->rmatbeg = (int*)malloc(inst->nrows * sizeof(int));
-	inst->rmatind = (int*)malloc(inst->nzcnt * sizeof(int));
-	inst->rmatval = (double*)malloc(inst->nzcnt * sizeof(double));
-	if (inst->rmatbeg == NULL || inst->rmatind == NULL || inst->rmatval == NULL) { fprintf(stderr, "[ERR][read_constraints_coefficients]: Failed to allocate one of rmatbeg, rmatind, rmatval.\n"); return 1; }
-	inst->status = CPXgetrows(inst->env, inst->lp, &unused, inst->rmatbeg, inst->rmatind, inst->rmatval, inst->nzcnt, &unused, 0, inst->nrows - 1);
-	if (inst->status) { fprintf(stderr, "[ERR][read_constraints_coefficients]: Failed to obtain rows info.\n"); return inst->status; }
-	// Get columns
-	inst->cmatbeg = (int*)malloc(inst->ncols * sizeof(int));
-	inst->cmatind = (int*)malloc(inst->nzcnt * sizeof(int));
-	inst->cmatval = (double*)malloc(inst->nzcnt * sizeof(double));
-	if (inst->cmatbeg == NULL || inst->cmatind == NULL || inst->cmatval == NULL) { fprintf(stderr, "[ERR][read_constraints_coefficients]: Failed to allocate one of cmatbeg, cmatind, cmatval.\n"); return 1; }
-	inst->status = CPXgetcols(inst->env, inst->lp, &unused, inst->cmatbeg, inst->cmatind, inst->cmatval, inst->nzcnt, &unused, 0, inst->ncols - 1);
-	if (inst->status) { fprintf(stderr, "[ERR][read_constraints_coefficients]: Failed to obtain columns info.\n"); return inst->status; }
-	return inst->status;
-}
-
-int read_constraints_senses(instance* inst) {
-	// Get constraint senses {'L','E','G'}
-	inst->sense = (char*)malloc(inst->nrows * sizeof(char));
-	if (inst->sense == NULL) { fprintf(stderr, "[ERR][read_constraints_senses]: Failed to allocate constraint senses.\n"); return 1; }
-	inst->status = CPXgetsense(inst->env, inst->lp, inst->sense, 0, inst->nrows - 1);
-	if (inst->status) { fprintf(stderr, "[ERR][read_constraints_senses]: Failed to obtain constraints senses.\n"); return inst->status; }
-	return inst->status;
-}
-
-int read_constraints_right_hand_sides(instance* inst) {
-	// Get right hand sides
-	inst->rhs = (double*)malloc(inst->nrows * sizeof(double));
-	if (inst->rhs == NULL) { fprintf(stderr, "[ERR][read_constraints_right_hand_sides]: Failed to allocate right hand sides.\n"); return 1; }
-	inst->status = CPXgetrhs(inst->env, inst->lp, inst->rhs, 0, inst->nrows - 1);
-	if (inst->status) { fprintf(stderr, "[ERR][read_constraints_right_hand_sides]: Failed to obtain rhs.\n"); return inst->status; }
-	return inst->status;
-}
-
-int read_row_slacks(instance* inst) {
-	// Get row slacks
-	inst->slack = (double*)malloc(inst->nrows * sizeof(double));
-	if (inst->slack == NULL) { fprintf(stderr, "[ERR][read_row_slacks]: Failed to allocate slacks.\n"); return 1; }
-	inst->status = CPXgetslack(inst->env, inst->lp, inst->slack, 0, inst->nrows - 1);
-	if (inst->status) { fprintf(stderr, "[ERR][read_row_slacks]: Failed to obtain slacks.\n"); return inst->status; }
-	return inst->status;
-}
-
-int read_problem_data(instance* inst) {
-
+	// External variables
+	CPXENVptr env; /**< CPLEX environment pointer. */
+	CPXLPptr lp;   /**< CPLEX lp pointer. */
+	int ncols;     /**< Number of variables (columns) of the MIP problem. */
+	double* ub;	   /**< Variable upper bounds array. */
+	double* lb;	   /**< Variable lower bounds array. */
 	// Local variables
-	int status; /**< Support status flag. */
+	int status;    /**< Support status flag. */
 
 	// Initialize
+	env = inst->env;
+	lp = inst->lp;
+	ncols = inst->ncols;
+	ub = NULL;
+	lb = NULL;
 	status = 0;
-														// TOLTE SE PRINT ERROR USATA INSIDE...
-	status = read_solution(inst);                     if (status) print_error("[read_problem_data]: Error inside read_solution.\n"); return status; }
-	status = read_variable_bounds(inst);              if (status) print_error("[read_problem_data]: Error inside read_variable_bounds.\n"); return status; }
-	status = read_objective_value(inst);              if (status) print_error("[read_problem_data]: Error inside read_objective_value.\n"); return status; }
-	status = read_objective_coefficients(inst);       if (status) print_error("[read_problem_data]: Error inside read_objective_coefficients.\n"); return status; }
-	status = read_constraints_coefficients(inst);     if (status) print_error("[read_problem_data]: Error inside read_constraints_coefficients.\n"); return status; }
-	status = read_constraints_senses(inst);           if (status) print_error("[read_problem_data]: Error inside read_constraints_senses.\n"); return status; }
-	status = read_constraints_right_hand_sides(inst); if (status) print_error("[read_problem_data]: Error inside read_constraints_right_hand_sides.\n"); return status; }
-	status = read_row_slacks(inst);                   if (status) print_error("[read_problem_data]: Error inside read_row_slacks.\n"); return status; }
-	return status;
+
+	// Allocate on the instance, assign to locals
+	inst->ub = (double*)malloc(inst->ncols * sizeof(double));
+	ub = inst->ub;
+	inst->lb = (double*)malloc(inst->ncols * sizeof(double));
+	lb = inst->lb;
+	if (ub == NULL || lb == NULL) print_error("[read_variable_bounds]: Failed to allocate variable bounds.\n");
+
+	// Get variable bounds (upper and lower)
+	status = CPXgetub(env, lp, ub, 0, ncols - 1);
+	if (status) print_error("[read_variable_bounds]: Failed to obtain upper bounds.\n");
+	status = CPXgetlb(env, lp, lb, 0, ncols - 1);
+	if (status) print_error("[read_variable_bounds]: Failed to obtain lower bounds.\n");
+}
+
+void read_objective_value(instance* inst) {
+
+	// External variables
+	CPXENVptr env;      /**< CPLEX environment pointer. */
+	CPXLPptr lp;        /**< CPLEX lp pointer. */
+	int ncols;          /**< Number of variables (columns) of the MIP problem. */
+	double* objval_ptr; /**< Pointer to the initial objective value of the solution of the continuous relaxation. */
+	// Local variables
+	int status;         /**< Support status flag. */
+
+	// Initialize
+	env = inst->env;
+	lp = inst->lp;
+	ncols = inst->ncols;
+	objval_ptr = &(inst->objval);
+	status = 0;
+
+	// Get objective value
+	status = CPXgetobjval(env, lp, objval_ptr);
+	if (status) print_error("[read_objective_value]: Failed to obtain objective value.\n");
+}
+
+void read_objective_coefficients(instance* inst) {
+
+	// External variables
+	CPXENVptr env;      /**< CPLEX environment pointer. */
+	CPXLPptr lp;        /**< CPLEX lp pointer. */
+	int ncols;          /**< Number of variables (columns) of the MIP problem. */
+	double* obj;        /**< Objective coefficients. */
+	// Local variables
+	int status;         /**< Support status flag. */
+
+	// Initialize
+	env = inst->env;
+	lp = inst->lp;
+	ncols = inst->ncols;
+	obj = NULL;
+	status = 0;
+
+	// Allocate on the instance, assign to locals
+	inst->obj = (double*)malloc(ncols * sizeof(double));
+	obj = inst->obj;
+	if (obj == NULL) print_error("[read_objective_coefficients]: Failed to allocate objective coefficients.\n");
+
+	// Get objective coefficients
+	status = CPXgetobj(env, lp, obj, 0, ncols - 1);
+	if (status) print_error("[read_objective_coefficients]: Failed to obtain objective coefficients.\n");
+}
+
+void read_constraints_coefficients(instance* inst) {
+
+	// External variables
+	CPXENVptr env;  /**< CPLEX environment pointer. */
+	CPXLPptr lp;    /**< CPLEX lp pointer. */
+	int ncols;      /**< Number of variables (columns) of the MIP problem. */
+	int nrows;      /**< Number of constraints (rows) of the MIP problem. */
+	int nnz; 		/**< Number of non-zero coefficients. */
+	int* rowbeg; 	/**< Begin row indices of non-zero coefficients for rmatind and rmatval. */
+	int* rowind; 	/**< Column indices of non-zero coefficients. */
+	double* rowval; /**< Non-zero coefficients (row major). */
+	int* colbeg; 	/**< Begin column indices of non-zero coefficients for cmatind and cmatval. */
+	int* colind; 	/**< Row indices of non-zero coefficients. */
+	double* colval; /**< Non-zero coefficients (column major). */
+	// Local variables
+	int unused;     /**< Unused parameter. */
+	int status;		/**< Support status flag. */
+
+	// Initialize
+	env = inst->env;
+	lp = inst->lp;
+	ncols = inst->ncols;
+	nrows = inst->nrows;
+	nnz = 0;
+	rowbeg = NULL;
+	rowind = NULL;
+	rowval = NULL;
+	colbeg = NULL;
+	colind = NULL;
+	colval = NULL;
+	unused = 0;
+	status = 0;
+
+	// First, get the number of non zero coefficients of the matrix (nzcnt)
+	inst->nzcnt = CPXgetnumnz(env, lp);
+	nnz = inst->nzcnt;
+
+	// Allocate on the instance, assign to locals
+	inst->rmatbeg = (int*)malloc(nrows * sizeof(int));
+	rowbeg = inst->rmatbeg;
+	inst->rmatind = (int*)malloc(nnz * sizeof(int));
+	rowind = inst->rmatind;
+	inst->rmatval = (double*)malloc(nnz * sizeof(double));
+	rowval = inst->rmatval;
+	inst->cmatbeg = (int*)malloc(ncols * sizeof(int));
+	colbeg = inst->cmatbeg;
+	inst->cmatind = (int*)malloc(nnz * sizeof(int));
+	colind = inst->cmatind;
+	inst->cmatval = (double*)malloc(nnz * sizeof(double));
+	colval = inst->cmatval;
+	if (rowbeg == NULL || rowind == NULL || rowval == NULL || 
+		colbeg == NULL || colind == NULL || colval == NULL) {
+		print_error("[read_constraints_coefficients]: Failed to allocate one of rmatbeg, rmatind, rmatval, cmatbeg, cmatind, cmatval.\n");
+	}
+
+	// Get constraint matrix, both by rows and by columns
+	status = CPXgetrows(env, lp, &unused, rowbeg, rowind, rowval, nnz, &unused, 0, nrows - 1);
+	if (status) print_error("[read_constraints_coefficients]: Failed to obtain rows info.\n");
+	status = CPXgetcols(env, lp, &unused, colbeg, colind, colval, nnz, &unused, 0, ncols - 1);
+	if (status) print_error("[read_constraints_coefficients]: Failed to obtain columns info.\n");
+}
+
+void read_constraints_senses(instance* inst) {
+
+	// External variables
+	CPXENVptr env; /**< CPLEX environment pointer. */
+	CPXLPptr lp;   /**< CPLEX lp pointer. */
+	int nrows;     /**< Number of constraints (rows) of the MIP problem. */
+	char* sense;   /**< Constraint senses array. */
+	// Local variables
+	int status;    /**< Support status flag. */
+
+	// Initialize
+	env = inst->env;
+	lp = inst->lp;
+	nrows = inst->nrows;
+	sense = NULL;
+	status = 0;
+
+	// Allocate on the instance, assign to locals
+	inst->sense = (char*)malloc(nrows * sizeof(char));
+	sense = inst->sense;
+	if (sense == NULL) print_error("[read_constraints_senses]: Failed to allocate constraint senses.\n");
+
+	// Get constraint senses {'L','E','G'}
+	status = CPXgetsense(env, lp, sense, 0, nrows - 1);
+	if (status) print_error("[read_constraints_senses]: Failed to obtain constraints senses.\n");
+}
+
+void read_constraints_right_hand_sides(instance* inst) {
+
+	// External variables
+	CPXENVptr env; /**< CPLEX environment pointer. */
+	CPXLPptr lp;   /**< CPLEX lp pointer. */
+	int nrows;     /**< Number of constraints (rows) of the MIP problem. */
+	double* rhs;   /**< Constraint right hand sides array. */
+	// Local variables
+	int status;    /**< Support status flag. */
+
+	// Initialize
+	env = inst->env;
+	lp = inst->lp;
+	nrows = inst->nrows;
+	rhs = NULL;
+	status = 0;
+
+	// Allocate on the instance, assign to locals
+	inst->rhs = (double*)malloc(nrows * sizeof(double));
+	rhs = inst->rhs;
+	if (rhs == NULL) print_error("[read_constraints_right_hand_sides]: Failed to allocate right hand sides.\n");
+
+	// Get right hand sides
+	status = CPXgetrhs(env, lp, rhs, 0, nrows - 1);
+	if (status) print_error("[read_constraints_right_hand_sides]: Failed to obtain rhs.\n");
+}
+
+void read_row_slacks(instance* inst) {
+
+	// External variables
+	CPXENVptr env; /**< CPLEX environment pointer. */
+	CPXLPptr lp;   /**< CPLEX lp pointer. */
+	int nrows;     /**< Number of constraints (rows) of the MIP problem. */
+	double* slack; /**< Row slacks array. */
+	// Local variables
+	int status;    /**< Support status flag. */
+
+	// Initialize
+	env = inst->env;
+	lp = inst->lp;
+	nrows = inst->nrows;
+	slack = NULL;
+	status = 0;
+
+	// Allocate on the instance, assign to locals
+	inst->slack = (double*)malloc(nrows * sizeof(double));
+	slack = inst->slack;
+	if (slack == NULL) print_error("[read_row_slacks]: Failed to allocate slacks.\n");
+
+	// Get row slacks
+	status = CPXgetslack(env, lp, slack, 0, nrows - 1);
+	if (status) print_error("[read_row_slacks]: Failed to obtain slacks.\n");
 }

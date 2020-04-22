@@ -182,36 +182,32 @@ int solve_continuous_relaxation(instance* inst);
  *        and populate the corresponding array field of the instance.
  *
  * @param inst Pointer to the already populated instance.
- * @return Error status (1 if any error occured, 0 otherwise).
  */
-int read_solution(instance* inst);
+void read_solution(instance* inst);
 
 /**
  * @brief Read the variable bounds from the CPLEX lp
  * 		  and populate the corresponding array fields of the instance.
  *
  * @param inst Pointer to the already populated instance.
- * @return Error status (1 if any error occured, 0 otherwise).
  */
-int read_variable_bounds(instance* inst);
+void read_variable_bounds(instance* inst);
 
 /**
  * @brief Read the objective value from the CPLEX lp
  * 		  and populate the corresponding field of the instance.
  *
  * @param inst Pointer to the already populated instance.
- * @return Error status (1 if any error occured, 0 otherwise).
  */
-int read_objective_value(instance* inst);
+void read_objective_value(instance* inst);
 
 /**
  * @brief Read the objective function coefficients from the CPLEX lp
  * 		  and populate the corresponding array field of the instance.
  *
  * @param inst Pointer to the already populated instance.
- * @return Error status (1 if any error occured, 0 otherwise).
  */
-int read_objective_coefficients(instance* inst);
+void read_objective_coefficients(instance* inst);
 
 /**
  * @brief Read the non-zero constraint coefficients both by row and column
@@ -219,27 +215,24 @@ int read_objective_coefficients(instance* inst);
  * 	      and populate the corresponding array fields of the instance.
  *
  * @param inst Pointer to the already populated instance.
- * @return Error status (1 if any error occured, 0 otherwise).
  */
-int read_constraints_coefficients(instance* inst);
+void read_constraints_coefficients(instance* inst);
 
 /**
  * @brief Read the constraint senses from the CPLEX lp,
  * 		  and populate the corresponding array field of the instance.
  *
  * @param inst Pointer to the already populated instance.
- * @return Error status (1 if any error occured, 0 otherwise).
  */
-int read_constraints_senses(instance* inst);
+void read_constraints_senses(instance* inst);
 
 /**
  * @brief Read the constraint right hand sides from the CPLEX lp,
  * 		  and populate the corresponding array field of the instance.
  *
  * @param inst Pointer to the already populated instance.
- * @return Error status (1 if any error occured, 0 otherwise).
  */
-int read_constraints_right_hand_sides(instance* inst);
+void read_constraints_right_hand_sides(instance* inst);
 
 /**
  * @brief Read the constraint (row) slacks for the continuous relaxation
@@ -248,18 +241,16 @@ int read_constraints_right_hand_sides(instance* inst);
  * 		  the rounding phase of zi_round.
  *
  * @param inst Pointer to the already populated instance.
- * @return Error status (1 if any error occured, 0 otherwise).
  */
-int read_row_slacks(instance* inst);
+void read_row_slacks(instance* inst);
 
 /**
  * @brief Read the problem data from the CPLEX lp using all the read functions,
  * 		  and populate the corresponding fields of the instance.
  *
  * @param inst Pointer to the already populated instance.
- * @return Error status (1 if any error occured, 0 otherwise).
  */
-int read_problem_data(instance* inst);
+void read_problem_data(instance* inst);
 
 /**
  * @brief Use the ZI-Round heuristic to round the continuous relaxation solution
@@ -344,7 +335,7 @@ void check_constraints(instance* inst, double* x);
  * @param inst Pointer to the already populated instance.
  * @return Error status (1 if any error occured, 0 otherwise).
  */
-int free_instance(instance* inst);
+int free_inst(instance* inst);
 
 /**
  * @brief [DEBUG] Print problem information to standard output or file.

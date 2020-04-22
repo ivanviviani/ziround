@@ -16,7 +16,6 @@ void parse_cmd(int argc, char** argv, instance* inst) {
 	if (help || VERBOSE > 10) {
 		fprintf(stdout, "\n\n**** Parameters ***************************\n");
 		fprintf(stdout, "**   --input-mip %s\n", inst->input_file);
-		// fprintf(stdout, "**   --obj-sense %s\n", ((inst->objsen == CPX_MIN) ? "min" : "max"));
 		fprintf(stdout, "*******************************************\n");
 	}
 

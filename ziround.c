@@ -254,7 +254,7 @@ void update_slacks(instance* inst, int j, double signed_delta) {
 	// Local Variables
 	double aij;     /**< Current coefficient. */
 	int rowind;     /**< Current row index. */
-	char* sense;    /**< Current row (constraint) sense. */
+	char* sense;    /**< Constraint senses array. */
 	int colend;     /**< Index of the last non-zero coefficient of the current column. */
 
 	// Initialize
