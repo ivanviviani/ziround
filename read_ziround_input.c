@@ -60,16 +60,21 @@ void read_solution(instance* inst) {
 
 	// Get solution status
 	solstat = CPXgetstat(env, lp);
+
 	switch (solstat) {
+
 		case CPX_STAT_UNBOUNDED:
 			print_warning("[read_solution]: Model is unbounded.\n"); 
-			return 1;
+			exit(EXIT_FAILURE);
+
 		case CPX_STAT_INFEASIBLE:
 			print_warning("[read_solution]: Model is infeasible.\n"); 
-			return 1;
+			exit(EXIT_FAILURE);
+
 		case CPX_STAT_INForUNBD:
 			print_warning("[read_solution]: Model is infeasible or unbounded.\n"); 
-			return 1;
+			exit(EXIT_FAILURE);
+
 		default:
 			break;
 	}

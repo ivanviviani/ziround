@@ -5,7 +5,8 @@
  */
 
 #pragma once
-
+#ifndef ZIROUND_H_
+#define ZIROUND_H_
 /*  README.md
     ZI-Round MIP Rounding Heuristic (version 2)
 
@@ -403,3 +404,5 @@ void print_error(const char* err, ...);
  *	@param ... The multiple parameters.
  */
 void print_verbose(int msg_verb, const char* format, ...);
+
+#endif /* ZIROUND_H_ */

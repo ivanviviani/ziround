@@ -54,8 +54,8 @@ int main(int argc, char** argv) {
 	// Populate the instance with problem data retrieved from the CPLEX lp
 	populate_inst(&inst);
 
-	if (VERBOSE > 200) print_problem_info(&inst, 1, 1);
-	if (VERBOSE > 150) {
+	if (VERBOSE >= 200) print_problem_info(&inst, 1, 1);
+	if (VERBOSE >= 150) {
 		output = fopen("output.txt", "a");
 		fprintf(output, "\n[INFO]: Continuous relaxation objective value: %.10g.\n", inst.objval);
 		fprintf(output, "[INFO]: Solution of continuous relaxation: \n");
@@ -72,7 +72,7 @@ int main(int argc, char** argv) {
 	fprintf(stdout, "[INFO][OK]: ZI-Round terminated.\n");
 	fprintf(stdout, "[INFO]: Candidate objective value: %f\n", inst.objval);
 
-	if (VERBOSE > 150) {
+	if (VERBOSE >= 150) {
 		output = fopen("output.txt", "a");
 		fprintf(output, "\n[INFO]: Candidate objective value: %f\n", inst.objval);
 		fprintf(output, "[INFO]: Candidate rounded x: ");
@@ -100,7 +100,7 @@ int main(int argc, char** argv) {
 	if (!rounded) fprintf(stdout, "[INFO][FINAL RESULT]: ... Failed to round all integer/binary variables of the MIP ...\n"); 
 	else fprintf(stdout, "[INFO][FINAL RESULT]: All integer/binary variables of the MIP have been rounded!\n");
 
-	if (VERBOSE > 150) {
+	if (VERBOSE >= 150) {
 		output = fopen("output.txt", "a");
 		fprintf(output, "[INFO][FINAL ROUNDED SOLUTION]: Rounded x: \n");
 		for (int j = 0; j < inst.ncols; j++) fprintf(output, "%f ", inst.x[j]);
