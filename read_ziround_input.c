@@ -23,6 +23,7 @@ void read_problem_sizes(instance* inst) {
 
 void populate_inst(instance* inst) {
 
+	read_problem_sizes(inst);
 	read_solution(inst);
 	read_variable_bounds(inst);
 	read_objective_value(inst);

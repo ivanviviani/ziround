@@ -12,8 +12,10 @@
 void zi_round(instance* inst) {
 
 	// External variables
+	CPXENVptr env;		 /**< CPLEX environment pointer. */
+	CPXLPptr lp;		 /**< CPLEX lp pointer. */
 	int ncols;			 /**< Number of variables (columns) of the MIP problem. */
-	double objval;		 /**< Objective value of the initial continuous relaxation solution. */
+	double* objval_ptr;	 /**< Pointer to the objective value of the initial continuous relaxation solution. */
 	double* obj;		 /**< Objective coefficients. */
 	double* x;           /**< Initial continuous relaxation solution. */
 	int* int_var;		 /**< Array of flags for integer/binary variables of the original MIP problem. */
@@ -28,8 +30,10 @@ void zi_round(instance* inst) {
 	int updated;		 /**< Flag set to 1 when at least one variable shift has been made. */
 
 	// Allocate / Initialize
-	ncols = inst->ncols;
-	objval = inst->objval;
+	env = inst->env;
+	lp = inst->lp;
+	ncols = CPXgetnumcols(env, lp);
+	objval_ptr = &(inst->objval);
 	obj = inst->obj;
 	x = inst->x;
 	int_var = inst->int_var;
@@ -64,7 +68,7 @@ void zi_round(instance* inst) {
 						(obj[j] <= 0 && fabs(delta_up[j] - 1.0) < TOLERANCE)) {
 
 						// Round xj to improve objective and update slacks
-						updated = round_xj_bestobj(inst, &objval, j, delta_up, delta_down, 0); // flag xj non-fractional (0)
+						updated = round_xj_bestobj(inst, objval_ptr, j, delta_up, delta_down, 0); // flag xj non-fractional (0)
 					}
 
 					break;
@@ -88,7 +92,7 @@ void zi_round(instance* inst) {
 					if (fabs(ZIplus - ZIminus) < TOLERANCE && ZIplus - ZI < -(TOLERANCE)) {
 
 						// Round xj to improve objective and update slacks
-						updated = round_xj_bestobj(inst, &objval, j, delta_up, delta_down, 1); // flag xj fractional (1)
+						updated = round_xj_bestobj(inst, objval_ptr, j, delta_up, delta_down, 1); // flag xj fractional (1)
 					}
 
 					// Second case
@@ -101,7 +105,7 @@ void zi_round(instance* inst) {
 
 						updated = 1;
 						update_slacks(inst, j, delta_up[j]);
-						update_objval(inst, &objval, j, delta_up[j]);
+						update_objval(inst, objval_ptr, j, delta_up[j]);
 					}
 
 					// Third case
@@ -114,7 +118,7 @@ void zi_round(instance* inst) {
 
 						updated = 1;
 						update_slacks(inst, j, -(delta_down[j]));
-						update_objval(inst, &objval, j, -(delta_down[j]));
+						update_objval(inst, objval_ptr, j, -(delta_down[j]));
 					}
 
 					break;

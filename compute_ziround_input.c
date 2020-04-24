@@ -32,6 +32,8 @@ void setup_CPLEX_env(instance* inst) {
 	if (status) print_error("[setup_CPLEX_env]: Failed to turn on screen indicator, error %d.\n", status);
 	status = CPXsetdblparam(env, CPXPARAM_TimeLimit, 3600);      
 	if (status) print_error("[setup_CPLEX_env]: Failed to set time limit, error %d.\n", status);
+	status = CPXsetintparam(env, CPXPARAM_Preprocessing_Presolve, CPX_OFF);
+	if (status) print_error("[setup_CPLEX_env]: Failed to turn presolve off, error %d.\n", status);
 
 	// Free
 	free(errmsg);
@@ -63,16 +65,16 @@ void save_integer_variables(instance* inst) {
 	// External variables
 	CPXENVptr env; /**< CPLEX environment pointer. */
 	CPXLPptr lp;   /**< CPLEX lp pointer. */
-	int ncols;     /**< Number of variables (columns) of the MIP problem. */
 	char* vartype; /**< Variable types array. */
 	int* int_var;  /**< Array of flags for integer/binary variables of the original MIP problem. */
 	// Local variables
+	int ncols;     /**< Number of variables (columns) of the MIP problem. */
 	int status;    /**< Support status flag. */
 
 	// Allocate / Initialize
 	env = inst->env;
 	lp = inst->lp;
-	ncols = inst->ncols;
+	ncols = CPXgetnumcols(env, lp);
 	vartype = NULL;
 	int_var = NULL;
 	status = 0;
