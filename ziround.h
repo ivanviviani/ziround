@@ -70,7 +70,7 @@
 /**
  * @brief Verbosity level.
  */
-#define VERBOSE 5
+#define VERBOSE 100
 
 /**
  * @brief Tolerance for non-integer numbers as considered by CPLEX.
@@ -152,14 +152,6 @@ void setup_CPLEX_env(instance* inst);
  * @param filename Name of the input file (mps format).
  */
 void read_MIP_problem(instance* inst, char* filename);
-
-/**
- * @brief Read the current number of rows and columns of the coefficients matrix
- * 	 	  and populate the corresponding fields of the instance.
- *
- * @param inst Pointer to the already populated instance.
- */
-void read_problem_sizes(instance* inst);
 
 /**
  * @brief Read and save variable types from the MIP and save the integer/binary ones in a

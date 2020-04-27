@@ -19,11 +19,11 @@ void parse_cmd(int argc, char** argv, instance* inst) {
 	}
 
 	// Print chosen parameters
-	if (help || VERBOSE > 10) {
-		fprintf(stdout, "\n\n**** Parameters ***************************\n");
-		fprintf(stdout, "**   --input-mip %s\n", inst->input_file);
-		fprintf(stdout, "*******************************************\n");
-	}
+	fprintf(stdout, "\n\n**** Parameters ***************************\n");
+	fprintf(stdout, "**   --input-mip %s\n", inst->input_file);
+	fprintf(stdout, "*******************************************\n\n\n");
+
+	// Help menu
 
 	if (help) exit(EXIT_FAILURE);
 }

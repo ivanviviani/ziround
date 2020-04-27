@@ -16,13 +16,9 @@
 int main(int argc, char** argv) {
 
 	// Local variables
-	instance inst; /**< General support structure. */
-	int rounded;   /**< Support flag. */
-	FILE* output;  /**< Output file pointer. */
-
-	// Initialize
-	rounded = 1;
-	output = NULL;
+	instance inst;       /**< General support structure. */
+	int rounded = 1;     /**< Support flag. */
+	FILE* output = NULL; /**< Output file pointer. */
 	
 	// Initialize instance
 	init_inst(&inst);
@@ -87,7 +83,7 @@ int main(int argc, char** argv) {
 	print_verbose(100, "[INFO]: ... verifying whether all integer variables of the original MIP have been rounded ...\n");
 	for (int j = 0; j < inst.ncols; j++) {
 		if (inst.int_var[j] && is_fractional(inst.x[j])) {
-			print_verbose(200, "[INFO]: Integer variable x_%d = %f has not been rounded!\n", j + 1, inst.x[j]);
+			print_verbose(100, "[INFO]: Variable (type '%c') x_%d = %f has not been rounded!\n", inst.mip_ctype[j], j + 1, inst.x[j]);
 			rounded = 0;
 		}
 	}

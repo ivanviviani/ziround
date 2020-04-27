@@ -31,18 +31,10 @@ void init_inst(instance* inst) {
 
 void free_inst(instance* inst) {
 
-	// External variables
-	CPXENVptr env; /**< CPLEX environment pointer. */
-	CPXLPptr lp;   /**< CPLEX lp pointer. */
 	// Local variables
-	char* errmsg;
-	int status;    /**< Support status flag. */
-
-	// Allocate / Initialize
-	env = inst->env;
-	lp = inst->lp;
-	errmsg = (char*)malloc(CPXMESSAGEBUFSIZE * sizeof(char));
-	status = 0;
+	char* errmsg = (char*)malloc(CPXMESSAGEBUFSIZE * sizeof(char));
+	if (errmsg == NULL) print_error("[setup_CPLEX_env]: Failed to allocate errmsg.\n");
+	int status = 0;
 
 	free(inst->x);       
 	free(inst->obj);     
@@ -60,16 +52,18 @@ void free_inst(instance* inst) {
 	free(inst->sense);   
 	free(inst->rhs);
 	if (inst->lp != NULL) {
-		status = CPXfreeprob(env, &lp);
+		status = CPXfreeprob(inst->env, &(inst->lp));
 		if (status) print_error("[free_inst]: CPXfreeprob failed, error code %d.\n", status);
 	}
-	if (env != NULL) {
-		status = CPXcloseCPLEX(&env);
+	if (inst->env != NULL) {
+		status = CPXcloseCPLEX(&(inst->env));
 		if (status) {
 			print_warning("[free_inst]: Could not close CPLEX environment.\n");
-			CPXgeterrorstring(env, status, errmsg);
+			CPXgeterrorstring(inst->env, status, errmsg);
 			print_error(stderr, "[free_inst]: %s", errmsg);
 		}
 	}
+
+	// Free
 	free(errmsg);
 }
