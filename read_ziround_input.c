@@ -26,6 +26,12 @@ void populate_inst(instance* inst) {
 	read_constraints_senses(inst);
 	read_constraints_right_hand_sides(inst);
 	read_row_slacks(inst);
+
+	// Extension (if enabled)
+	if (inst->extension) {
+		extend_row_slacks(inst);
+		extend_constraints_senses(inst);
+	}
 }
 
 void read_solution(instance* inst) {
@@ -111,6 +117,15 @@ void read_objective_coefficients(instance* inst) {
 	// Get objective coefficients
 	status = CPXgetobj(inst->env, inst->lp, inst->obj, 0, inst->ncols - 1);
 	if (status) print_error("[read_objective_coefficients]: Failed to obtain objective coefficients.\n");
+
+	// [DEBUG ONLY] Print objective coefficients
+	if (VERBOSE >= 200) {
+		printf("\n\n");
+		for (int j = 0; j < inst->ncols; j++) {
+			printf("%f ", inst->obj[j]);
+		}
+		printf("\n\n");
+	}
 }
 
 void read_constraints_coefficients(instance* inst) {
@@ -153,6 +168,15 @@ void read_constraints_senses(instance* inst) {
 	// Get constraint senses {'L','E','G'}
 	status = CPXgetsense(inst->env, inst->lp, inst->sense, 0, inst->nrows - 1);
 	if (status) print_error("[read_constraints_senses]: Failed to obtain constraints senses.\n");
+
+	// [DEBUG ONLY] Print constraints senses
+	if (VERBOSE >= 120) {
+		printf("\n\n");
+		for (int i = 0; i < inst->nrows; i++) {
+			printf("%c ", inst->sense[i]);
+		}
+		printf("\n\n");
+	}
 }
 
 void read_constraints_right_hand_sides(instance* inst) {
@@ -181,4 +205,93 @@ void read_row_slacks(instance* inst) {
 	// Get row slacks
 	status = CPXgetslack(inst->env, inst->lp, inst->slack, 0, inst->nrows - 1);
 	if (status) print_error("[read_row_slacks]: Failed to obtain slacks.\n");
+}
+
+void extend_row_slacks(instance* inst) {
+
+	// Local variables
+	double aij;        /**< Current coefficient. */
+	int rowind;        /**< Current row index. */
+	int colend;        /**< Index of the last non-zero coefficient of the current column. */
+	int eq_index = -1; /**< Index of the only equality constraint in which a continuous variable is involved. */
+	double contrib;    /**< Contribution of the variable in that constraint. */
+	int status = 0;
+
+	// Allocate extended equality constraints flags (initialized to false)
+	inst->eq_ext = (int*)calloc(inst->nrows, sizeof(int));
+	if (inst->eq_ext == NULL) print_error("[extend_row_slacks]: Failed to allocate unique equality constraints flags.\n");
+
+	// Scan continuous variables
+	for (int j = 0; j < inst->ncols; j++) {
+		if (inst->vartype[j] != CPX_CONTINUOUS) continue; // Skip non-continuous variables
+
+		colend = (j < inst->ncols - 1) ? inst->cmatbeg[j + 1] : inst->nzcnt;
+
+		// Scan equality constraints in which the j-th continuous variable is involved
+		for (int k = inst->cmatbeg[j]; k < colend; k++) {
+
+			rowind = inst->cmatind[k];
+			if (inst->sense[rowind] != 'E') continue; // Skip non-equality constraints
+
+			// Save the first row index. Skip variable if involved in more than one equality constraint.
+			if (eq_index == -1) eq_index = rowind;
+			else {
+				eq_index = -2;
+				break;
+			}
+		}
+
+		// If the j-th continuous variable is involved in only one equality constraint
+		if (eq_index >= 0) {
+
+			// Set equality constraint flag
+			inst->eq_ext[eq_index] = 1;
+
+			// Get its contribution in that constraint
+			status = CPXgetcoef(inst->env, inst->lp, eq_index, j, &aij);
+			if (status) print_error("[extend_row_slacks]: Failed to obtain coefficient.\n");
+			contrib = aij * inst->x[j];
+
+			// Consider its contribution as contribution to the row slack
+			inst->slack[eq_index] += contrib;
+		}
+	}
+}
+
+void extend_constraints_senses(instance* inst) {
+
+	// Scan unique equality constraints flags
+	for (int i = 0; i < inst->nrows; i++) {
+		
+		if (!(inst->eq_ext[i])) continue; // Skip non-unique equality constraints
+
+		// Set extended constraint sense
+		switch (inst->sense[i]) {
+
+			case 'E':
+				if (inst->slack[i] > TOLERANCE) {
+
+					inst->sense[i] = 'L';
+				}
+				else if (inst->slack[i] < -(TOLERANCE)) {
+
+					inst->sense[i] = 'G';
+				}
+				break;
+			case 'L':
+			case 'G':
+				print_error("[extend_constraints_senses]: Tried to extend a non-equality constraint!\n");
+			default:
+				print_error("[extend_constraints_senses]: Constraint sense %c not supported!\n", inst->sense[i]);
+		}
+	}
+
+	// [DEBUG ONLY] Print constraints senses
+	if (VERBOSE >= 120) {
+		printf("\n\n___ Constraints senses after extension ___\n");
+		for (int i = 0; i < inst->nrows; i++) {
+			printf("%c ", inst->sense[i]);
+		}
+		printf("\n\n");
+	}
 }

@@ -33,7 +33,8 @@ void zi_round(instance* inst) {
 
 		// Inner loop (for each variable xj that was integer/binary in the original MIP)
 		for (int j = 0; j < inst->ncols; j++) {
-			if (!(inst->int_var[j])) continue;
+
+			if (!(inst->int_var[j])) continue; // Skip non-integer variables
 
 			switch (is_fractional(inst->x[j])) {
 
@@ -119,7 +120,7 @@ void zi_round(instance* inst) {
 		if (updated) print_verbose(100, "[zi_round] ...Update found, scan variables again...\n");
 		else print_verbose(100, "[zi_round] ...No updates found, exit outer loop...\n");
 		
-		// [BRUTE FORCE] [DEBUG ONLY] Check variable bounds and constraints
+		// [DEBUG ONLY] [BRUTE FORCE]  Check variable bounds and constraints
 		if (VERBOSE >= 150) {
 			check_bounds(inst, inst->x);
 			check_constraints(inst, inst->x);
@@ -230,9 +231,9 @@ int round_xj_bestobj(instance* inst, double* objval, int j, double* delta_up, do
 void update_slacks(instance* inst, int j, double signed_delta) {
 
 	// Local Variables
-	double aij;     /**< Current coefficient. */
-	int rowind;     /**< Current row index. */
-	int colend;     /**< Index of the last non-zero coefficient of the current column. */
+	double aij; /**< Current coefficient. */
+	int rowind; /**< Current row index. */
+	int colend; /**< Index of the last non-zero coefficient of the current column. */
 
 	// Initialize
 	colend = (j < inst->ncols - 1) ? inst->cmatbeg[j + 1] : inst->nzcnt;

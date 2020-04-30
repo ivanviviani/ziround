@@ -70,7 +70,7 @@
 /**
  * @brief Verbosity level.
  */
-#define VERBOSE 100
+#define VERBOSE 120
 
 /**
  * @brief Tolerance for non-integer numbers as considered by CPLEX.
@@ -98,8 +98,9 @@ typedef struct {
     double* slack; 			/**< Row (constraint) slacks, defined as right hand side minus row activity. */
     double objval; 			/**< Current objective value (for current problem solution). */
     int objsen; 			/**< Objective function sense, CPX_MIN (default) or CPX_MAX (specified from command line). */
-    char* mip_ctype; 		/**< Variable types (before converting MIP to LP), integer/binary or continuous. */
+    char* vartype; 		    /**< Variable types (before converting MIP to LP), integer/binary or continuous. */
     int* int_var; 			/**< Flags array that keeps track of integer/binary (value 1) and continuous (value 0) variables. */
+    int* eq_ext;            /**< Flags array that keeps track of unique equality constraints indices in which continuous variables are involved. */
 
     // Coefficient matrix
     int nzcnt; 				/**< Number of non-zero coefficients. */
@@ -116,6 +117,7 @@ typedef struct {
     CPXENVptr env; 			/**< CPLEX environment pointer. */
     CPXLPptr lp; 			/**< CPLEX lp pointer. */
     char* input_file; 		/**< Input filename (mps format, specified from command line). */
+    int extension;          /**< Flag for ZI-Round extension. */
 
 } instance;
 
@@ -234,6 +236,23 @@ void read_constraints_right_hand_sides(instance* inst);
  * @param inst Pointer to the already populated instance.
  */
 void read_row_slacks(instance* inst);
+
+/**
+ * @brief Extend row slacks by considering also continuous variables that
+ *        are involved in only one equality constraint.
+ *
+ * @param inst Pointer to the already populated instance.
+ */
+void extend_row_slacks(instance* inst);
+
+/**
+ * @brief Extend constraints senses by considering unique equality constraints
+ *        in which continuous variables are involved as less/greater than
+ *        constraints, depending on their extended row slack.
+ *
+ * @param inst Pointer to the already populated instance.
+ */
+void extend_constraints_senses(instance* inst);
 
 /**
  * @brief Read the problem data from the CPLEX lp using all the read functions,

@@ -14,8 +14,9 @@ void init_inst(instance* inst) {
 	inst->ub = NULL;
 	inst->slack = NULL; 
 	inst->objsen = CPX_MIN; 
-	inst->mip_ctype = NULL;
-	inst->int_var = NULL; 
+	inst->vartype = NULL;
+	inst->int_var = NULL;
+	inst->eq_ext = NULL;
 	inst->rmatbeg = NULL; 
 	inst->rmatind = NULL;
 	inst->rmatval = NULL; 
@@ -27,6 +28,7 @@ void init_inst(instance* inst) {
 	inst->env = NULL; 
 	inst->lp = NULL; 
 	inst->input_file = NULL;
+	inst->extension = 0;
 }
 
 void free_inst(instance* inst) {
@@ -41,8 +43,9 @@ void free_inst(instance* inst) {
 	free(inst->lb);
 	free(inst->ub);      
 	free(inst->slack);   
-	free(inst->mip_ctype);
-	free(inst->int_var); 
+	free(inst->vartype);
+	free(inst->int_var);
+	free(inst->eq_ext);
 	free(inst->rmatbeg); 
 	free(inst->rmatind);
 	free(inst->rmatval); 

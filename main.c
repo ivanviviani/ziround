@@ -83,7 +83,7 @@ int main(int argc, char** argv) {
 	print_verbose(100, "[INFO]: ... verifying whether all integer variables of the original MIP have been rounded ...\n");
 	for (int j = 0; j < inst.ncols; j++) {
 		if (inst.int_var[j] && is_fractional(inst.x[j])) {
-			print_verbose(100, "[INFO]: Variable (type '%c') x_%d = %f has not been rounded!\n", inst.mip_ctype[j], j + 1, inst.x[j]);
+			print_verbose(100, "[INFO]: Variable (type '%c') x_%d = %f has not been rounded!\n", inst.vartype[j], j + 1, inst.x[j]);
 			rounded = 0;
 		}
 	}
