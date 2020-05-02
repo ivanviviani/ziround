@@ -70,7 +70,7 @@
 /**
  * @brief Verbosity level.
  */
-#define VERBOSE 120
+#define VERBOSE 200
 
 /**
  * @brief Tolerance for non-integer numbers as considered by CPLEX.
@@ -276,14 +276,13 @@ void zi_round(instance* inst);
  * of UBj and LBj calculated before. Also update the row slacks.
  *
  * @param inst Pointer to the already populated instance.
- * @param objval Pointer to the objective value.
  * @param j Column (variable xj) index.
  * @param delta_up Array of possible up-shifts.
  * @param delta_down Array of possible down-shifts.
  * @param is_fractional Flag that indicates whether xj is fractional or integer.
  * @return 1 if the variable xj has been updated, 0 otherwise.
  */
-int round_xj_bestobj(instance* inst, double* objval, int j, double* delta_up, double* delta_down, int is_fractional);
+int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down, int is_fractional);
 
 /**
  * @brief Update the slack array field of the instance (incrementally)
@@ -296,18 +295,6 @@ int round_xj_bestobj(instance* inst, double* objval, int j, double* delta_up, do
  * @param signed_delta Signed delta xj.
  */
 void update_slacks(instance* inst, int j, double signed_delta);
-
-/**
- * @brief Update the objective value (incrementally) for the current updated solution x.
- *
- * @details Whenever it is called, only one variable xj has been updated.
- *
- * @param inst Pointer to the already populated instance.
- * @param objval Pointer to the objective value.
- * @param j Index of the (only) variable just updated.
- * @param signed_delta Signed delta xj.
- */
-void update_objval(instance* inst, double* objval, int j, double signed_delta);
 
 /**
  * @brief Compute the j-th entries of the arrays of possible up-shifts and down-shifts

@@ -140,7 +140,7 @@ void read_constraints_senses(instance* inst) {
 	if (CPXgetsense(inst->env, inst->lp, inst->sense, 0, inst->nrows - 1)) print_error("[read_constraints_senses]: Failed to obtain constraints senses.\n");
 
 	// [DEBUG ONLY] Print constraints senses
-	if (VERBOSE >= 120) {
+	if (inst->extension && VERBOSE >= 120) {
 		printf("\n\n");
 		for (int i = 0; i < inst->nrows; i++) {
 			printf("%c ", inst->sense[i]);
@@ -209,7 +209,7 @@ void extend_row_slacks(instance* inst) {
 			contrib = aij * inst->x[j];
 
 			// Consider its contribution as contribution to the row slack
-			inst->slack[eq_index] += contrib;
+			inst->slack[eq_index] = inst->slack[eq_index] + contrib;
 		}
 	}
 }
@@ -225,8 +225,8 @@ void extend_constraints_senses(instance* inst) {
 		switch (inst->sense[i]) {
 
 			case 'E':
-				if (inst->slack[i] > TOLERANCE)         inst->sense[i] = 'L';
-				else if (inst->slack[i] < -(TOLERANCE)) inst->sense[i] = 'G';
+				if (inst->slack[i] > 0.0 + TOLERANCE)      inst->sense[i] = 'L';
+				else if (inst->slack[i] < 0.0 - TOLERANCE) inst->sense[i] = 'G';
 				break;
 			case 'L':
 			case 'G':
