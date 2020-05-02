@@ -33,9 +33,7 @@ void init_inst(instance* inst) {
 
 void free_inst(instance* inst) {
 
-	// Local variables
-	char* errmsg = (char*)malloc(CPXMESSAGEBUFSIZE * sizeof(char));
-	if (errmsg == NULL) print_error("[setup_CPLEX_env]: Failed to allocate errmsg.\n");
+	char* errmsg = (char*)malloc(CPXMESSAGEBUFSIZE * sizeof(char)); if (errmsg == NULL) print_error("[setup_CPLEX_env]: Failed to allocate errmsg.\n");
 	int status = 0;
 
 	free(inst->x);       
@@ -55,8 +53,7 @@ void free_inst(instance* inst) {
 	free(inst->sense);   
 	free(inst->rhs);
 	if (inst->lp != NULL) {
-		status = CPXfreeprob(inst->env, &(inst->lp));
-		if (status) print_error("[free_inst]: CPXfreeprob failed, error code %d.\n", status);
+		if (CPXfreeprob(inst->env, &(inst->lp))) print_error("[free_inst]: CPXfreeprob failed, error code %d.\n", status);
 	}
 	if (inst->env != NULL) {
 		status = CPXcloseCPLEX(&(inst->env));

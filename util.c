@@ -18,14 +18,10 @@ void check_bounds(instance* inst, double* x) {
 
 void check_constraints(instance* inst, double* x) {
 
-	// Local variables
-	double* row_infeas = (double*)malloc(inst->nrows * sizeof(double));
-	if (row_infeas == NULL) print_error("[check_constraints]: Failed to allocate row_infeas.\n");
-	int status = 0;
+	double* row_infeas = (double*)malloc(inst->nrows * sizeof(double)); if (row_infeas == NULL) print_error("[check_constraints]: Failed to allocate row_infeas.\n");
 
 	// Compute row infeasibilities
-	status = CPXgetrowinfeas(inst->env, inst->lp, x, row_infeas, 0, inst->nrows - 1);
-	if (status) print_error("[check_constraints]: Failed to obtain row infeasibilities.\n");
+	if (CPXgetrowinfeas(inst->env, inst->lp, x, row_infeas, 0, inst->nrows - 1)) print_error("[check_constraints]: Failed to obtain row infeasibilities.\n");
 
 	// Scan rows
 	for (int i = 0; i < inst->nrows; i++) {
