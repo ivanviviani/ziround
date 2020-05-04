@@ -53,7 +53,7 @@ void zi_round(instance* inst) {
 						(inst->obj[j] < 0 && fabs(delta_up[j] - 1.0) < TOLERANCE)) {
 
 						// Round xj to improve objective and update slacks
-						updated = round_xj_bestobj(inst, &(inst->objval), j, delta_up, delta_down, 0); // flag xj non-fractional (0)
+						updated = round_xj_bestobj(inst, j, delta_up, delta_down, 0); // flag xj non-fractional (0)
 					}
 
 					break;
@@ -77,7 +77,7 @@ void zi_round(instance* inst) {
 					if (fabs(ZIplus - ZIminus) < TOLERANCE && ZIplus < ZI - TOLERANCE) {
 
 						// Round xj to improve objective and update slacks
-						updated = round_xj_bestobj(inst, &(inst->objval), j, delta_up, delta_down, 1); // flag xj fractional (1)
+						updated = round_xj_bestobj(inst, j, delta_up, delta_down, 1); // flag xj fractional (1)
 					}
 
 					// Second case
@@ -141,12 +141,12 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 	double obj_deltaplus;  /**< Delta obj if xj is shifted up. */
 	double obj_deltaminus; /**< Delta obj if xj is shifted down. */
 	int updated = 0;       /**< Flag set to 1 when at least one variable shift has been made. */
-	char vtype[_MAX_FNAME];
+	char vtype[3];		   /**< Support string. */
 
 	// Initialize
-	obj_deltaplus  = 0.0 + inst->obj[j] * delta_up[j];
-	obj_deltaminus = 0.0 - inst->obj[j] * delta_down[j];
-	sprintf(vtype, (xj_fractional) ? "FRA" : "INT");
+	obj_deltaplus  = 0.0 + (inst->obj[j] * delta_up[j]);
+	obj_deltaminus = 0.0 - (inst->obj[j] * delta_down[j]);
+	sprintf(vtype, ((xj_fractional)?"FRA":"INT"));
 
 	// Check obj sense, then update xj, update slacks and update objective value
 	switch (inst->objsen) {
@@ -155,9 +155,7 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 
 			if (obj_deltaplus < 0.0 - TOLERANCE && obj_deltaplus < obj_deltaminus - TOLERANCE) {
 
-
-				print_verbose(100, "[round_xj_bestobj][%s]: >>> Set x_%d = x_%d + delta_up_%d = %f + %f = %f\n",
-					vtype, j + 1, j + 1, j + 1, inst->x[j], delta_up[j], inst->x[j] + delta_up[j]);
+				print_verbose(100, "[round_xj_bestobj][%s]: >>> Set x_%d = x_%d + delta_up_%d = %f + %f = %f\n", vtype, j + 1, j + 1, j + 1, inst->x[j], delta_up[j], inst->x[j] + delta_up[j]);
 				if (!xj_fractional && VERBOSE >= 150 && fabs(delta_up[j] - 1.0) > TOLERANCE) {
 					print_error("[round_xj_bestobj]: delta_up_%d = %f (should be 1.0).\n", j + 1, delta_up[j]);
 				}
@@ -172,8 +170,7 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 
 			else if (obj_deltaminus < 0.0 - TOLERANCE && obj_deltaminus < obj_deltaplus - TOLERANCE) {
 
-				print_verbose(100, "[round_xj_bestobj][%s]: >>> Set x_%d = x_%d - delta_down_%d = %f - %f = %f\n",
-					vtype, j + 1, j + 1, j + 1, inst->x[j], delta_down[j], inst->x[j] - delta_down[j]);
+				print_verbose(100, "[round_xj_bestobj][%s]: >>> Set x_%d = x_%d - delta_down_%d = %f - %f = %f\n", vtype, j + 1, j + 1, j + 1, inst->x[j], delta_down[j], inst->x[j] - delta_down[j]);
 				if (!xj_fractional && VERBOSE >= 150 && fabs(delta_down[j] - 1.0) > TOLERANCE) {
 					print_error("[round_xj_bestobj]: delta_down_%d = %f (should be 1.0).\n", j + 1, delta_down[j]);
 				}

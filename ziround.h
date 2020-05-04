@@ -70,7 +70,7 @@
 /**
  * @brief Verbosity level.
  */
-#define VERBOSE 200
+#define VERBOSE 120
 
 /**
  * @brief Tolerance for non-integer numbers as considered by CPLEX.
@@ -349,6 +349,16 @@ void print_problem_info(instance* inst, int sol_available, int to_file);
  * @return Fractionality of the value.
  */
 double fractionality(double xj);
+
+/**
+ * @brief Calculate the fractionality of a solution.
+ *
+ * @param x Solution.
+ * @param int_var Flags array for integer variables.
+ * @param len Length of the array.
+ * @return Fractionality of the solution.
+ */
+double sol_fractionality(double* x, int* int_var, int len);
 
 /**
  * @brief Check the integrality of the given value.

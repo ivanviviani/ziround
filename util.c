@@ -40,6 +40,15 @@ double fractionality(double xj) {
 	return min(minusfloor, minusceil);
 }
 
+double sol_fractionality(double* x, int* int_var, int len) {
+	double solfrac = 0.0;
+	for (int j = 0; j < len; j++) {
+		if (!(int_var[j])) continue;
+		solfrac = solfrac + fractionality(x[j]);
+	}
+	return solfrac;
+}
+
 int is_fractional(double num) { return 1 - (fabs(num - round(num)) < TOLERANCE); }
 
 double dot_product(double* coef, double* var_value, int len) {

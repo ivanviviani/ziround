@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
 	zi_round(&inst);
 //************************************************************************************************
 
-	print_verbose(100, "[INFO][OK]: ZI-Round terminated.\n");
+	print_verbose(100, "[INFO][OK]: ZI-Round terminated. Solution fractionality: %f.\n", sol_fractionality(inst.x, inst.int_var, inst.ncols));
 	print_verbose(100, "[INFO]: Candidate objective value: %f\n", inst.objval);
 
 	if (VERBOSE >= 150) {
