@@ -238,18 +238,18 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 void update_slacks(instance* inst, int j, double signed_delta) {
 
 	// Local Variables
-	double aij; /**< Current coefficient. */
-	int rowind; /**< Current row index. */
+	//double aij; /**< Current coefficient. */
+	//int rowind; /**< Current row index. */
 	int colend; /**< Index of the last non-zero coefficient of the current column. */
 
 	// Initialize
 	colend = (j < inst->ncols - 1) ? inst->cmatbeg[j + 1] : inst->nzcnt;
 
-	// Scan non-zero coefficients of column j
+	// Scan constraints of variable j
 	for (int k = inst->cmatbeg[j]; k < colend; k++) {
 
-		aij = inst->cmatval[k];
-		rowind = inst->cmatind[k];
+		double aij = inst->cmatval[k];
+		int rowind = inst->cmatind[k];
 
 		switch (inst->sense[rowind]) {
 
@@ -258,7 +258,36 @@ void update_slacks(instance* inst, int j, double signed_delta) {
 				inst->slack[rowind] = inst->slack[rowind] - aij * signed_delta;
 				break;
 			case 'E':
-				print_error("[update_slacks]: Tried to update slack of an equality constraint!\n");
+				// Distinguish "special" equality constraints (if extension enabled)
+				if (inst->extension && inst->row_slack_var[rowind] != -1) {
+
+					print_verbose(120, "[update_slacks]: ENTERED SPECIAL EQUALITY CASE.\n");
+
+					int slack_var = inst->row_slack_var[rowind];
+					double slack_coef = 0.0;
+
+					// Update (continuous) slack variable AND objective value
+					int rowend = (rowind < inst->nrows - 1) ? inst->rmatbeg[rowind] : inst->nzcnt;
+					double sum = 0.0;
+					for (int h = inst->rmatbeg[rowind]; h < rowend; h++) {
+
+						int varind = inst->rmatind[h];
+
+						if (varind == slack_var) {
+							slack_coef = inst->rmatval[h];
+							continue;
+						}
+						
+						sum += inst->rmatval[h] * inst->x[varind];
+					}
+					inst->objval = inst->objval - (inst->obj[slack_var] * inst->x[slack_var]);
+					inst->x[slack_var] = (inst->rhs[rowind] - sum) / slack_coef;
+					inst->objval = inst->objval + (inst->obj[slack_var] * inst->x[slack_var]);
+				}
+				else {
+					print_error("[update_slacks]: Tried to update slack of an equality constraint (with no slack variable)!\n");
+				}
+				break;
 			default:
 				print_error("[update_slacks]: Constraint sense %c not supported!\n", inst->sense[rowind]);
 		}
@@ -362,13 +391,86 @@ void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, c
 
 				break;
 
-			case 'E': // (slack zero): variable xj involved in equality constraint, thus cannot be moved
+			case 'E': // (slack zero)
 
-				print_verbose(200, "[delta_updown]: sense = E ; Variable x_%d involved in equality constraint %d --> cannot be moved!\n", j + 1, rowind);
-				
-				// Set delta_up1 and delta_down1 to zero --> new_delta_up and new_delta_down will get value zero
-				delta_up1 = 0.0;
-				delta_down1 = 0.0;
+				// Distinguish "special" equality constraints (if extension enabled)
+				if (inst->extension && inst->row_slack_var[rowind] != -1) {
+
+					int slack_var = inst->row_slack_var[rowind];
+					double slack_coef;
+					CPXgetcoef(inst->env, inst->lp, rowind, slack_var, &slack_coef);
+					double slack = slack_coef * inst->x[slack_var];
+
+					// DEBUG
+					int rowend = (rowind < inst->nrows - 1) ? inst->rmatbeg[rowind + 1] : inst->nzcnt;
+					double rowact = 0.0;
+					for (int i = inst->rmatbeg[rowind]; i < rowend; i++) {
+						int varind = inst->rmatind[i];
+						rowact += inst->rmatval[i] * inst->x[varind];
+					}
+					print_verbose(120, "[delta_updown][DEBUG]: rowact %f = rhs %f | slack_var x_%d = %f | slack %f\n", rowact, inst->rhs[rowind], slack_var, inst->x[slack_var], slack);
+					// DEBUG
+
+					// Check slack sign
+					if (slack > 0.0 + TOLERANCE) {
+
+						// Without the slack, the constraint would be 'L' (slack non-negative)
+						if (aij > 0.0) {
+
+							print_verbose(200, "[delta_updown]: sense = L ; slack[%d] = %f ; a_%d_%d = %f ; candidate_up1_%d = %f\n",
+								rowind + 1, inst->slack[rowind], rowind + 1, j + 1, aij, j + 1, inst->slack[rowind] / aij);
+
+							// Update delta_up1
+							candidate_up1 = slack / aij;
+							delta_up1 = min(candidate_up1, delta_up1);
+						}
+						if (aij < 0.0) {
+
+							print_verbose(200, "[delta_updown]: sense = L ; slack[%d] = %f ; a_%d_%d = %f ; candidate_down1_%d = %f\n",
+								rowind + 1, inst->slack[rowind], rowind + 1, j + 1, aij, j + 1, -(inst->slack[rowind]) / aij);
+
+							// Update delta_down1
+							candidate_down1 = -(slack) / aij;
+							delta_down1 = min(candidate_down1, delta_down1);
+						}
+					}
+					else if (slack < 0.0 - TOLERANCE) {
+
+						// Without the slack, the constraint would be 'G' (slack non-positive)
+						if (aij < 0.0) {
+
+							print_verbose(200, "[delta_updown]: sense = G ; slack[%d] = %f ; a_%d_%d = %f ; candidate_up1_%d = %f\n",
+								rowind + 1, inst->slack[rowind], rowind + 1, j + 1, aij, j + 1, inst->slack[rowind] / aij);
+
+							// Update delta_up1
+							candidate_up1 = slack / aij;
+							delta_up1 = min(candidate_up1, delta_up1);
+						}
+						if (aij > 0.0) {
+
+							print_verbose(200, "[delta_updown]: sense = G ; slack[%d] = %f ; a_%d_%d = %f ; candidate_down1_%d = %f\n",
+								rowind + 1, inst->slack[rowind], rowind + 1, j + 1, aij, j + 1, -(inst->slack[rowind]) / aij);
+
+							// Update delta_down1
+							candidate_down1 = -(slack) / aij;
+							delta_down1 = min(candidate_down1, delta_down1);
+						}
+					}
+					else {
+						print_verbose(200, "[delta_updown][extension]: sense = E ; Variable x_%d involved in equality constraint %d with slack zero --> cannot be moved!\n", j + 1, rowind);
+
+						// Set delta_up1 and delta_down1 to zero --> new_delta_up and new_delta_down will get value zero
+						delta_up1 = 0.0;
+						delta_down1 = 0.0;
+					}
+				}
+				else {
+					print_verbose(200, "[delta_updown]: sense = E ; Variable x_%d involved in equality constraint %d with slack zero --> cannot be moved!\n", j + 1, rowind);
+
+					// Set delta_up1 and delta_down1 to zero --> new_delta_up and new_delta_down will get value zero
+					delta_up1 = 0.0;
+					delta_down1 = 0.0;
+				}
 
 				break;
 

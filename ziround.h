@@ -100,6 +100,10 @@ typedef struct {
     int objsen; 			/**< Objective function sense, CPX_MIN (default) or CPX_MAX (specified from command line). */
     char* vartype; 		    /**< Variable types (before converting MIP to LP), integer/binary or continuous. */
     int* int_var; 			/**< Flags array that keeps track of integer/binary (value 1) and continuous (value 0) variables. */
+    int* row_slack_var;
+    int* var_eq_row;
+    
+    
     int* eq_ext;            /**< Flags array that keeps track of unique equality constraints indices in which continuous variables are involved. */
 
     // Coefficient matrix
@@ -238,6 +242,11 @@ void read_constraints_right_hand_sides(instance* inst);
 void read_row_slacks(instance* inst);
 
 /**
+ * @brief TODO
+ */
+void find_slack_variables(instance* inst);
+
+/**
  * @brief Extend row slacks by considering also continuous variables that
  *        are involved in only one equality constraint.
  *
@@ -325,6 +334,11 @@ void check_bounds(instance* inst, double* x);
  * @param x Solution to be used for evaluating constraints satisfiability.
  */
 void check_constraints(instance* inst, double* x);
+
+/**
+ * @brief TODO
+ */
+void check_rounding(instance* inst);
 
 /**
  * @brief Deallocate all the fields of the instance.

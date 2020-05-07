@@ -11,27 +11,59 @@ void check_bounds(instance* inst, double* x) {
 	// Scan xj variables
 	for (int j = 0; j < inst->ncols; j++) {
 		if ((x[j] - inst->lb[j]) < -(TOLERANCE) || (x[j] - inst->ub[j]) > TOLERANCE) {
-			print_error("[check_bounds][!!!]: Bound %d violated!\n", j + 1);
+			print_error("[check_bounds]: Bound %d violated: %f <= x_%d %f <= %f\n", j + 1, inst->lb[j], j + 1, inst->x[j], inst->ub[j]);
 		}
 	}
 }
 
 void check_constraints(instance* inst, double* x) {
 
-	double* row_infeas = (double*)malloc(inst->nrows * sizeof(double)); if (row_infeas == NULL) print_error("[check_constraints]: Failed to allocate row_infeas.\n");
-
-	// Compute row infeasibilities
-	if (CPXgetrowinfeas(inst->env, inst->lp, x, row_infeas, 0, inst->nrows - 1)) print_error("[check_constraints]: Failed to obtain row infeasibilities.\n");
-
-	// Scan rows
+	// Scan constraints
 	for (int i = 0; i < inst->nrows; i++) {
-		if (fabs(row_infeas[i]) > TOLERANCE) {
-			print_error("[check_constraints]: Constraint %d violated!\n", i + 1);
+
+		int rowend = (i < inst->nrows - 1) ? inst->rmatbeg[i + 1] : inst->nzcnt;
+		double rowact = 0.0;
+
+		// Scan non-zero coefficients of the constraint and compute row activity
+		for (int k = inst->rmatbeg[i]; k < rowend; k++) {
+
+			int varind = inst->rmatind[k];
+			rowact += inst->rmatval[k] * x[varind];
+		}
+
+		// Check compliance with the constraint sense
+		switch (inst->sense[i]) {
+			case 'L':
+				if (rowact > inst->rhs[i] + TOLERANCE) print_error("[check_constraints]: Constraint %d violated: rowact %f <= rhs %f\n", i + 1, rowact, inst->rhs[i]);
+				break;
+			case 'G':
+				if (rowact < inst->rhs[i] - TOLERANCE) print_error("[check_constraints]: Constraint %d violated: rowact %f >= rhs %f\n", i + 1, rowact, inst->rhs[i]);
+				break;
+			case 'E':
+				if (fabs(rowact - inst->rhs[i]) > TOLERANCE) print_error("[check_constraints]: Constraint %d violated: rowact %f = rhs %f\n", i + 1, rowact, inst->rhs[i]);
+				break;
+			default:
+				print_error("[check_constraints]: Constraint sense '%c' not supported.\n", inst->sense[i]);
 		}
 	}
-	
-	// Free
-	free(row_infeas);
+	print_verbose(100, "[check_constraints][OK]: Constraints satisfied.\n");
+}
+
+void check_rounding(instance* inst) {
+
+	int rounded = 1;
+
+	// Scan integer/binary variables
+	for (int j = 0; j < inst->ncols; j++) {
+		if (!(inst->int_var[j])) continue;
+
+		if (is_fractional(inst->x[j])) {
+			print_warning("[check_rounding]: Variable (type '%c') x_%d = %f has not been rounded!\n", inst->vartype[j], j + 1, inst->x[j]);
+			rounded = 0;
+		}
+	}
+
+	if (!rounded) print_error("[check_rounding]: ... Failed to round all integer/binary variables of the MIP ...\n");
 }
 
 double fractionality(double xj) {

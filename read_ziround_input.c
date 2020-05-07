@@ -29,8 +29,7 @@ void populate_inst(instance* inst) {
 
 	// Extension (if enabled)
 	if (inst->extension) {
-		extend_row_slacks(inst);
-		extend_constraints_senses(inst);
+		find_slack_variables(inst);
 	}
 }
 
@@ -166,6 +165,47 @@ void read_row_slacks(instance* inst) {
 	// Get row slacks
 	if (CPXgetslack(inst->env, inst->lp, inst->slack, 0, inst->nrows - 1)) print_error("[read_row_slacks]: Failed to obtain slacks.\n");
 }
+
+void find_slack_variables(instance* inst) {
+
+	inst->row_slack_var = (int*)malloc((size_t)inst->nrows * sizeof(int));
+	inst->var_eq_row = (int*)malloc((size_t)inst->ncols * sizeof(int));
+	if (inst->row_slack_var == NULL || inst->var_eq_row == NULL) print_error("[find_slack_variables]: Failed to allocate one among row_slack_var, has_slack, var_eq_row.\n");
+	for (int i = 0; i < inst->nrows; i++) inst->row_slack_var[i] = -1;
+	for (int j = 0; j < inst->ncols; j++) inst->var_eq_row[j] = -1;
+	
+	// Scan continuous variables
+	for (int j = 0; j < inst->ncols; j++) {
+		if (inst->vartype[j] != CPX_CONTINUOUS) continue;
+
+		int eq_index = -1;
+		int colend = (j < inst->nrows - 1) ? inst->cmatbeg[j + 1] : inst->nzcnt;
+
+		// Scan constraints
+		for (int k = inst->cmatbeg[j]; k < colend; k++) {
+
+			int rowind = inst->cmatind[k];
+			if (inst->sense[rowind] != 'E' || inst->row_slack_var[rowind] != -1) continue;
+
+			// Save the first row index. Skip variable if involved in more than one equality constraint.
+			if (eq_index == -1) eq_index = rowind;
+			else {
+				eq_index = -2;
+				break;
+			}
+		}
+
+		// If the j-th continuous variable is involved in only one equality constraint (that was not chosen yet)
+		if (eq_index >= 0) {
+			inst->row_slack_var[eq_index] = j;
+			inst->var_eq_row[j] = eq_index;
+			print_verbose(100, "[find_slack_variables]: Row %d of sense '%c' has slack variable x_%d = %f of type '%c'.\n",
+				eq_index, inst->sense[eq_index], j + 1, inst->x[j], inst->vartype[j]);
+		}
+	}
+}
+
+// TO REMOVE -----------------------------------------------------------------------------------------------------------------------------------------
 
 void extend_row_slacks(instance* inst) {
 

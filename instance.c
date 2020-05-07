@@ -16,7 +16,11 @@ void init_inst(instance* inst) {
 	inst->objsen = CPX_MIN; 
 	inst->vartype = NULL;
 	inst->int_var = NULL;
+	inst->row_slack_var = NULL;
+	inst->var_eq_row = NULL;
+
 	inst->eq_ext = NULL;
+
 	inst->rmatbeg = NULL; 
 	inst->rmatind = NULL;
 	inst->rmatval = NULL; 
@@ -43,7 +47,11 @@ void free_inst(instance* inst) {
 	free(inst->slack);   
 	free(inst->vartype);
 	free(inst->int_var);
+	free(inst->row_slack_var);
+	free(inst->var_eq_row);
+
 	free(inst->eq_ext);
+
 	free(inst->rmatbeg); 
 	free(inst->rmatind);
 	free(inst->rmatval); 
