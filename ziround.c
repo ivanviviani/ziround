@@ -393,7 +393,7 @@ void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, c
 
 			case 'E': // (slack zero)
 
-				// Distinguish "special" equality constraints (if extension enabled)
+				// Distinguish equality constraints with singletons (if extension enabled)
 				if (inst->extension && inst->row_slack_var[rowind] != -1) {
 
 					int slack_var = inst->row_slack_var[rowind];

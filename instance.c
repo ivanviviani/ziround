@@ -16,6 +16,9 @@ void init_inst(instance* inst) {
 	inst->objsen = CPX_MIN; 
 	inst->vartype = NULL;
 	inst->int_var = NULL;
+	inst->row_singletons = NULL;
+	inst->num_singletons = NULL;
+
 	inst->row_slack_var = NULL;
 	inst->var_eq_row = NULL;
 
@@ -47,6 +50,10 @@ void free_inst(instance* inst) {
 	free(inst->slack);   
 	free(inst->vartype);
 	free(inst->int_var);
+	for (int i = 0; i < inst->nrows; i++) free(inst->row_singletons[i]);
+	free(inst->row_singletons);
+	free(inst->num_singletons);
+
 	free(inst->row_slack_var);
 	free(inst->var_eq_row);
 

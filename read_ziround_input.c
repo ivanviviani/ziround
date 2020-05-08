@@ -29,7 +29,8 @@ void populate_inst(instance* inst) {
 
 	// Extension (if enabled)
 	if (inst->extension) {
-		find_slack_variables(inst);
+		find_singletons(inst);
+		exit(0);
 	}
 }
 
@@ -164,6 +165,71 @@ void read_row_slacks(instance* inst) {
 
 	// Get row slacks
 	if (CPXgetslack(inst->env, inst->lp, inst->slack, 0, inst->nrows - 1)) print_error("[read_row_slacks]: Failed to obtain slacks.\n");
+}
+
+void find_singletons(instance* inst) {
+
+	inst->row_singletons = (int**)malloc((size_t)inst->nrows * sizeof(int*));
+	inst->num_singletons = (int*)calloc((size_t)inst->nrows, sizeof(int)); if (inst->row_singletons == NULL || inst->num_singletons == NULL) print_error("[find_singletons]: Failed to allocate row_singletons or num_singletons.\n");
+	int* count = (int*)calloc((size_t)inst->nrows, sizeof(int)); if (count == NULL) print_error("[find_singletons]: Failed to allocate count.\n");
+
+	// Count number of singletons for each row (scan continuous variables)
+	for (int j = 0; j < inst->ncols; j++) {
+		if (inst->vartype[j] != CPX_CONTINUOUS) continue;
+
+		int colend = (j < inst->nrows - 1) ? inst->cmatbeg[j + 1] : inst->nzcnt;
+
+		// If the variable appears in only one constraint
+		if (inst->cmatbeg[j] == colend - 1) {
+
+			int rowind = inst->cmatind[inst->cmatbeg[j]];
+			print_verbose(120, "[find_singletons]: x_%d = %f in constraint %d ('%c')\n", j, inst->x[j], rowind, inst->sense[rowind]);
+			inst->num_singletons[rowind]++;
+			count[rowind]++;
+		}
+	}
+
+	// Allocate and initialize singleton indices for each row
+	for (int i = 0; i < inst->nrows; i++) {
+		if (inst->num_singletons[i] == 0) { inst->row_singletons[i] = NULL; continue; }
+
+		inst->row_singletons[i] = (int*)malloc((size_t)inst->num_singletons[i] * sizeof(int)); if (inst->row_singletons[i] == NULL) print_error("[find_singletons]: Failed to allocate row_singletons[%d].\n", i);
+		for (int k = 0; k < inst->num_singletons[i]; k++) {
+			inst->row_singletons[i][k] = -1;
+		}
+	}
+
+	// Populate singleton indices for each row
+	for (int j = 0; j < inst->ncols; j++) {
+		if (inst->vartype[j] != CPX_CONTINUOUS) continue;
+
+		int colend = (j < inst->nrows - 1) ? inst->cmatbeg[j + 1] : inst->nzcnt;
+
+		// If the variable appears in only one constraint
+		if (inst->cmatbeg[j] == colend - 1) {
+
+			int rowind = inst->cmatind[inst->cmatbeg[j]];
+			int index = inst->num_singletons[rowind] - count[rowind];
+			inst->row_singletons[rowind][index] = j;
+			count[rowind]--;
+		}
+	}
+
+	// [DEBUG ONLY] Print row singletons (indices)
+	if (VERBOSE >= 100) {
+		fprintf(stdout, "\nROW SINGLETONS (INDICES)\n");
+		for (int i = 0; i < inst->nrows; i++) {
+			fprintf(stdout, "Row %d: ", i);
+			if (inst->num_singletons[i] == 0) printf("-");
+			for (int k = 0; k < inst->num_singletons[i]; k++) {
+				fprintf(stdout, "%d ", inst->row_singletons[i][k]);
+			}
+			fprintf(stdout, "\n");
+		}
+	}
+
+	// Free
+	free(count);
 }
 
 void find_slack_variables(instance* inst) {
