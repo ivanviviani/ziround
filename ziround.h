@@ -288,6 +288,11 @@ void populate_inst(instance* inst);
 void zi_round(instance* inst);
 
 /**
+ * @brief TODO
+ */
+void check_slacks(instance* inst, int j, double* delta_up, double* delta_down, const char round_updown);
+
+/**
  * @brief Update variable xj to improve objective, according to the values
  * of UBj and LBj calculated before. Also update the row slacks.
  *
@@ -323,6 +328,11 @@ void update_slacks(instance* inst, int j, double signed_delta);
  * @param epsilon Tolerance for the computed up/down shifts.
  */
 void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, const double epsilon);
+
+/**
+ * @brief TODO
+ */
+void compute_singletons_slack_bounds(instance* inst, int rowind, double* lb, double* ub);
 
 /**
  * @brief Check that all the variable bounds are satisfied, for the

@@ -54,11 +54,15 @@ int main(int argc, char** argv) {
 		fclose(output);
 	}
 
+	print_verbose(100, "\n**************************************************************************\n");
 	print_verbose(100, "[INFO]: ... Starting ZI-Round ...\n");
+	print_verbose(100, "**************************************************************************\n");
 //******************************************* ZI-ROUND *******************************************
 	zi_round(&inst);
 //************************************************************************************************
+	print_verbose(100, "**************************************************************************\n");
 	print_verbose(100, "[INFO][OK]: ZI-Round terminated. Solution fractionality: %f.\n", sol_fractionality(inst.x, inst.int_var, inst.ncols));
+	print_verbose(100, "**************************************************************************\n");
 
 	// Print objective value of candidate rounded solution
 	print_verbose(100, "[INFO]: Candidate objective value: %f\n", inst.objval);

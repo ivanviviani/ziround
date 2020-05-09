@@ -85,6 +85,9 @@ void zi_round(instance* inst) {
 
 						print_verbose(100, "[zi_round][FRA]        : >>> Set x_%d = x_%d + delta_up_%d = %f + %f = %f\n", 
 							j + 1, j + 1, j + 1, inst->x[j], delta_up[j], inst->x[j] + delta_up[j]);
+
+						// Check whether all affected constraints have enough slack for a ROUND UP of xj
+						check_slacks(inst, j, delta_up, delta_down, 'U');
 						
 						// Round UP
 						inst->x[j] = inst->x[j] + delta_up[j];
@@ -99,6 +102,9 @@ void zi_round(instance* inst) {
 						
 						print_verbose(100, "[zi_round][FRA]        : >>> Set x_%d = x_%d - delta_down_%d = %f - %f = %f\n", 
 							j + 1, j + 1, j + 1, inst->x[j], delta_down[j], inst->x[j] - delta_down[j]);
+
+						// Check whether all affected constraints have enough slack for a ROUND DOWN of xj
+						check_slacks(inst, j, delta_up, delta_down, 'D');
 						
 						// Round DOWN
 						inst->x[j] = inst->x[j] - delta_down[j];
@@ -114,13 +120,12 @@ void zi_round(instance* inst) {
 					print_error(" in function is_fractional.\n");
 			}
 		} // end inner loop
-
 		
 		if (updated) print_verbose(100, "[zi_round] ...Update found, scan variables again...\n");
 		else print_verbose(100, "[zi_round] ...No updates found, exit outer loop...\n");
 		
 		// [DEBUG ONLY] [BRUTE FORCE]  Check variable bounds and constraints
-		if (VERBOSE >= 150) {
+		if (VERBOSE >= 120) {
 			check_bounds(inst, inst->x);
 			check_constraints(inst, inst->x);
 		}
@@ -135,6 +140,121 @@ void zi_round(instance* inst) {
 //**************************************************************************************************************************************************************
 //**************************************************************************************************************************************************************
 
+void check_slacks(instance* inst, int j, double* delta_up, double* delta_down, const char round_updown) {
+
+	if (round_updown != 'U' && round_updown != 'D') print_error("[check_slacks]: Rounding sense '%c' undefined.\n", round_updown);
+
+	// Check whether all affected constraints have enough slack for a ROUND UP/DOWN of xj
+	int colend = (j < inst->ncols - 1) ? inst->cmatbeg[j + 1] : inst->nzcnt;
+	for (int k = inst->cmatbeg[j]; k < colend; k++) {
+
+		int rowind = inst->cmatind[k];
+		double aij = inst->cmatval[k];
+		double curr_slack = 0.0;
+		double delta_slack = 0.0;
+		char msg[17];
+
+		switch (inst->sense[rowind]) {
+
+			case 'L': // (slack non-negative)
+
+				curr_slack = inst->slack[rowind];
+				delta_slack = (round_updown == 'U') ? (aij * delta_up[j]) : (aij * (-delta_down[j]));
+
+				// Slack after rounding
+				double new_slack = curr_slack - delta_slack;
+				sprintf(msg, (new_slack > -(TOLERANCE)) ? "Enough slack [OK]" : "NOT enough slack!");
+
+				print_verbose(120, "[check_slacks][x_%d aij %f][row %d '%c']: curr_slack %f (-) delta_slack = %f * %f = %f | %s\n",
+					j + 1, aij, rowind + 1, inst->sense[rowind], curr_slack, aij, (round_updown == 'U') ? delta_up[j] : (-delta_down[j]), delta_slack, msg);
+
+				if (msg[0] == 'N') print_error("[check_slacks][x_%d][row %d '%c']: After rounding, invalid slack. Found %f < 0.\n", 
+										j + 1, rowind + 1, inst->sense[rowind], new_slack);
+
+				break;
+
+			case 'G': // (slack non-positive)
+
+				curr_slack = inst->slack[rowind];
+				delta_slack = (round_updown == 'U') ? (aij * delta_up[j]) : (aij * (-delta_down[j]));
+
+				// Slack after rounding
+				double new_slack = curr_slack - delta_slack;
+				sprintf(msg, (new_slack < TOLERANCE) ? "Enough slack [OK]" : "NOT enough slack!");
+
+				print_verbose(120, "[check_slacks][x_%d aij %f][row %d '%c']: curr_slack %f (-) delta_slack = %f * %f = %f | %s\n",
+					j + 1, aij, rowind + 1, inst->sense[rowind], curr_slack, aij, (round_updown == 'U') ? delta_up[j] : (-delta_down[j]), delta_slack, msg);
+
+				if (msg[0] == 'N') print_error("[check_slacks][x_%d][row %d '%c']: After rounding, invalid slack. Found %f > 0.\n", 
+										j + 1, rowind + 1, inst->sense[rowind], new_slack);
+
+				break;
+
+			case 'E': // (slack zero if extension disabled)
+
+				// [EXTENSION] Distinguish equality constraints with singletons (if extension enabled)
+				if (inst->extension && inst->num_singletons[rowind] > 0) {
+
+					// Compute singletons slack of constraint rowind
+					double singletons_slack = 0.0;
+					for (int h = 0; h < inst->num_singletons[rowind]; h++) {
+
+						double coef = 0.0;
+						int singleton_index = inst->row_singletons[rowind][h];
+						CPXgetcoef(inst->env, inst->lp, rowind, singleton_index, &coef);
+						singletons_slack += (coef * inst->x[singleton_index]);
+					}
+					curr_slack = singletons_slack;
+					delta_slack = (round_updown == 'U') ? (aij * delta_up[j]) : (aij * (-delta_down[j]));
+
+					// Compute singletons slack upper and lower bound (range)
+					double ss_lb = 0.0;
+					double ss_ub = 0.0;
+					compute_singletons_slack_bounds(inst, rowind, &ss_lb, &ss_ub);
+
+					// Singletons slack after rounding
+					double new_ss = curr_slack - delta_slack;
+					sprintf(msg, (!(new_ss < ss_lb - TOLERANCE || new_ss > ss_ub + TOLERANCE)) ? "Enough slack [OK]" : "NOT enough slack!");
+						
+					print_verbose(120, "[check_slacks][extension][x_%d aij %f][row %d '%c']: curr_slack %f (-) delta_slack = %f * %f = %f | %s\n",
+						j + 1, aij, rowind + 1, inst->sense[rowind], curr_slack, aij, (round_updown == 'U') ? delta_up[j] : (-delta_down[j]), delta_slack, msg);
+
+					if (msg[0] == 'N') print_error("[check_slacks][extension][x_%d][row %d '%c']: After rounding, singletons slack out of bounds. Found %f <= %f <= %f.\n", 
+											j + 1, rowind + 1, inst->sense[rowind], ss_lb, new_ss, ss_ub);
+
+					/*
+					if (curr_slack > TOLERANCE) {
+						// Case 'L': slack non-negative
+						sprintf(msg, (curr_slack - delta_slack > TOLERANCE) ? "Enough slack [OK]" : "NOT enough slack!");
+					}
+					else if (curr_slack < -(TOLERANCE)) {
+						// Case 'G': slack non-positive
+						sprintf(msg, (curr_slack - delta_slack < -(TOLERANCE)) ? "Enough slack [OK]" : "NOT enough slack!");
+					}
+					else {
+						sprintf(msg, "Slack ZERO!");
+					}
+					print_verbose(120, "[check_slacks][extension][x_%d aij %f][row %d '%c']: singletons_slack %f (-) delta_slack = %f * %f = %f | %s\n",
+						j + 1, aij, rowind + 1, inst->sense[rowind], curr_slack, aij, (round_updown == 'U') ? delta_up[j] : (-delta_down[j]), delta_slack, msg);
+
+					if (msg[0] == 'N') print_error("[check_slacks][x_%d][row %d '%c']: NOT enough slack for rounding x_%d.\n", j + 1, rowind + 1, inst->sense[rowind], j + 1);
+					*/
+				}
+				else {
+
+					print_error("[check_slacks][x_%d][row %d '%c']: Constraint has no singletons --> slack ZERO --> x_%d cannot be rounded.\n",
+						j + 1, rowind + 1, inst->sense[rowind], j + 1);
+				}
+
+				break;
+
+			default:
+				print_error("[check_slacks]: Constraint sense '%c' not included in {'L','G','E'}.\n", inst->sense[rowind]);
+		}
+
+	}
+}
+
 int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down, int xj_fractional) {
 
 	// Local variables
@@ -144,9 +264,12 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 	char vtype[3];		   /**< Support string. */
 
 	// Initialize
-	obj_deltaplus  = 0.0 + (inst->obj[j] * delta_up[j]);
-	obj_deltaminus = 0.0 - (inst->obj[j] * delta_down[j]);
+	obj_deltaplus  = (inst->obj[j] * delta_up[j]);
+	obj_deltaminus = -(inst->obj[j] * delta_down[j]);
 	sprintf(vtype, ((xj_fractional)?"FRA":"INT"));
+
+	print_verbose(120, "[round_xj_bestobj]: %f <= x_%d = %f <= %f | delta_up = %f delta down = %f objcoef = %f | obj_deltaplus = %f obj_deltaminus = %f\n", 
+		inst->lb[j], j + 1, inst->x[j], inst->ub[j], delta_up[j], delta_down[j], inst->obj[j], obj_deltaplus, obj_deltaminus);
 
 	// Check obj sense, then update xj, update slacks and update objective value
 	switch (inst->objsen) {
@@ -159,6 +282,9 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 				if (!xj_fractional && VERBOSE >= 150 && fabs(delta_up[j] - 1.0) > TOLERANCE) {
 					print_error("[round_xj_bestobj]: delta_up_%d = %f (should be 1.0).\n", j + 1, delta_up[j]);
 				}
+
+				// Check whether all affected constraints have enough slack for a ROUND UP of xj
+				check_slacks(inst, j, delta_up, delta_down, 'U');
 
 				// Round UP (if xj is not fractional then delta_up[j] must be 1.0)
 				inst->x[j] = inst->x[j] + delta_up[j];
@@ -175,6 +301,9 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 					print_error("[round_xj_bestobj]: delta_down_%d = %f (should be 1.0).\n", j + 1, delta_down[j]);
 				}
 
+				// Check whether all affected constraints have enough slack for a ROUND DOWN of xj
+				check_slacks(inst, j, delta_up, delta_down, 'D');
+
 				// Round DOWN (if xj is not fractional then delta_down[j] must be 1.0)
 				inst->x[j] = inst->x[j] - delta_down[j];
 
@@ -183,7 +312,20 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 				inst->objval = inst->objval - (inst->obj[j] * delta_down[j]);
 			}
 
-			else print_verbose(120, "[INFO][round_xj_bestobj]: obj_deltaplus == obj_deltaminus.\n");
+			else {
+
+				print_verbose(120, "[round_xj_bestobj]: obj_deltaplus == obj_deltaminus. >>> Round x_%d arbitrarily (DOWN).\n", j + 1);
+
+				// Check whether all affected constraints have enough slack for a ROUND DOWN of xj
+				check_slacks(inst, j, delta_up, delta_down, 'D');
+
+				// Round arbitrarily (DOWN)
+				inst->x[j] = inst->x[j] - delta_down[j];
+
+				updated = 1;
+				update_slacks(inst, j, -(delta_down[j]));
+				inst->objval = inst->objval - (inst->obj[j] * delta_down[j]);
+			}
 
 			break;
 
@@ -197,6 +339,9 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 				if (!xj_fractional && VERBOSE >= 150 && fabs(delta_up[j] - 1.0) > TOLERANCE) {
 					print_error("[round_xj_bestobj]: delta_up_%d = %f (should be 1.0).\n", j + 1, delta_up[j]);
 				}
+
+				// Check whether all affected constraints have enough slack for a ROUND UP of xj
+				check_slacks(inst, j, delta_up, delta_down, 'U');
 
 				// Round UP (if xj is not fractional then delta_up[j] must be 1.0)
 				inst->x[j] = inst->x[j] + delta_up[j];
@@ -214,7 +359,10 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 					print_error("[round_xj_bestobj]: delta_down_%d = %f (should be 1.0).\n", j + 1, delta_down[j]);
 				}
 
-				// Round UP (if xj is not fractional then delta_down[j] must be 1.0)
+				// Check whether all affected constraints have enough slack for a ROUND DOWN of xj
+				check_slacks(inst, j, delta_up, delta_down, 'D');
+
+				// Round DOWN (if xj is not fractional then delta_down[j] must be 1.0)
 				inst->x[j] = inst->x[j] - delta_down[j];
 
 				updated = 1;
@@ -259,10 +407,13 @@ void update_slacks(instance* inst, int j, double signed_delta) {
 				break;
 			case 'E':
 				// Distinguish "special" equality constraints (if extension enabled)
-				if (inst->extension && inst->row_slack_var[rowind] != -1) {
+				if (inst->extension && inst->num_singletons[rowind] > 0) {
 
-					print_verbose(120, "[update_slacks]: ENTERED SPECIAL EQUALITY CASE.\n");
+					..print_verbose(120, "[update_slacks]: ENTERED SPECIAL EQUALITY CASE.\n");
 
+
+
+					/*
 					int slack_var = inst->row_slack_var[rowind];
 					double slack_coef = 0.0;
 
@@ -283,6 +434,7 @@ void update_slacks(instance* inst, int j, double signed_delta) {
 					inst->objval = inst->objval - (inst->obj[slack_var] * inst->x[slack_var]);
 					inst->x[slack_var] = (inst->rhs[rowind] - sum) / slack_coef;
 					inst->objval = inst->objval + (inst->obj[slack_var] * inst->x[slack_var]);
+					*/
 				}
 				else {
 					print_error("[update_slacks]: Tried to update slack of an equality constraint (with no slack variable)!\n");
@@ -341,6 +493,9 @@ void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, c
 
 			case 'L': // (slack non-negative)
 
+				if (inst->extension && inst->num_singletons[rowind] > 0) print_error("[delta_updown][extension][x_%d][row %d '%c']: Inequality constraint has %d singletons.\n",
+					j + 1, rowind + 1, inst->sense[rowind], inst->num_singletons[rowind]);
+
 				// Clip slack to zero if negative
 				if (inst->slack[rowind] < 0.0 - TOLERANCE) inst->slack[rowind] = 0.0;
 
@@ -367,6 +522,9 @@ void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, c
 
 			case 'G': // (slack non-positive)
 
+				if (inst->extension && inst->num_singletons[rowind] > 0) print_error("[delta_updown][extension][x_%d][row %d '%c']: Inequality constraint has %d singletons.\n",
+					j + 1, rowind + 1, inst->sense[rowind], inst->num_singletons[rowind]);
+
 				// Clip slack to zero if positive
 				if (inst->slack[rowind] > 0.0 + TOLERANCE) inst->slack[rowind] = 0.0;
 
@@ -391,81 +549,73 @@ void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, c
 
 				break;
 
-			case 'E': // (slack zero)
+			case 'E': // (slack zero if extension disabled)
 
-				// Distinguish equality constraints with singletons (if extension enabled)
-				if (inst->extension && inst->row_slack_var[rowind] != -1) {
+				// [EXTENSION] Distinguish equality constraints with singletons (if extension enabled)
+				if (inst->extension && inst->num_singletons[rowind] > 0) {
 
-					int slack_var = inst->row_slack_var[rowind];
-					double slack_coef;
-					CPXgetcoef(inst->env, inst->lp, rowind, slack_var, &slack_coef);
-					double slack = slack_coef * inst->x[slack_var];
+					print_verbose(120, "[delta_updown][extension][x_%d][row %d '%c']: singletons ", j + 1, rowind + 1, inst->sense[rowind]);
 
-					// DEBUG
-					int rowend = (rowind < inst->nrows - 1) ? inst->rmatbeg[rowind + 1] : inst->nzcnt;
-					double rowact = 0.0;
-					for (int i = inst->rmatbeg[rowind]; i < rowend; i++) {
-						int varind = inst->rmatind[i];
-						rowact += inst->rmatval[i] * inst->x[varind];
+					// Compute singletons slack of constraint rowind
+					double singletons_slack = 0.0;
+					for (int k = 0; k < inst->num_singletons[rowind]; k++) {
+
+						double coef = 0.0;
+						int singleton_index = inst->row_singletons[rowind][k];
+						print_verbose(120, "x_%d ", singleton_index + 1);
+						CPXgetcoef(inst->env, inst->lp, rowind, singleton_index, &coef);
+						singletons_slack += (coef * inst->x[singleton_index]);
 					}
-					print_verbose(120, "[delta_updown][DEBUG]: rowact %f = rhs %f | slack_var x_%d = %f | slack %f\n", rowact, inst->rhs[rowind], slack_var, inst->x[slack_var], slack);
-					// DEBUG
+					print_verbose(120, "| singletons_slack = %f | ", singletons_slack);
 
-					// Check slack sign
-					if (slack > 0.0 + TOLERANCE) {
+					// Compute singletons slack upper and lower bound (range)
+					double ss_lb = 0.0;
+					double ss_ub = 0.0;
+					compute_singletons_slack_bounds(inst, rowind, &ss_lb, &ss_ub);
+					print_verbose(120, "Bounds %f <= ss <= %f\n", ss_lb, ss_ub);
 
-						// Without the slack, the constraint would be 'L' (slack non-negative)
-						if (aij > 0.0) {
+					// Singletons slack deltas
+					double ss_delta_up = ss_ub - singletons_slack;
+					double ss_delta_down = singletons_slack - ss_lb;
 
-							print_verbose(200, "[delta_updown]: sense = L ; slack[%d] = %f ; a_%d_%d = %f ; candidate_up1_%d = %f\n",
-								rowind + 1, inst->slack[rowind], rowind + 1, j + 1, aij, j + 1, inst->slack[rowind] / aij);
+					// Update candidate deltas
+					if (aij > 0.0) {
 
-							// Update delta_up1
-							candidate_up1 = slack / aij;
-							delta_up1 = min(candidate_up1, delta_up1);
-						}
-						if (aij < 0.0) {
+						candidate_down1 = ss_delta_up / aij;
+						candidate_up1 = ss_delta_down / aij;
+						// Clip candidates to zero if inaccurate
+						if (fabs(candidate_down1) < TOLERANCE) candidate_down1 = 0.0;
+						if (fabs(candidate_up1) < TOLERANCE) candidate_up1 = 0.0;
 
-							print_verbose(200, "[delta_updown]: sense = L ; slack[%d] = %f ; a_%d_%d = %f ; candidate_down1_%d = %f\n",
-								rowind + 1, inst->slack[rowind], rowind + 1, j + 1, aij, j + 1, -(inst->slack[rowind]) / aij);
+						// Check candidates signs
+						if (candidate_down1 < -(TOLERANCE) ||
+							candidate_up1 < -(TOLERANCE))
+							print_error("[delta_updown][extension][x_%d][row %d '%c']: Negative candidate deltas. Found %f and %f.",
+								j + 1, rowind + 1, inst->sense[rowind], candidate_down1, candidate_up1);
 
-							// Update delta_down1
-							candidate_down1 = -(slack) / aij;
-							delta_down1 = min(candidate_down1, delta_down1);
-						}
+						delta_down1 = min(candidate_down1, delta_down1);
+						delta_up1 = min(candidate_up1, delta_up1);
 					}
-					else if (slack < 0.0 - TOLERANCE) {
+					if (aij < 0.0) {
 
-						// Without the slack, the constraint would be 'G' (slack non-positive)
-						if (aij < 0.0) {
+						candidate_up1 = -(ss_delta_up) / aij;
+						candidate_down1 = -(ss_delta_down) / aij;
+						// Clip candidates to zero if inaccurate
+						if (fabs(candidate_down1) < TOLERANCE) candidate_down1 = 0.0;
+						if (fabs(candidate_up1) < TOLERANCE) candidate_up1 = 0.0;
 
-							print_verbose(200, "[delta_updown]: sense = G ; slack[%d] = %f ; a_%d_%d = %f ; candidate_up1_%d = %f\n",
-								rowind + 1, inst->slack[rowind], rowind + 1, j + 1, aij, j + 1, inst->slack[rowind] / aij);
+						// Check candidates signs
+						if (candidate_down1 < -(TOLERANCE) ||
+							candidate_up1 < -(TOLERANCE))
+							print_error("[delta_updown][extension][x_%d][row %d '%c']: Negative candidate deltas. Found %f and %f.",
+								j + 1, rowind + 1, inst->sense[rowind], candidate_down1, candidate_up1);
 
-							// Update delta_up1
-							candidate_up1 = slack / aij;
-							delta_up1 = min(candidate_up1, delta_up1);
-						}
-						if (aij > 0.0) {
-
-							print_verbose(200, "[delta_updown]: sense = G ; slack[%d] = %f ; a_%d_%d = %f ; candidate_down1_%d = %f\n",
-								rowind + 1, inst->slack[rowind], rowind + 1, j + 1, aij, j + 1, -(inst->slack[rowind]) / aij);
-
-							// Update delta_down1
-							candidate_down1 = -(slack) / aij;
-							delta_down1 = min(candidate_down1, delta_down1);
-						}
-					}
-					else {
-						print_verbose(200, "[delta_updown][extension]: sense = E ; Variable x_%d involved in equality constraint %d with slack zero --> cannot be moved!\n", j + 1, rowind);
-
-						// Set delta_up1 and delta_down1 to zero --> new_delta_up and new_delta_down will get value zero
-						delta_up1 = 0.0;
-						delta_down1 = 0.0;
+						delta_down1 = min(candidate_down1, delta_down1);
+						delta_up1 = min(candidate_up1, delta_up1);
 					}
 				}
 				else {
-					print_verbose(200, "[delta_updown]: sense = E ; Variable x_%d involved in equality constraint %d with slack zero --> cannot be moved!\n", j + 1, rowind);
+					print_verbose(200, "[delta_updown][x_%d][row %d '%c']: Slack ZERO (no singletons) --> x_%d cannot be moved!\n", j + 1, rowind + 1, inst->sense[rowind], j + 1);
 
 					// Set delta_up1 and delta_down1 to zero --> new_delta_up and new_delta_down will get value zero
 					delta_up1 = 0.0;
@@ -494,4 +644,27 @@ void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, c
 	}
 	delta_up[j] = new_delta_up;
 	delta_down[j] = new_delta_down;
+}
+
+// [EXTENSION]
+void compute_singletons_slack_bounds(instance* inst, int rowind, double* lb, double* ub) {
+
+	// Compute singletons slack upper and lower bound (range)
+	*ub = 0.0;
+	*lb = 0.0;
+	for (int k = 0; k < inst->num_singletons[rowind]; k++) {
+
+		double coef = 0.0;
+		int singleton_index = inst->row_singletons[rowind][k];
+		CPXgetcoef(inst->env, inst->lp, rowind, singleton_index, &coef);
+
+		if (coef > 0.0) {
+			*ub = *ub + coef * inst->ub[singleton_index];
+			*lb = *lb + coef * inst->lb[singleton_index];
+		}
+		if (coef < 0.0) {
+			*ub = *ub + coef * inst->lb[singleton_index];
+			*lb = *lb + coef * inst->ub[singleton_index];
+		}
+	}
 }

@@ -30,7 +30,7 @@ void populate_inst(instance* inst) {
 	// Extension (if enabled)
 	if (inst->extension) {
 		find_singletons(inst);
-		exit(0);
+		//exit(0);
 	}
 }
 
@@ -140,7 +140,7 @@ void read_constraints_senses(instance* inst) {
 	if (CPXgetsense(inst->env, inst->lp, inst->sense, 0, inst->nrows - 1)) print_error("[read_constraints_senses]: Failed to obtain constraints senses.\n");
 
 	// [DEBUG ONLY] Print constraints senses
-	if (inst->extension && VERBOSE >= 120) {
+	if (inst->extension && VERBOSE >= 200) {
 		printf("\n\n");
 		for (int i = 0; i < inst->nrows; i++) {
 			printf("%c ", inst->sense[i]);
@@ -183,7 +183,7 @@ void find_singletons(instance* inst) {
 		if (inst->cmatbeg[j] == colend - 1) {
 
 			int rowind = inst->cmatind[inst->cmatbeg[j]];
-			print_verbose(120, "[find_singletons]: x_%d = %f in constraint %d ('%c')\n", j, inst->x[j], rowind, inst->sense[rowind]);
+			print_verbose(200, "[find_singletons]: x_%d = %f in constraint %d ('%c')\n", j, inst->x[j], rowind, inst->sense[rowind]);
 			inst->num_singletons[rowind]++;
 			count[rowind]++;
 		}
@@ -216,16 +216,17 @@ void find_singletons(instance* inst) {
 	}
 
 	// [DEBUG ONLY] Print row singletons (indices)
-	if (VERBOSE >= 100) {
+	if (VERBOSE >= 200) {
 		fprintf(stdout, "\nROW SINGLETONS (INDICES)\n");
 		for (int i = 0; i < inst->nrows; i++) {
 			fprintf(stdout, "Row %d: ", i);
-			if (inst->num_singletons[i] == 0) printf("-");
+			if (inst->num_singletons[i] == 0) fprintf(stdout, "-");
 			for (int k = 0; k < inst->num_singletons[i]; k++) {
 				fprintf(stdout, "%d ", inst->row_singletons[i][k]);
 			}
 			fprintf(stdout, "\n");
 		}
+		fprintf(stdout, "\n");
 	}
 
 	// Free
