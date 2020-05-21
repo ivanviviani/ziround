@@ -30,6 +30,7 @@ void populate_inst(instance* inst) {
 	// Extension (if enabled)
 	if (inst->extension) {
 		find_singletons(inst);
+		compute_singletons_slacks_bounds(inst);
 		//exit(0);
 	}
 }
@@ -233,122 +234,31 @@ void find_singletons(instance* inst) {
 	free(count);
 }
 
-void find_slack_variables(instance* inst) {
+void compute_singletons_slacks_bounds(instance* inst) {
 
-	inst->row_slack_var = (int*)malloc((size_t)inst->nrows * sizeof(int));
-	inst->var_eq_row = (int*)malloc((size_t)inst->ncols * sizeof(int));
-	if (inst->row_slack_var == NULL || inst->var_eq_row == NULL) print_error("[find_slack_variables]: Failed to allocate one among row_slack_var, has_slack, var_eq_row.\n");
-	for (int i = 0; i < inst->nrows; i++) inst->row_slack_var[i] = -1;
-	for (int j = 0; j < inst->ncols; j++) inst->var_eq_row[j] = -1;
-	
-	// Scan continuous variables
-	for (int j = 0; j < inst->ncols; j++) {
-		if (inst->vartype[j] != CPX_CONTINUOUS) continue;
+	inst->ss_ub = (double*)calloc((size_t)inst->nrows, sizeof(double));
+	inst->ss_lb = (double*)calloc((size_t)inst->nrows, sizeof(double));
+	if (inst->ss_ub == NULL || inst->ss_lb == NULL) print_error("[compute_singletons_slacks_bounds]: Failed to allocate ss_ub or ss_lb");
 
-		int eq_index = -1;
-		int colend = (j < inst->nrows - 1) ? inst->cmatbeg[j + 1] : inst->nzcnt;
-
-		// Scan constraints
-		for (int k = inst->cmatbeg[j]; k < colend; k++) {
-
-			int rowind = inst->cmatind[k];
-			if (inst->sense[rowind] != 'E' || inst->row_slack_var[rowind] != -1) continue;
-
-			// Save the first row index. Skip variable if involved in more than one equality constraint.
-			if (eq_index == -1) eq_index = rowind;
-			else {
-				eq_index = -2;
-				break;
-			}
-		}
-
-		// If the j-th continuous variable is involved in only one equality constraint (that was not chosen yet)
-		if (eq_index >= 0) {
-			inst->row_slack_var[eq_index] = j;
-			inst->var_eq_row[j] = eq_index;
-			print_verbose(100, "[find_slack_variables]: Row %d of sense '%c' has slack variable x_%d = %f of type '%c'.\n",
-				eq_index, inst->sense[eq_index], j + 1, inst->x[j], inst->vartype[j]);
-		}
-	}
-}
-
-// TO REMOVE -----------------------------------------------------------------------------------------------------------------------------------------
-
-void extend_row_slacks(instance* inst) {
-
-	double aij;        /**< Current coefficient. */
-	int rowind;        /**< Current row index. */
-	int colend;        /**< Index of the last non-zero coefficient of the current column. */
-	int eq_index = -1; /**< Index of the only equality constraint in which a continuous variable is involved. */
-	double contrib;    /**< Contribution of the variable in that constraint. */
-
-	// Allocate extended equality constraints flags (initialized to false)
-	inst->eq_ext = (int*)calloc(inst->nrows, sizeof(int)); if (inst->eq_ext == NULL) print_error("[extend_row_slacks]: Failed to allocate unique equality constraints flags.\n");
-
-	// Scan continuous variables
-	for (int j = 0; j < inst->ncols; j++) {
-		if (inst->vartype[j] != CPX_CONTINUOUS) continue; // Skip non-continuous variables
-
-		colend = (j < inst->ncols - 1) ? inst->cmatbeg[j + 1] : inst->nzcnt;
-
-		// Scan equality constraints in which the j-th continuous variable is involved
-		for (int k = inst->cmatbeg[j]; k < colend; k++) {
-
-			rowind = inst->cmatind[k];
-			if (inst->sense[rowind] != 'E') continue; // Skip non-equality constraints
-
-			// Save the first row index. Skip variable if involved in more than one equality constraint.
-			if (eq_index == -1) eq_index = rowind;
-			else {
-				eq_index = -2;
-				break;
-			}
-		}
-
-		// If the j-th continuous variable is involved in only one equality constraint
-		if (eq_index >= 0) {
-			
-			// Set equality constraint flag
-			inst->eq_ext[eq_index] = 1;
-
-			// Get its contribution in that constraint
-			if (CPXgetcoef(inst->env, inst->lp, eq_index, j, &aij)) print_error("[extend_row_slacks]: Failed to obtain coefficient.\n");
-			contrib = aij * inst->x[j];
-
-			// Consider its contribution as contribution to the row slack
-			inst->slack[eq_index] = inst->slack[eq_index] + contrib;
-		}
-	}
-}
-
-void extend_constraints_senses(instance* inst) {
-
-	// Scan unique equality constraints flags
+	// Scan constraints that have singletons
 	for (int i = 0; i < inst->nrows; i++) {
-		
-		if (!(inst->eq_ext[i])) continue; // Skip non-unique equality constraints
+		if (inst->num_singletons[i] == 0) continue;
 
-		// Set extended constraint sense
-		switch (inst->sense[i]) {
+		// Compute singletons slack upper and lower bound (range)
+		for (int k = 0; k < inst->num_singletons[i]; k++) {
 
-			case 'E':
-				if (inst->slack[i] > 0.0 + TOLERANCE)      inst->sense[i] = 'L';
-				else if (inst->slack[i] < 0.0 - TOLERANCE) inst->sense[i] = 'G';
-				break;
-			case 'L':
-			case 'G':
-				print_error("[extend_constraints_senses]: Tried to extend a non-equality constraint!\n");
-			default:
-				print_error("[extend_constraints_senses]: Constraint sense %c not supported!\n", inst->sense[i]);
+			double coef = 0.0;
+			int singleton_index = inst->row_singletons[i][k];
+			CPXgetcoef(inst->env, inst->lp, i, singleton_index, &coef);
+
+			if (coef > 0.0) {
+				inst->ss_ub[i] = inst->ss_ub[i] + coef * inst->ub[singleton_index];
+				inst->ss_lb[i] = inst->ss_lb[i] + coef * inst->lb[singleton_index];
+			}
+			if (coef < 0.0) {
+				inst->ss_ub[i] = inst->ss_ub[i] + coef * inst->lb[singleton_index];
+				inst->ss_lb[i] = inst->ss_lb[i] + coef * inst->ub[singleton_index];
+			}
 		}
-	}
-
-	// [DEBUG ONLY] Print constraints senses
-	if (VERBOSE >= 120) {
-		printf("\n\n___ Constraints senses after extension ___\n");
-		for (int i = 0; i < inst->nrows; i++) {
-			printf("%c ", inst->sense[i]);
-		}
-		printf("\n\n");
 	}
 }

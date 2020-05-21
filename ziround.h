@@ -102,11 +102,8 @@ typedef struct {
     int* int_var; 			/**< Flags array that keeps track of integer/binary (value 1) and continuous (value 0) variables. */
     int** row_singletons;
     int* num_singletons;
-
-    int* row_slack_var;
-    int* var_eq_row;
-
-    int* eq_ext;            /**< Flags array that keeps track of unique equality constraints indices in which continuous variables are involved. */
+    double* ss_ub;
+    double* ss_lb;
 
     // Coefficient matrix
     int nzcnt; 				/**< Number of non-zero coefficients. */
@@ -332,7 +329,7 @@ void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, c
 /**
  * @brief TODO
  */
-void compute_singletons_slack_bounds(instance* inst, int rowind, double* lb, double* ub);
+double singletons_slack_with_bounds(instance* inst, int rowind, double* lb, double* ub);
 
 /**
  * @brief Check that all the variable bounds are satisfied, for the

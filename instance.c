@@ -18,12 +18,8 @@ void init_inst(instance* inst) {
 	inst->int_var = NULL;
 	inst->row_singletons = NULL;
 	inst->num_singletons = NULL;
-
-	inst->row_slack_var = NULL;
-	inst->var_eq_row = NULL;
-
-	inst->eq_ext = NULL;
-
+	inst->ss_ub = NULL;
+	inst->ss_lb = NULL;
 	inst->rmatbeg = NULL; 
 	inst->rmatind = NULL;
 	inst->rmatval = NULL; 
@@ -53,12 +49,8 @@ void free_inst(instance* inst) {
 	for (int i = 0; i < inst->nrows; i++) free(inst->row_singletons[i]);
 	free(inst->row_singletons);
 	free(inst->num_singletons);
-
-	free(inst->row_slack_var);
-	free(inst->var_eq_row);
-
-	free(inst->eq_ext);
-
+	free(inst->ss_ub);
+	free(inst->ss_lb);
 	free(inst->rmatbeg); 
 	free(inst->rmatind);
 	free(inst->rmatval); 
