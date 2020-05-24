@@ -18,6 +18,8 @@ void init_inst(instance* inst) {
 	inst->int_var = NULL;
 	inst->row_singletons = NULL;
 	inst->num_singletons = NULL;
+	inst->rs_beg = NULL;
+	inst->rs_coef = NULL;
 	inst->ss_ub = NULL;
 	inst->ss_lb = NULL;
 	inst->rmatbeg = NULL; 
@@ -46,9 +48,10 @@ void free_inst(instance* inst) {
 	free(inst->slack);   
 	free(inst->vartype);
 	free(inst->int_var);
-	for (int i = 0; i < inst->nrows; i++) free(inst->row_singletons[i]);
 	free(inst->row_singletons);
 	free(inst->num_singletons);
+	free(inst->rs_beg);
+	free(inst->rs_coef);
 	free(inst->ss_ub);
 	free(inst->ss_lb);
 	free(inst->rmatbeg); 

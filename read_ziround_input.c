@@ -168,13 +168,14 @@ void read_row_slacks(instance* inst) {
 	if (CPXgetslack(inst->env, inst->lp, inst->slack, 0, inst->nrows - 1)) print_error("[read_row_slacks]: Failed to obtain slacks.\n");
 }
 
+// [EXTENSION]
 void find_singletons(instance* inst) {
 
-	inst->row_singletons = (int**)malloc((size_t)inst->nrows * sizeof(int*));
-	inst->num_singletons = (int*)calloc((size_t)inst->nrows, sizeof(int)); if (inst->row_singletons == NULL || inst->num_singletons == NULL) print_error("[find_singletons]: Failed to allocate row_singletons or num_singletons.\n");
-	int* count = (int*)calloc((size_t)inst->nrows, sizeof(int)); if (count == NULL) print_error("[find_singletons]: Failed to allocate count.\n");
+	inst->num_singletons = (int*)calloc((size_t)inst->nrows, sizeof(int)); 
+	int* count = (int*)calloc((size_t)inst->nrows, sizeof(int)); if (inst->num_singletons == NULL || count == NULL) print_error("[find_singletons][extension]: Failed to allocate num_singletons or count.\n");
 
 	// Count number of singletons for each row (scan continuous variables)
+	inst->rs_size = 0;
 	for (int j = 0; j < inst->ncols; j++) {
 		if (inst->vartype[j] != CPX_CONTINUOUS) continue;
 
@@ -184,23 +185,43 @@ void find_singletons(instance* inst) {
 		if (inst->cmatbeg[j] == colend - 1) {
 
 			int rowind = inst->cmatind[inst->cmatbeg[j]];
-			print_verbose(200, "[find_singletons]: x_%d = %f in constraint %d ('%c')\n", j, inst->x[j], rowind, inst->sense[rowind]);
+			print_verbose(200, "[find_singletons][extension]: x_%d = %f in constraint %d ('%c')\n", j, inst->x[j], rowind, inst->sense[rowind]);
 			inst->num_singletons[rowind]++;
 			count[rowind]++;
+			inst->rs_size++;
 		}
 	}
 
-	// Allocate and initialize singleton indices for each row
+	inst->row_singletons = (int*)malloc((size_t)inst->rs_size * sizeof(int));
+	inst->rs_beg = (int*)malloc((size_t)inst->nrows * sizeof(int));
+	inst->rs_coef = (double*)calloc((size_t)inst->rs_size, sizeof(double)); if (inst->row_singletons == NULL || inst->rs_beg == NULL || inst->rs_coef == NULL) print_error("[find_singletons]: Failed to allocate row_singletons or rs_beg or rs_coef\n");
+	for (int k = 0; k < inst->rs_size; k++) inst->row_singletons[k] = -1;
+	for (int i = 0; i < inst->nrows; i++) inst->rs_beg[i] = -1;
+
+	// Populate row singletons begin indices
+	int first = 0;
+	int prev = -1; // Index of previous row with beg index
 	for (int i = 0; i < inst->nrows; i++) {
-		if (inst->num_singletons[i] == 0) { inst->row_singletons[i] = NULL; continue; }
+		if (inst->num_singletons[i] == 0) continue;
 
-		inst->row_singletons[i] = (int*)malloc((size_t)inst->num_singletons[i] * sizeof(int)); if (inst->row_singletons[i] == NULL) print_error("[find_singletons]: Failed to allocate row_singletons[%d].\n", i);
-		for (int k = 0; k < inst->num_singletons[i]; k++) {
-			inst->row_singletons[i][k] = -1;
+		if (first == 0) {
+			inst->rs_beg[i] = 0;
+			first = 1;
+			prev = i;
 		}
+		else {
+			int index = inst->rs_beg[prev] + inst->num_singletons[prev];
+			inst->rs_beg[i] = index;
+			prev = i;
+		}
+		
+		// [DEBUG ONLY] Print row singletons begin indices
+		print_verbose(200, "[DEBUG][find_singletons][extension]: Row %d | %d singletons | rs_beg = %d\n", i, inst->num_singletons[i], inst->rs_beg[i]);
 	}
+	// [DEBUG ONLY] Print size of row singletons array
+	print_verbose(200, "[DEBUG][find_singletons][extension]: rs_size = %d\n", inst->rs_size);
 
-	// Populate singleton indices for each row
+	// Populate singleton indices and coefficients for each row
 	for (int j = 0; j < inst->ncols; j++) {
 		if (inst->vartype[j] != CPX_CONTINUOUS) continue;
 
@@ -209,21 +230,24 @@ void find_singletons(instance* inst) {
 		// If the variable appears in only one constraint
 		if (inst->cmatbeg[j] == colend - 1) {
 
-			int rowind = inst->cmatind[inst->cmatbeg[j]];
-			int index = inst->num_singletons[rowind] - count[rowind];
-			inst->row_singletons[rowind][index] = j;
+			int rowind = inst->cmatind[colend - 1];
+			int offset = inst->num_singletons[rowind] - count[rowind];
+			int beg = inst->rs_beg[rowind];
+			inst->row_singletons[beg + offset] = j;
+			inst->rs_coef[beg + offset] = inst->cmatval[colend - 1];
 			count[rowind]--;
 		}
 	}
 
 	// [DEBUG ONLY] Print row singletons (indices)
 	if (VERBOSE >= 200) {
-		fprintf(stdout, "\nROW SINGLETONS (INDICES)\n");
+		fprintf(stdout, "\n[DEBUG][find_singletons][extension]: Row singletons (index | coef):\n");
 		for (int i = 0; i < inst->nrows; i++) {
-			fprintf(stdout, "Row %d: ", i);
+			fprintf(stdout, "[DEBUG][find_singletons][extension]: Row %d: ", i);
 			if (inst->num_singletons[i] == 0) fprintf(stdout, "-");
+			int beg = inst->rs_beg[i];
 			for (int k = 0; k < inst->num_singletons[i]; k++) {
-				fprintf(stdout, "%d ", inst->row_singletons[i][k]);
+				fprintf(stdout, "(%d | %f) ", inst->row_singletons[beg + k], inst->rs_coef[beg + k]);
 			}
 			fprintf(stdout, "\n");
 		}
@@ -234,22 +258,24 @@ void find_singletons(instance* inst) {
 	free(count);
 }
 
+// [EXTENSION]
 void compute_singletons_slacks_bounds(instance* inst) {
 
 	inst->ss_ub = (double*)calloc((size_t)inst->nrows, sizeof(double));
 	inst->ss_lb = (double*)calloc((size_t)inst->nrows, sizeof(double));
-	if (inst->ss_ub == NULL || inst->ss_lb == NULL) print_error("[compute_singletons_slacks_bounds]: Failed to allocate ss_ub or ss_lb");
+	if (inst->ss_ub == NULL || inst->ss_lb == NULL) print_error("[compute_singletons_slacks_bounds][extension]: Failed to allocate ss_ub or ss_lb.");
 
 	// Scan constraints that have singletons
 	for (int i = 0; i < inst->nrows; i++) {
 		if (inst->num_singletons[i] == 0) continue;
 
-		// Compute singletons slack upper and lower bound (range)
+		int beg = inst->rs_beg[i];
+
+		// Compute singletons slack upper and lower bound (row i)
 		for (int k = 0; k < inst->num_singletons[i]; k++) {
 
-			double coef = 0.0;
-			int singleton_index = inst->row_singletons[i][k];
-			CPXgetcoef(inst->env, inst->lp, i, singleton_index, &coef);
+			int singleton_index = inst->row_singletons[beg + k];
+			double coef = inst->rs_coef[beg + k];
 
 			if (coef > 0.0) {
 				inst->ss_ub[i] = inst->ss_ub[i] + coef * inst->ub[singleton_index];
@@ -260,5 +286,8 @@ void compute_singletons_slacks_bounds(instance* inst) {
 				inst->ss_lb[i] = inst->ss_lb[i] + coef * inst->ub[singleton_index];
 			}
 		}
+
+		// [DEBUG ONLY] Print singletons slacks bounds
+		print_verbose(200, "[DEBUG][compute_singletons_slacks_bounds][extension][row %d]: ss_lb = %f | ss_ub = %f\n", i + 1, inst->ss_lb[i], inst->ss_ub[i]);
 	}
 }

@@ -121,8 +121,8 @@ void zi_round(instance* inst) {
 			}
 		} // end inner loop
 		
-		if (updated) print_verbose(100, "[zi_round] ...Update found, scan variables again...\n");
-		else print_verbose(100, "[zi_round] ...No updates found, exit outer loop...\n");
+		if (updated) { print_verbose(100, "[zi_round] ...Update found, scan variables again...\n"); }
+		else { print_verbose(100, "[zi_round] ...No updates found, exit outer loop...\n"); }
 		
 		// [DEBUG ONLY] [BRUTE FORCE]  Check variable bounds and constraints
 		if (VERBOSE >= 120) {
@@ -151,9 +151,11 @@ void check_slacks(instance* inst, int j, double* delta_up, double* delta_down, c
 		int rowind = inst->cmatind[k];
 		double aij = inst->cmatval[k];
 		double curr_slack = 0.0;
+		double singletons_slack = 0.0;
 		double delta_slack = 0.0;
 		double new_slack = 0.0;
 		char msg[17];
+		int enough_slack = 0;
 
 		switch (inst->sense[rowind]) {
 
@@ -162,32 +164,86 @@ void check_slacks(instance* inst, int j, double* delta_up, double* delta_down, c
 				curr_slack = inst->slack[rowind];
 				delta_slack = (round_updown == 'U') ? (aij * delta_up[j]) : (aij * (-delta_down[j]));
 
-				// Slack after rounding
+				// Row slack after rounding (negative iff also singletons slack should be used)
 				new_slack = curr_slack - delta_slack;
-				sprintf(msg, (new_slack > -(TOLERANCE)) ? "Enough slack [OK]" : "NOT enough slack!");
+				print_verbose(20, "[check_slacks][x_%d aij %f][row %d '%c']: new_slack = %f ", j + 1, rowind + 1, inst->sense[rowind], new_slack);
+				if (new_slack < -(TOLERANCE)) print_verbose(20, "(need singletons slack!)\n");
+				else print_verbose(20, "\n");
 
-				print_verbose(120, "[check_slacks][x_%d aij %f][row %d '%c']: curr_slack %f (-) delta_slack = %f * %f = %f | %s\n",
-					j + 1, aij, rowind + 1, inst->sense[rowind], curr_slack, aij, (round_updown == 'U') ? delta_up[j] : (-delta_down[j]), delta_slack, msg);
+				// [EXTENSION] Distinguish inequality constraints with singletons (if extension enabled)
+				if (inst->extension && inst->num_singletons[rowind] > 0) {
 
-				if (msg[0] == 'N') print_error("[check_slacks][x_%d][row %d '%c']: After rounding, invalid slack. Found %f < 0.\n", 
-										j + 1, rowind + 1, inst->sense[rowind], new_slack);
+					// If the new row slack is negative then the remaining amount must be covered by the singletons slack
+					if (new_slack < -(TOLERANCE)) {
+
+						// Compute singletons slack of constraint rowind and get bounds
+						double ss_lb = inst->ss_lb[rowind];
+						double ss_ub = inst->ss_ub[rowind];
+						singletons_slack = compute_singletons_slack(inst, rowind);
+
+						// Singletons slack after rounding
+						double delta_ss = new_slack;
+						double new_ss = singletons_slack + delta_ss; // + because signed delta
+
+						// New singletons slack must stay within its bounds
+						sprintf(msg, (!(new_ss < ss_lb - TOLERANCE || new_ss > ss_ub + TOLERANCE)) ? "Enough slack [OK]" : "NOT enough slack!");
+					}
+				}
+				else {
+					// Extension disabled
+					if (!(inst->extension)) sprintf(msg, (new_slack > -(TOLERANCE)) ? "Enough slack [OK]" : "NOT enough slack!");
+
+					// If new_slack was negative then the extension must be enabled, otherwise an unknown error occured
+					if (new_slack < -(TOLERANCE)) print_error("[check_slacks][x_%d aij %f][row %d '%c']: new_slack negative but no singletons to cover it.", j + 1, rowind + 1, inst->sense[rowind]);
+				}
+
+				print_verbose(120, "[check_slacks][x_%d aij %f][row %d '%c']: curr_slack %f (-) delta_slack = %f * %f = %f | %s\n", j + 1, aij, rowind + 1, inst->sense[rowind], curr_slack, aij, (round_updown == 'U') ? delta_up[j] : (-delta_down[j]), delta_slack, msg);
+
+				if (msg[0] == 'N') print_error("[check_slacks][x_%d][row %d '%c']: After rounding, invalid slack. Found %f < 0.\n", j + 1, rowind + 1, inst->sense[rowind], new_slack);
 
 				break;
 
 			case 'G': // (slack non-positive)
-
+				
 				curr_slack = inst->slack[rowind];
 				delta_slack = (round_updown == 'U') ? (aij * delta_up[j]) : (aij * (-delta_down[j]));
 
-				// Slack after rounding
+				// Row slack after rounding (positive iff also singletons slack should be used)
 				new_slack = curr_slack - delta_slack;
-				sprintf(msg, (new_slack < TOLERANCE) ? "Enough slack [OK]" : "NOT enough slack!");
+				print_verbose(20, "[check_slacks][x_%d aij %f][row %d '%c']: new_slack = %f ", j + 1, rowind + 1, inst->sense[rowind], new_slack);
+				if (new_slack > TOLERANCE) print_verbose(20, "(need singletons slack!)\n");
+				else print_verbose(20, "\n");
 
-				print_verbose(120, "[check_slacks][x_%d aij %f][row %d '%c']: curr_slack %f (-) delta_slack = %f * %f = %f | %s\n",
-					j + 1, aij, rowind + 1, inst->sense[rowind], curr_slack, aij, (round_updown == 'U') ? delta_up[j] : (-delta_down[j]), delta_slack, msg);
+				// [EXTENSION] Distinguish inequality constraints with singletons (if extension enabled)
+				if (inst->extension && inst->num_singletons[rowind] > 0) {
 
-				if (msg[0] == 'N') print_error("[check_slacks][x_%d][row %d '%c']: After rounding, invalid slack. Found %f > 0.\n", 
-										j + 1, rowind + 1, inst->sense[rowind], new_slack);
+					// If the new row slack is positive then the remaining amount must be covered by the singletons slack
+					if (new_slack > TOLERANCE) {
+
+						// Compute singletons slack of constraint rowind and get bounds
+						double ss_lb = inst->ss_lb[rowind];
+						double ss_ub = inst->ss_ub[rowind];
+						singletons_slack = compute_singletons_slack(inst, rowind);
+
+						// Singletons slack after rounding
+						double delta_ss = new_slack;
+						double new_ss = singletons_slack + delta_ss; // + because signed delta
+
+						// New singletons slack must stay within its bounds
+						sprintf(msg, (!(new_ss < ss_lb - TOLERANCE || new_ss > ss_ub + TOLERANCE)) ? "Enough slack [OK]" : "NOT enough slack!");
+					}
+				}
+				else {
+					// Extension disabled
+					if (!(inst->extension)) sprintf(msg, (new_slack < TOLERANCE) ? "Enough slack [OK]" : "NOT enough slack!");
+
+					// If new_slack was positive then the extension must be enabled, otherwise an unknown error occured
+					if (new_slack > TOLERANCE) print_error("[check_slacks][x_%d aij %f][row %d '%c']: new_slack positive but no singletons to cover it.", j + 1, rowind + 1, inst->sense[rowind]);
+				}
+
+				print_verbose(120, "[check_slacks][x_%d aij %f][row %d '%c']: curr_slack %f (-) delta_slack = %f * %f = %f | %s\n", j + 1, aij, rowind + 1, inst->sense[rowind], curr_slack, aij, (round_updown == 'U') ? delta_up[j] : (-delta_down[j]), delta_slack, msg);
+
+				if (msg[0] == 'N') print_error("[check_slacks][x_%d][row %d '%c']: After rounding, invalid slack. Found %f > 0.\n", j + 1, rowind + 1, inst->sense[rowind], new_slack);
 
 				break;
 
@@ -197,25 +253,22 @@ void check_slacks(instance* inst, int j, double* delta_up, double* delta_down, c
 				if (inst->extension && inst->num_singletons[rowind] > 0) {
 
 					// Compute singletons slack of constraint rowind (with bounds)
-					double ss_lb = 0.0;
-					double ss_ub = 0.0;
-					curr_slack = singletons_slack_with_bounds(inst, rowind, &ss_lb, &ss_ub);
+					double ss_lb = inst->ss_lb[rowind];
+					double ss_ub = inst->ss_ub[rowind];
+					curr_slack = compute_singletons_slack(inst, rowind);
 					delta_slack = (round_updown == 'U') ? (aij * delta_up[j]) : (aij * (-delta_down[j]));
 
 					// Singletons slack after rounding
 					double new_ss = curr_slack - delta_slack;
 					sprintf(msg, (!(new_ss < ss_lb - TOLERANCE || new_ss > ss_ub + TOLERANCE)) ? "Enough slack [OK]" : "NOT enough slack!");
 						
-					print_verbose(120, "[check_slacks][extension][x_%d aij %f][row %d '%c']: curr_slack %f (-) delta_slack = %f * %f = %f | %s\n",
-						j + 1, aij, rowind + 1, inst->sense[rowind], curr_slack, aij, (round_updown == 'U') ? delta_up[j] : (-delta_down[j]), delta_slack, msg);
+					print_verbose(120, "[check_slacks][extension][x_%d aij %f][row %d '%c']: curr_slack %f (-) delta_slack = %f * %f = %f | %s\n", j + 1, aij, rowind + 1, inst->sense[rowind], curr_slack, aij, (round_updown == 'U') ? delta_up[j] : (-delta_down[j]), delta_slack, msg);
 
-					if (msg[0] == 'N') print_error("[check_slacks][extension][x_%d][row %d '%c']: After rounding, singletons slack out of bounds. Found %f <= %f <= %f.\n", 
-											j + 1, rowind + 1, inst->sense[rowind], ss_lb, new_ss, ss_ub);
+					if (msg[0] == 'N') print_error("[check_slacks][extension][x_%d][row %d '%c']: After rounding, singletons slack out of bounds. Found %f <= %f <= %f.\n", j + 1, rowind + 1, inst->sense[rowind], ss_lb, new_ss, ss_ub);
 				}
 				else {
 					// Extension disabled
-					print_error("[check_slacks][x_%d][row %d '%c']: Constraint has no singletons --> slack ZERO --> x_%d cannot be rounded.\n",
-						j + 1, rowind + 1, inst->sense[rowind], j + 1);
+					print_error("[check_slacks][x_%d][row %d '%c']: Constraint has no singletons --> slack ZERO --> x_%d cannot be rounded.\n", j + 1, rowind + 1, inst->sense[rowind], j + 1);
 				}
 
 				break;
@@ -377,16 +430,155 @@ void update_slacks(instance* inst, int j, double signed_delta) {
 
 		double aij = inst->cmatval[k];
 		int rowind = inst->cmatind[k];
+		double delta_slack = aij * signed_delta;
+		double curr_slack = inst->slack[rowind];
+		double temp_slack = 0.0;
 
 		switch (inst->sense[rowind]) {
 
-			case 'L':
-			case 'G':
+			case 'L': // (slack non-negative)
 
-				print_verbose(120, "[update_slacks][x_%d][row %d '%c']: slack = %f - (%f * %f) = %f.\n", 
-					j + 1, rowind + 1, inst->sense[rowind], inst->slack[rowind], aij, signed_delta, inst->slack[rowind] - aij * signed_delta);
+				// [EXTENSION] Distinguish inequality constraints with singletons (if extension enabled)
+				if (inst->extension && inst->num_singletons[rowind] > 0) {
 
-				inst->slack[rowind] = inst->slack[rowind] - aij * signed_delta;
+					// First, use at most all the row slack available to cover delta_slack
+					temp_slack = curr_slack - delta_slack;
+					// Update row slack
+					inst->slack[rowind] = max(0.0, temp_slack);
+
+					// If not enough row slack (temp_slack negative), resort to singletons slack
+					if (temp_slack < -(TOLERANCE)) {
+
+						// Delta singletons slack to distribute among the singletons [new_ss = ss + delta_ss (+ because signed delta)]
+						double delta_ss = temp_slack;
+
+						// Distribute delta among the singletons, stop when done (delta_ss negative --> singletons slack must decrease)
+						int beg = inst->rs_beg[rowind];
+						for (int k = 0; k < inst->num_singletons[rowind]; k++) {
+
+							// Stop updating the singletons when delta singletons slack has been covered
+							if (delta_ss > -(TOLERANCE)) break;
+							print_verbose(120, "[update_slacks][extension][row %d '%c']: Remaining delta singletons slack to distribute: %f.\n", rowind + 1, inst->sense[rowind], delta_ss);
+
+							// Singleton info
+							int singleton_index = inst->row_singletons[beg + k];
+							double coef = inst->rs_coef[beg + k];
+							double s_lb = inst->lb[singleton_index];
+							double s_ub = inst->ub[singleton_index];
+							double s_val = inst->x[singleton_index];
+							double covered_delta_ss = 0.0;
+							double max_s_delta = 0.0;
+							double s_delta = 0.0;
+
+							// Compute covered delta of the singleton
+							if (coef > 0.0) {
+								max_s_delta = s_val - s_lb;
+								covered_delta_ss = max(delta_ss, -coef * max_s_delta);
+							}
+							if (coef < 0.0) {
+								max_s_delta = s_ub - s_val;
+								covered_delta_ss = max(delta_ss, coef * max_s_delta);
+							}
+							// Update remaining delta to be covered by the next singletons
+							delta_ss = delta_ss - covered_delta_ss;
+
+							// Compute singleton delta
+							s_delta = covered_delta_ss / coef;
+							// Update singleton
+							inst->x[singleton_index] = s_val + s_delta;
+
+							// Update objective value
+							inst->objval = inst->objval + (inst->obj[singleton_index] * s_delta);
+						} // end for
+					}
+					else {
+						// Enough row slack, already updated above
+					}
+				}
+				else {
+					// Extension disabled
+					if (!(inst->extension)) {
+						// Just update row slack
+						print_verbose(120, "[update_slacks][x_%d][row %d '%c']: slack = %f - (%f * %f) = %f.\n", j + 1, rowind + 1, inst->sense[rowind], inst->slack[rowind], aij, signed_delta, inst->slack[rowind] - aij * signed_delta);
+						inst->slack[rowind] = inst->slack[rowind] - aij * signed_delta;
+					}
+
+					// If temp_slack was negative then the extension must be enabled, otherwise an unknown error occured
+					if (temp_slack < -(TOLERANCE)) print_error("[update_slacks][x_%d aij %f][row %d '%c']: temp_slack negative but no singletons to cover it.", j + 1, rowind + 1, inst->sense[rowind]);
+				}
+
+				break;
+
+			case 'G': // (slack non-positive)
+
+				// [EXTENSION] Distinguish inequality constraints with singletons (if extension enabled)
+				if (inst->extension && inst->num_singletons[rowind] > 0) {
+
+					// First, use at most all the row slack available to cover delta_slack
+					temp_slack = curr_slack - delta_slack;
+					// Update row slack
+					inst->slack[rowind] = min(0.0, temp_slack);
+
+					// If not enough row slack (temp_slack positive), resort to singletons slack
+					if (temp_slack > TOLERANCE) {
+
+						// Delta singletons slack to distribute among the singletons [new_ss = ss + delta_ss (+ because signed delta)]
+						double delta_ss = temp_slack;
+
+						// Distribute delta among the singletons, stop when done (delta_ss positive --> singletons slack must increase)
+						int beg = inst->rs_beg[rowind];
+						for (int k = 0; k < inst->num_singletons[rowind]; k++) {
+
+							// Stop updating the singletons when delta singletons slack has been covered
+							if (delta_ss < TOLERANCE) break;
+							print_verbose(120, "[update_slacks][extension][row %d '%c']: Remaining delta singletons slack to distribute: %f.\n", rowind + 1, inst->sense[rowind], delta_ss);
+
+							// Singleton info
+							int singleton_index = inst->row_singletons[beg + k];
+							double coef = inst->rs_coef[beg + k];
+							double s_lb = inst->lb[singleton_index];
+							double s_ub = inst->ub[singleton_index];
+							double s_val = inst->x[singleton_index];
+							double covered_delta_ss = 0.0;
+							double max_s_delta = 0.0;
+							double s_delta = 0.0;
+
+							// Compute covered delta of the singleton
+							if (coef > 0.0) {
+								max_s_delta = s_ub - s_val;
+								covered_delta_ss = min(delta_ss, coef * max_s_delta);
+							}
+							if (coef < 0.0) {
+								max_s_delta = s_val - s_lb;
+								covered_delta_ss = min(delta_ss, -coef * max_s_delta);
+							}
+							// Update remaining delta to be covered by the next singletons
+							delta_ss = delta_ss - covered_delta_ss;
+
+							// Compute singleton delta
+							s_delta = covered_delta_ss / coef;
+							// Update singleton
+							inst->x[singleton_index] = s_val + s_delta;
+
+							// Update objective value
+							inst->objval = inst->objval + (inst->obj[singleton_index] * s_delta);
+						} // end for
+					}
+					else {
+						// Enough row slack, already updated above
+					}
+				}
+				else {
+					// Extension disabled
+					if (!(inst->extension)) {
+						// Just update row slack
+						print_verbose(120, "[update_slacks][x_%d][row %d '%c']: slack = %f - (%f * %f) = %f.\n", j + 1, rowind + 1, inst->sense[rowind], inst->slack[rowind], aij, signed_delta, inst->slack[rowind] - aij * signed_delta);
+						inst->slack[rowind] = inst->slack[rowind] - aij * signed_delta;
+					}
+
+					// If temp_slack was negative then the extension must be enabled, otherwise an unknown error occured
+					if (temp_slack < -(TOLERANCE)) print_error("[update_slacks][x_%d aij %f][row %d '%c']: temp_slack negative but no singletons to cover it.", j + 1, rowind + 1, inst->sense[rowind]);
+				}
 
 				break;
 
@@ -396,9 +588,9 @@ void update_slacks(instance* inst, int j, double signed_delta) {
 				if (inst->extension && inst->num_singletons[rowind] > 0) {
 
 					// Compute singletons slack of constraint rowind (with bounds)
-					double ss_lb = 0.0;
-					double ss_ub = 0.0;
-					double singletons_slack = singletons_slack_with_bounds(inst, rowind, &ss_lb, &ss_ub);
+					double ss_lb = inst->ss_lb[rowind];
+					double ss_ub = inst->ss_ub[rowind];
+					double singletons_slack = compute_singletons_slack(inst, rowind);
 					
 					// Compute new singletons slack (after rounding xj):
 					// xj contribution increases (decreases) --> singletons slack decreases (increases) of the same amount
@@ -409,9 +601,9 @@ void update_slacks(instance* inst, int j, double signed_delta) {
 					// Update singletons
 					if (inst->num_singletons[rowind] == 1) {
 
-						int singleton_index = inst->row_singletons[rowind][0];
-						double coef = 0.0;
-						CPXgetcoef(inst->env, inst->lp, rowind, singleton_index, &coef);
+						int beg = inst->rs_beg[rowind];
+						int singleton_index = inst->row_singletons[beg];
+						double coef = inst->rs_coef[beg];
 						double new_singleton_val = new_ss / coef;
 
 						// Check bounds of new singleton value
@@ -433,6 +625,8 @@ void update_slacks(instance* inst, int j, double signed_delta) {
 						double remaining = new_ss;
 						print_verbose(120, "[update_slacks][extension][row %d '%c']: Singletons slack to distribute %f\n", rowind + 1, inst->sense[rowind], remaining);
 
+						int beg = inst->rs_beg[rowind];
+
 						// Positive singletons slack to distribute
 						if (new_ss > TOLERANCE) {
 
@@ -443,9 +637,8 @@ void update_slacks(instance* inst, int j, double signed_delta) {
 									rowind + 1, inst->sense[rowind], remaining);
 
 								// Singleton info
-								double coef = 0.0;
-								int singleton_index = inst->row_singletons[rowind][k];
-								CPXgetcoef(inst->env, inst->lp, rowind, singleton_index, &coef);
+								int singleton_index = inst->row_singletons[beg + k];
+								double coef = inst->rs_coef[beg + k];
 								double s_lb = inst->lb[singleton_index];
 								double s_ub = inst->ub[singleton_index];
 
@@ -514,9 +707,8 @@ void update_slacks(instance* inst, int j, double signed_delta) {
 									rowind + 1, inst->sense[rowind], remaining);
 
 								// Singleton info
-								double coef = 0.0;
-								int singleton_index = inst->row_singletons[rowind][k];
-								CPXgetcoef(inst->env, inst->lp, rowind, singleton_index, &coef);
+								int singleton_index = inst->row_singletons[beg + k];
+								double coef = inst->rs_coef[beg + k];
 								double s_lb = inst->lb[singleton_index];
 								double s_ub = inst->ub[singleton_index];
 
@@ -583,7 +775,7 @@ void update_slacks(instance* inst, int j, double signed_delta) {
 							for (int k = 0; k < inst->num_singletons[rowind]; k++) {
 
 								// Singleton info
-								int singleton_index = inst->row_singletons[rowind][k];
+								int singleton_index = inst->row_singletons[beg + k];
 								double s_lb = inst->lb[singleton_index];
 								double s_ub = inst->ub[singleton_index];
 
@@ -637,9 +829,7 @@ void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, c
 	double candidate_down1; /**< Current delta_down[j] minor candidate. */
 	double new_delta_up;    /**< Final delta_up[j] winner. */
 	double new_delta_down;  /**< Final delta_down[j] winner. */
-	double aij;				/**< Current coefficient. */
-	int rowind;				/**< Current row index. */
-	int colend;				/**< Index of the last non-zero coefficient of the current column. */
+	int colend;				/**< Index of the last non-zero coefficient of column j. */
 
 	// Initialize
 	delta_up1   = LONG_MAX;
@@ -648,14 +838,34 @@ void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, c
 	delta_down2 = inst->x[j] - inst->lb[j];
 	colend      = (j < inst->ncols - 1) ? inst->cmatbeg[j + 1] : inst->nzcnt;
 	
-	print_verbose(200, "[delta_updown]: delta_up2_%d = ub_%d - x_%d = %f - %f = %f ; delta_down2_%d = x_%d - lb_%d = %f - %f = %f\n",
-		j + 1, j + 1, j + 1, inst->ub[j], inst->x[j], delta_up2, j + 1, j + 1, j + 1, inst->x[j], inst->lb[j], delta_down2);
+	print_verbose(200, "[delta_updown]: delta_up2_%d = ub_%d - x_%d = %f - %f = %f ; delta_down2_%d = x_%d - lb_%d = %f - %f = %f\n", j + 1, j + 1, j + 1, inst->ub[j], inst->x[j], delta_up2, j + 1, j + 1, j + 1, inst->x[j], inst->lb[j], delta_down2);
 
-	// Scan non-zero coefficients of column j
+	// Scan constraints of variable xj
 	for (int k = inst->cmatbeg[j]; k < colend; k++) {
 
-		aij = inst->cmatval[k];
-		rowind = inst->cmatind[k];
+		double aij = inst->cmatval[k];      // Coefficient of xj in the constraint
+		int rowind = inst->cmatind[k];      // Constraint index
+		double slack = inst->slack[rowind]; // Constraint row slack (no singleton slack included)
+
+		// [EXTENSION] Get singletons slack info (if any)
+		double ss_lb = LONG_MAX;
+		double ss_ub = LONG_MIN;
+		double singletons_slack = 0.0;
+		double ss_delta_up = 0.0;
+		double ss_delta_down = 0.0;
+		if (inst->extension && inst->num_singletons[rowind] > 0) {
+
+			// Compute singletons slack of constraint rowind and get bounds
+			ss_lb = inst->ss_lb[rowind];
+			ss_ub = inst->ss_ub[rowind];
+			singletons_slack = compute_singletons_slack(inst, rowind);
+
+			// Conpute singletons slack deltas (clip to zero if non-positive)
+			ss_delta_up = ss_ub - singletons_slack;
+			ss_delta_down = singletons_slack - ss_lb;
+			if (ss_delta_up < 0.0) ss_delta_up = 0.0;
+			if (ss_delta_down < 0.0) ss_delta_down = 0.0;
+		}
 		
 		// Check sense, then check sign of aij, and update delta_up1, delta_down1
 		switch (inst->sense[rowind]) {
@@ -663,29 +873,31 @@ void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, c
 			case 'L': // (slack non-negative)
 
 				// [TEMPORARY]
-				if (inst->extension && inst->num_singletons[rowind] > 0) 
-					print_error("[delta_updown][extension][x_%d][row %d '%c']: Inequality constraint has %d singletons.\n",
-					j + 1, rowind + 1, inst->sense[rowind], inst->num_singletons[rowind]);
+				if (inst->extension && inst->num_singletons[rowind] > 0) print_error("[delta_updown][extension][x_%d][row %d '%c']: Inequality constraint has %d singletons.\n", j + 1, rowind + 1, inst->sense[rowind], inst->num_singletons[rowind]);
 
 				// Clip slack to zero if negative
-				if (inst->slack[rowind] < 0.0 - TOLERANCE) inst->slack[rowind] = 0.0;
+				if (inst->slack[rowind] < 0.0 - TOLERANCE) { 
+					inst->slack[rowind] = 0.0; 
+					slack = inst->slack[rowind]; 
+				}
+
+				// [EXTENSION] Update available slack: 'L' constraint --> singletons slack (if any) should decrease
+				if (inst->extension && inst->num_singletons[rowind] > 0) slack = slack + ss_delta_down; // overall slack increases
 
 				if (aij > 0.0) { 
 					
-					print_verbose(200, "[delta_updown]: sense = L ; slack[%d] = %f ; a_%d_%d = %f ; candidate_up1_%d = %f\n",
-						rowind + 1, inst->slack[rowind], rowind + 1, j + 1, aij, j + 1, inst->slack[rowind] / aij);
-					
+					print_verbose(200, "[delta_updown]: sense = L ; slack[%d] = %f ; a_%d_%d = %f (--> candidate_up1)\n", rowind + 1, inst->slack[rowind], rowind + 1, j + 1, aij, j + 1);
+
 					// Update delta_up1
-					candidate_up1 = inst->slack[rowind] / aij;
+					candidate_up1 = slack / aij;
 					delta_up1 = min(candidate_up1, delta_up1);
 				}
 				if (aij < 0.0) {
 
-					print_verbose(200, "[delta_updown]: sense = L ; slack[%d] = %f ; a_%d_%d = %f ; candidate_down1_%d = %f\n",
-						rowind + 1, inst->slack[rowind], rowind + 1, j + 1, aij, j + 1, -(inst->slack[rowind]) / aij);
+					print_verbose(200, "[delta_updown]: sense = L ; slack[%d] = %f ; a_%d_%d = %f (--> candidate_down1)\n", rowind + 1, inst->slack[rowind], rowind + 1, j + 1, aij, j + 1);
 
 					// Update delta_down1
-					candidate_down1 = -(inst->slack[rowind]) / aij;
+					candidate_down1 = -(slack) / aij;
 					delta_down1 = min(candidate_down1, delta_down1);
 				}
 
@@ -694,29 +906,31 @@ void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, c
 			case 'G': // (slack non-positive)
 
 				// [TEMPORARY]
-				if (inst->extension && inst->num_singletons[rowind] > 0) 
-					print_error("[delta_updown][extension][x_%d][row %d '%c']: Inequality constraint has %d singletons.\n",
-					j + 1, rowind + 1, inst->sense[rowind], inst->num_singletons[rowind]);
+				if (inst->extension && inst->num_singletons[rowind] > 0) print_error("[delta_updown][extension][x_%d][row %d '%c']: Inequality constraint has %d singletons.\n", j + 1, rowind + 1, inst->sense[rowind], inst->num_singletons[rowind]);
 
 				// Clip slack to zero if positive
-				if (inst->slack[rowind] > 0.0 + TOLERANCE) inst->slack[rowind] = 0.0;
+				if (inst->slack[rowind] > 0.0 + TOLERANCE) { 
+					inst->slack[rowind] = 0.0;
+					slack = inst->slack[rowind];
+				}
+
+				// [EXTENSION] Update available slack: 'G' constraint --> singletons slack (if any) should increase
+				if (inst->extension && inst->num_singletons[rowind] > 0) slack = slack - ss_delta_up; // overall slack decreases (increases in absolute value)
 
 				if (aij < 0.0) {
 
-					print_verbose(200, "[delta_updown]: sense = G ; slack[%d] = %f ; a_%d_%d = %f ; candidate_up1_%d = %f\n",
-						rowind + 1, inst->slack[rowind], rowind + 1, j + 1, aij, j + 1, inst->slack[rowind] / aij);
+					print_verbose(200, "[delta_updown]: sense = G ; slack[%d] = %f ; a_%d_%d = %f (--> candidate_up1)\n", rowind + 1, inst->slack[rowind], rowind + 1, j + 1, aij, j + 1);
 
 					// Update delta_up1
-					candidate_up1 = inst->slack[rowind] / aij;
+					candidate_up1 = slack / aij;
 					delta_up1 = min(candidate_up1, delta_up1);
 				}
 				if (aij > 0.0) {
 
-					print_verbose(200, "[delta_updown]: sense = G ; slack[%d] = %f ; a_%d_%d = %f ; candidate_down1_%d = %f\n",
-						rowind + 1, inst->slack[rowind], rowind + 1, j + 1, aij, j + 1, -(inst->slack[rowind]) / aij);
+					print_verbose(200, "[delta_updown]: sense = G ; slack[%d] = %f ; a_%d_%d = %f (--> candidate_down1)\n", rowind + 1, inst->slack[rowind], rowind + 1, j + 1, aij, j + 1);
 
 					// Update delta_down1
-					candidate_down1 = -(inst->slack[rowind]) / aij;
+					candidate_down1 = -(slack) / aij;
 					delta_down1 = min(candidate_down1, delta_down1);
 				}
 
@@ -729,18 +943,9 @@ void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, c
 
 					print_verbose(120, "[delta_updown][extension][x_%d][row %d '%c']: %d singletons. ", j + 1, rowind + 1, inst->sense[rowind], inst->num_singletons[rowind]);
 
-					// Compute singletons slack of constraint rowind (with bounds)
-					double ss_lb = 0.0;
-					double ss_ub = 0.0;
-					double singletons_slack = singletons_slack_with_bounds(inst, rowind, &ss_lb, &ss_ub);
-
-					print_verbose(120, "Singletons slack = %f. Bounds %f <= ss <= %f\n", singletons_slack, ss_lb, ss_ub);
-
-					// Singletons slack deltas (clip to zero if non-positive)
-					double ss_delta_up = ss_ub - singletons_slack;
-					double ss_delta_down = singletons_slack - ss_lb;
-					if (ss_delta_up < 0.0) ss_delta_up = 0.0;
-					if (ss_delta_down < 0.0) ss_delta_down = 0.0;
+					// Compute singletons slack of constraint rowind and get bounds (done above)
+					print_verbose(120, "[delta_updown][extension][x_%d][row %d '%c']: Singletons slack = %f. Bounds %f <= ss <= %f\n", j + 1, rowind + 1, inst->sense[rowind], singletons_slack, ss_lb, ss_ub);
+					// Compute singletons slack deltas (done above)
 
 					// Update candidate deltas
 					if (aij > 0.0) {
@@ -752,10 +957,8 @@ void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, c
 						if (fabs(candidate_up1) < TOLERANCE) candidate_up1 = 0.0;
 
 						// Check candidates signs
-						if (candidate_down1 < -(TOLERANCE) ||
-							candidate_up1 < -(TOLERANCE))
-							print_error("[delta_updown][extension][x_%d][row %d '%c']: Negative candidate deltas. Found %f and %f.",
-								j + 1, rowind + 1, inst->sense[rowind], candidate_down1, candidate_up1);
+						if (candidate_down1 < -(TOLERANCE) || candidate_up1 < -(TOLERANCE))
+							print_error("[delta_updown][extension][x_%d][row %d '%c']: Negative candidate deltas. Found %f and %f.", j + 1, rowind + 1, inst->sense[rowind], candidate_down1, candidate_up1);
 
 						delta_down1 = min(candidate_down1, delta_down1);
 						delta_up1 = min(candidate_up1, delta_up1);
@@ -769,10 +972,8 @@ void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, c
 						if (fabs(candidate_up1) < TOLERANCE) candidate_up1 = 0.0;
 
 						// Check candidates signs
-						if (candidate_down1 < -(TOLERANCE) ||
-							candidate_up1 < -(TOLERANCE))
-							print_error("[delta_updown][extension][x_%d][row %d '%c']: Negative candidate deltas. Found %f and %f.",
-								j + 1, rowind + 1, inst->sense[rowind], candidate_down1, candidate_up1);
+						if (candidate_down1 < -(TOLERANCE) || candidate_up1 < -(TOLERANCE))
+							print_error("[delta_updown][extension][x_%d][row %d '%c']: Negative candidate deltas. Found %f and %f.", j + 1, rowind + 1, inst->sense[rowind], candidate_down1, candidate_up1);
 
 						delta_down1 = min(candidate_down1, delta_down1);
 						delta_up1 = min(candidate_up1, delta_up1);
@@ -812,29 +1013,18 @@ void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, c
 }
 
 // [EXTENSION]
-double singletons_slack_with_bounds(instance* inst, int rowind, double* lb, double* ub) {
+double compute_singletons_slack(instance* inst, int rowind) {
 
-	if (inst->num_singletons[rowind] <= 0) print_error("[singletons_slack_with_bounds][extension]: Tried to compute singletons slack of row %d with no singletons.\n", rowind + 1);
+	if (inst->num_singletons[rowind] <= 0) print_error("[compute_singletons_slack][extension]: Tried to compute singletons slack of row %d with no singletons.\n", rowind + 1);
 
-	// Compute singletons slack with upper and lower bound (range)
-	*ub = 0.0;
-	*lb = 0.0;
+	// Compute singletons slack
 	double singletons_slack = 0.0;
+	int beg = inst->rs_beg[rowind];
 	for (int k = 0; k < inst->num_singletons[rowind]; k++) {
 
-		double coef = 0.0;
-		int singleton_index = inst->row_singletons[rowind][k];
-		CPXgetcoef(inst->env, inst->lp, rowind, singleton_index, &coef);
+		int singleton_index = inst->row_singletons[beg + k];
+		double coef = inst->rs_coef[beg + k];
 		singletons_slack += (coef * inst->x[singleton_index]);
-
-		if (coef > 0.0) {
-			*ub = *ub + coef * inst->ub[singleton_index];
-			*lb = *lb + coef * inst->lb[singleton_index];
-		}
-		if (coef < 0.0) {
-			*ub = *ub + coef * inst->lb[singleton_index];
-			*lb = *lb + coef * inst->ub[singleton_index];
-		}
 	}
 
 	return singletons_slack;

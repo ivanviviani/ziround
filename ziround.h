@@ -100,7 +100,10 @@ typedef struct {
     int objsen; 			/**< Objective function sense, CPX_MIN (default) or CPX_MAX (specified from command line). */
     char* vartype; 		    /**< Variable types (before converting MIP to LP), integer/binary or continuous. */
     int* int_var; 			/**< Flags array that keeps track of integer/binary (value 1) and continuous (value 0) variables. */
-    int** row_singletons;
+    int* row_singletons;
+    int rs_size;
+    int* rs_beg;
+    double* rs_coef;
     int* num_singletons;
     double* ss_ub;
     double* ss_lb;
@@ -248,24 +251,7 @@ void find_singletons(instance* inst);
 /**
  * @brief TODO
  */
-void find_slack_variables(instance* inst);
-
-/**
- * @brief Extend row slacks by considering also continuous variables that
- *        are involved in only one equality constraint.
- *
- * @param inst Pointer to the already populated instance.
- */
-void extend_row_slacks(instance* inst);
-
-/**
- * @brief Extend constraints senses by considering unique equality constraints
- *        in which continuous variables are involved as less/greater than
- *        constraints, depending on their extended row slack.
- *
- * @param inst Pointer to the already populated instance.
- */
-void extend_constraints_senses(instance* inst);
+void compute_singletons_slacks_bounds(instance* inst);
 
 /**
  * @brief Read the problem data from the CPLEX lp using all the read functions,
@@ -329,7 +315,7 @@ void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, c
 /**
  * @brief TODO
  */
-double singletons_slack_with_bounds(instance* inst, int rowind, double* lb, double* ub);
+double compute_singletons_slack(instance* inst, int rowind);
 
 /**
  * @brief Check that all the variable bounds are satisfied, for the
