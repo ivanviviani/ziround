@@ -11,6 +11,8 @@ void populate_inst(instance* inst) {
 	// Read problem sizes
 	inst->nrows = CPXgetnumrows(inst->env, inst->lp);
 	inst->ncols = CPXgetnumcols(inst->env, inst->lp);
+	assert(positive_integer(inst->nrows));
+	assert(positive_integer(inst->ncols));
 
 	read_solution(inst);
 
@@ -18,6 +20,7 @@ void populate_inst(instance* inst) {
 
 	// Read objective info
 	inst->objsen = CPXgetobjsen(inst->env, inst->lp);
+	assert(valid_obj_sense(inst->objsen));
 	read_objective_value(inst);
 	read_objective_coefficients(inst);
 
@@ -31,7 +34,6 @@ void populate_inst(instance* inst) {
 	if (inst->extension) {
 		find_singletons(inst);
 		compute_singletons_slacks_bounds(inst);
-		//exit(0);
 	}
 }
 
@@ -40,7 +42,6 @@ void read_solution(instance* inst) {
 	int solstat;   /**< Solution status according to CPLEX. */
 	int solmethod; /**< Solution method according to CPLEX. */
 	int soltype;   /**< Solution type according to CPLEX. */
-	int status = 0;
 
 	// Allocate solution
 	inst->x = (double*)malloc(inst->ncols * sizeof(double)); if (inst->x == NULL) print_error("[read_solution]: Failed to allocate solution.\n");
@@ -61,11 +62,11 @@ void read_solution(instance* inst) {
 
 	// Get solution info
 	if (CPXsolninfo(inst->env, inst->lp, &(solmethod), &(soltype), NULL, NULL)) print_error("[read_solution]: Failed to obtain solution info.\n");
-	if (soltype == CPX_NO_SOLN)                                                 print_error("[read_solution]: Solution not available.\n");
+	if (soltype == CPX_NO_SOLN) print_error("[read_solution]: Solution not available.\n");
 	print_verbose(150, "Solution status %d, solution method %d.\n", solstat, solmethod);
 
 	// Get solution
-	if (CPXgetx(inst->env, inst->lp, inst->x, 0, inst->ncols - 1))              print_error("[read_solution]: Failed to obtain primal solution.\n");
+	if (CPXgetx(inst->env, inst->lp, inst->x, 0, inst->ncols - 1)) print_error("[read_solution]: Failed to obtain primal solution.\n");
 }
 
 void read_variable_bounds(instance* inst) {
@@ -105,12 +106,11 @@ void read_objective_coefficients(instance* inst) {
 
 void read_constraints_coefficients(instance* inst) {
 
-	// Local variables
 	int unused = 0;
-	int status = 0;
 
 	// First, get the number of non zero coefficients of the matrix (nzcnt)
 	inst->nzcnt = CPXgetnumnz(inst->env, inst->lp);
+	assert(positive_integer(inst->nzcnt));
 
 	// Allocate constraints info
 	inst->rmatbeg = (int*)malloc(inst->nrows * sizeof(int));
@@ -119,8 +119,7 @@ void read_constraints_coefficients(instance* inst) {
 	inst->cmatbeg = (int*)malloc(inst->ncols * sizeof(int));
 	inst->cmatind = (int*)malloc(inst->nzcnt * sizeof(int));
 	inst->cmatval = (double*)malloc(inst->nzcnt * sizeof(double));
-	if (inst->rmatbeg == NULL || inst->rmatind == NULL || inst->rmatval == NULL ||
-		inst->cmatbeg == NULL || inst->cmatind == NULL || inst->cmatval == NULL) {
+	if (inst->rmatbeg == NULL || inst->rmatind == NULL || inst->rmatval == NULL || inst->cmatbeg == NULL || inst->cmatind == NULL || inst->cmatval == NULL) {
 		print_error("[read_constraints_coefficients]: Failed to allocate one of rmatbeg, rmatind, rmatval, cmatbeg, cmatind, cmatval.\n");
 	}
 
@@ -131,17 +130,15 @@ void read_constraints_coefficients(instance* inst) {
 
 void read_constraints_senses(instance* inst) {
 
-	// Local variables
-	int status = 0;
-
 	// Allocate constraint senses
 	inst->sense = (char*)malloc(inst->nrows * sizeof(char)); if (inst->sense == NULL) print_error("[read_constraints_senses]: Failed to allocate constraint senses.\n");
 
 	// Get constraint senses {'L','E','G'}
 	if (CPXgetsense(inst->env, inst->lp, inst->sense, 0, inst->nrows - 1)) print_error("[read_constraints_senses]: Failed to obtain constraints senses.\n");
+	assert(no_ranged_constraints(inst->sense, inst->nrows));
 
 	// [DEBUG ONLY] Print constraints senses
-	if (inst->extension && VERBOSE >= 200) {
+	if (VERBOSE >= 200) {
 		printf("\n\n");
 		for (int i = 0; i < inst->nrows; i++) {
 			printf("%c ", inst->sense[i]);
@@ -162,10 +159,11 @@ void read_constraints_right_hand_sides(instance* inst) {
 void read_row_slacks(instance* inst) {
 
 	// Allocate row slacks
-	inst->slack = (double*)malloc(inst->nrows * sizeof(double)); if (inst->slack == NULL) print_error("[read_row_slacks]: Failed to allocate slacks.\n");
+	inst->slack = (double*)malloc(inst->nrows * sizeof(double)); if (inst->slack == NULL) print_error("[read_row_slacks]: Failed to allocate row slacks.\n");
 
 	// Get row slacks
 	if (CPXgetslack(inst->env, inst->lp, inst->slack, 0, inst->nrows - 1)) print_error("[read_row_slacks]: Failed to obtain slacks.\n");
+	assert(valid_row_slacks(inst->slack, inst->sense, inst->nrows));
 }
 
 // [EXTENSION]
@@ -175,9 +173,10 @@ void find_singletons(instance* inst) {
 	int* count = (int*)calloc((size_t)inst->nrows, sizeof(int)); if (inst->num_singletons == NULL || count == NULL) print_error("[find_singletons][extension]: Failed to allocate num_singletons or count.\n");
 
 	// Count number of singletons for each row (scan continuous variables)
-	inst->rs_size = 0;
+	inst->rs_size = 0; // Total number of singletons
 	for (int j = 0; j < inst->ncols; j++) {
 		if (inst->vartype[j] != CPX_CONTINUOUS) continue;
+		assert(var_type_continuous(inst->vartype[j]));
 
 		int colend = (j < inst->nrows - 1) ? inst->cmatbeg[j + 1] : inst->nzcnt;
 
@@ -185,12 +184,15 @@ void find_singletons(instance* inst) {
 		if (inst->cmatbeg[j] == colend - 1) {
 
 			int rowind = inst->cmatind[inst->cmatbeg[j]];
+			assert(index_in_bounds(rowind, inst->nrows));
 			print_verbose(200, "[find_singletons][extension]: x_%d = %f in constraint %d ('%c')\n", j, inst->x[j], rowind, inst->sense[rowind]);
 			inst->num_singletons[rowind]++;
 			count[rowind]++;
 			inst->rs_size++;
 		}
 	}
+	assert(non_negative_integer(inst->rs_size));
+	print_verbose(120, "[find_singletons][extension]: Total number of singletons = %d\n", inst->rs_size);
 
 	inst->row_singletons = (int*)malloc((size_t)inst->rs_size * sizeof(int));
 	inst->rs_beg = (int*)malloc((size_t)inst->nrows * sizeof(int));
@@ -203,6 +205,7 @@ void find_singletons(instance* inst) {
 	int prev = -1; // Index of previous row with beg index
 	for (int i = 0; i < inst->nrows; i++) {
 		if (inst->num_singletons[i] == 0) continue;
+		assert(positive_integer(inst->num_singletons[i]));
 
 		if (first == 0) {
 			inst->rs_beg[i] = 0;
@@ -210,7 +213,8 @@ void find_singletons(instance* inst) {
 			prev = i;
 		}
 		else {
-			int index = inst->rs_beg[prev] + inst->num_singletons[prev];
+			int index = inst->rs_beg[prev] + inst->num_singletons[prev]; 
+			assert(index_in_bounds(index, inst->rs_size));
 			inst->rs_beg[i] = index;
 			prev = i;
 		}
@@ -223,21 +227,30 @@ void find_singletons(instance* inst) {
 
 	// Populate singleton indices and coefficients for each row
 	for (int j = 0; j < inst->ncols; j++) {
-		if (inst->vartype[j] != CPX_CONTINUOUS) continue;
+		if (inst->vartype[j] != CPX_CONTINUOUS) continue; 
+		assert(var_type_continuous(inst->vartype[j]));
 
 		int colend = (j < inst->nrows - 1) ? inst->cmatbeg[j + 1] : inst->nzcnt;
 
 		// If the variable appears in only one constraint
 		if (inst->cmatbeg[j] == colend - 1) {
 
-			int rowind = inst->cmatind[colend - 1];
-			int offset = inst->num_singletons[rowind] - count[rowind];
-			int beg = inst->rs_beg[rowind];
+			int rowind = inst->cmatind[colend - 1];                    
+			assert(index_in_bounds(rowind, inst->nrows));
+
+			int offset = inst->num_singletons[rowind] - count[rowind]; 
+			assert(non_negative_integer(offset));
+
+			int beg = inst->rs_beg[rowind];                            
+			assert(index_in_bounds(beg + offset, inst->rs_size));
+
 			inst->row_singletons[beg + offset] = j;
 			inst->rs_coef[beg + offset] = inst->cmatval[colend - 1];
 			count[rowind]--;
 		}
 	}
+	assert(array_of_zeros(count, inst->nrows));
+	free(count);
 
 	// [DEBUG ONLY] Print row singletons (indices)
 	if (VERBOSE >= 200) {
@@ -253,41 +266,42 @@ void find_singletons(instance* inst) {
 		}
 		fprintf(stdout, "\n");
 	}
-
-	// Free
-	free(count);
 }
 
 // [EXTENSION]
 void compute_singletons_slacks_bounds(instance* inst) {
 
 	inst->ss_ub = (double*)calloc((size_t)inst->nrows, sizeof(double));
-	inst->ss_lb = (double*)calloc((size_t)inst->nrows, sizeof(double));
-	if (inst->ss_ub == NULL || inst->ss_lb == NULL) print_error("[compute_singletons_slacks_bounds][extension]: Failed to allocate ss_ub or ss_lb.");
+	inst->ss_lb = (double*)calloc((size_t)inst->nrows, sizeof(double)); if (inst->ss_ub == NULL || inst->ss_lb == NULL) print_error("[compute_singletons_slacks_bounds][extension]: Failed to allocate ss_ub or ss_lb.");
 
 	// Scan constraints that have singletons
 	for (int i = 0; i < inst->nrows; i++) {
-		if (inst->num_singletons[i] == 0) continue;
+		if (inst->num_singletons[i] == 0) continue; // Skip rows with no singletons
+		assert(positive_integer(inst->num_singletons[i]));
 
-		int beg = inst->rs_beg[i];
+		int beg = inst->rs_beg[i]; 
+		assert(index_in_bounds(beg, inst->rs_size));
 
 		// Compute singletons slack upper and lower bound (row i)
 		for (int k = 0; k < inst->num_singletons[i]; k++) {
 
-			int singleton_index = inst->row_singletons[beg + k];
+			assert(index_in_bounds(beg + k, inst->rs_size));
+			int singleton_index = inst->row_singletons[beg + k]; 
+			assert(index_in_bounds(singleton_index, inst->ncols));
 			double coef = inst->rs_coef[beg + k];
 
 			if (coef > 0.0) {
-				inst->ss_ub[i] = inst->ss_ub[i] + coef * inst->ub[singleton_index];
-				inst->ss_lb[i] = inst->ss_lb[i] + coef * inst->lb[singleton_index];
+				inst->ss_ub[i] += (coef * inst->ub[singleton_index]);
+				inst->ss_lb[i] += (coef * inst->lb[singleton_index]);
 			}
 			if (coef < 0.0) {
-				inst->ss_ub[i] = inst->ss_ub[i] + coef * inst->lb[singleton_index];
-				inst->ss_lb[i] = inst->ss_lb[i] + coef * inst->ub[singleton_index];
+				inst->ss_ub[i] += (coef * inst->lb[singleton_index]);
+				inst->ss_lb[i] += (coef * inst->ub[singleton_index]);
 			}
 		}
 
 		// [DEBUG ONLY] Print singletons slacks bounds
 		print_verbose(200, "[DEBUG][compute_singletons_slacks_bounds][extension][row %d]: ss_lb = %f | ss_ub = %f\n", i + 1, inst->ss_lb[i], inst->ss_ub[i]);
 	}
+	assert(valid_bounds(inst->ss_lb, inst->ss_ub, inst->nrows));
 }

@@ -66,6 +66,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <math.h>
+#include <assert.h>
 
 /**
  * @brief Verbosity level.
@@ -301,6 +302,11 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 void update_slacks(instance* inst, int j, double signed_delta);
 
 /**
+ * TODO
+ */
+void update_singletons(instance* inst, int rowind, double delta_ss);
+
+/**
  * @brief Compute the j-th entries of the arrays of possible up-shifts and down-shifts
  *        according to the ZI-Round heuristic specifications.
  *
@@ -426,5 +432,21 @@ void print_error(const char* err, ...);
  *	@param ... The multiple parameters.
  */
 void print_verbose(int msg_verb, const char* format, ...);
+
+// ASSERTS
+int positive_integer(int num);
+int non_negative_integer(int num);
+int non_negative_double(double num);
+int non_positive_double(double num);
+int valid_obj_sense(int objsen);
+int no_ranged_constraints(char* sense, int nrows);
+int valid_row_slacks(double* slack, char* sense, int nrows);
+int valid_var_types(char* vartype, int ncols);
+int var_type_integer_or_binary(char vartype);
+int var_type_continuous(char vartype);
+int index_in_bounds(int ind, int len);
+int array_of_zeros(int* arr, int len);
+int valid_bounds(double* lower, double* upper, int nvars);
+int var_in_bounds(double var, double lb, double ub);
 
 #endif /* ZIROUND_H_ */

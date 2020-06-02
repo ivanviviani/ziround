@@ -37,7 +37,7 @@ void read_MIP_problem(instance* inst, char* filename) {
 
 void save_integer_variables(instance* inst) {
 	
-	int ncols = CPXgetnumcols(inst->env, inst->lp);
+	int ncols = CPXgetnumcols(inst->env, inst->lp); assert(ncols > 0);
 
 	// Allocate variable types
 	inst->vartype = (char*)malloc(ncols * sizeof(char)); if (inst->vartype == NULL) print_error("[save_integer_variables]: Failed to allocate vartype.\n");
@@ -45,19 +45,27 @@ void save_integer_variables(instance* inst) {
 
 	// Get MIP variable types {CPX_CONTINUOUS, CPX_BINARY, CPX_INTEGER, CPX_SEMICONT, CPX_SEMIINT}
 	if (CPXgetctype(inst->env, inst->lp, inst->vartype, 0, ncols - 1)) print_error("[save_integer_variables]: Failed to obtain MIP variable types.\n");
+	assert(valid_var_types(inst->vartype, ncols));
 
 	// Remember integer variables {CPX_BINARY, CPX_INTEGER}
 	for (int j = 0; j < ncols; j++) {
-		if (inst->vartype[j] == CPX_INTEGER || inst->vartype[j] == CPX_BINARY) {
 
-			inst->int_var[j] = 1;
+		switch (inst->vartype[j]) {
+			case CPX_INTEGER:
+			case CPX_BINARY:
+				inst->int_var[j] = 1;
+				break;
+			case CPX_CONTINUOUS:
+				inst->int_var[j] = 0;
+				break;
+			default:
+				print_error(100, "[save_integer_variables][x_%d]: Type '%c' not supported.\n", j + 1, inst->vartype[j]);
 		}
-		else if (inst->vartype[j] != CPX_CONTINUOUS) print_verbose(100, "[INFO][save_integer_variables]: Variable x_%d of type '%c' found.\n", j + 1, inst->vartype[j]);
 	}
 }
 
 void solve_continuous_relaxation(instance* inst) {
 
 	if (CPXchgprobtype(inst->env, inst->lp, CPXPROB_LP)) print_error("[solve_continuous_relaxation]: Failed to change problem type.\n");
-	if (CPXlpopt(inst->env, inst->lp))                   print_error("[solve_continuous_relaxation]: Failed to optimize LP.\n");
+	if (CPXlpopt(inst->env, inst->lp)) print_error("[solve_continuous_relaxation]: Failed to optimize LP.\n");
 }

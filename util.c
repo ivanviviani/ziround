@@ -10,7 +10,7 @@ void check_bounds(instance* inst, double* x) {
 
 	// Scan xj variables
 	for (int j = 0; j < inst->ncols; j++) {
-		if ((x[j] - inst->lb[j]) < -(TOLERANCE) || (x[j] - inst->ub[j]) > TOLERANCE) {
+		if ((x[j] < inst->lb[j] - TOLERANCE) || (x[j] > inst->ub[j] + TOLERANCE)) {
 			print_error("[check_bounds]: Bound %d violated: %f <= x_%d %f <= %f\n", j + 1, inst->lb[j], j + 1, inst->x[j], inst->ub[j]);
 		}
 	}
@@ -28,7 +28,8 @@ void check_constraints(instance* inst, double* x) {
 		for (int k = inst->rmatbeg[i]; k < rowend; k++) {
 
 			int varind = inst->rmatind[k];
-			rowact += inst->rmatval[k] * x[varind];
+			assert(index_in_bounds(varind, inst->ncols));
+			rowact += (inst->rmatval[k] * x[varind]);
 		}
 
 		// Check compliance with the constraint sense
@@ -56,6 +57,7 @@ void check_rounding(instance* inst) {
 	// Scan integer/binary variables
 	for (int j = 0; j < inst->ncols; j++) {
 		if (!(inst->int_var[j])) continue;
+		assert(var_type_integer_or_binary(inst->vartype[j]));
 
 		if (is_fractional(inst->x[j])) {
 			print_warning("[check_rounding]: Variable (type '%c') x_%d = %f has not been rounded!\n", inst->vartype[j], j + 1, inst->x[j]);
