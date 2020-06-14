@@ -26,6 +26,16 @@ int non_positive_double(double num) {
 	return (num <= 0.0);
 }
 
+int zero_double(double num) {
+
+	return (fabs(num) < TOLERANCE);
+}
+
+int equals_double(double x, double y) {
+
+	return zero_double(x - y);
+}
+
 int index_in_bounds(int ind, int len) {
 
 	return ((ind >= 0) && (ind < len));

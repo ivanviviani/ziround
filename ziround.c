@@ -513,7 +513,10 @@ void update_slacks(instance* inst, int j, double signed_delta) {
 
 							// Update objective value
 							inst->objval += (inst->obj[singleton_index] * s_delta);
-						} // end for check delta_ss
+						} // end for
+
+						// Delta slack must have been distributed among the singletons
+						assert(zero_double(delta_ss));
 					}
 					else {
 						// Enough row slack, update it
@@ -587,7 +590,7 @@ void update_slacks(instance* inst, int j, double signed_delta) {
 								covered_delta_ss = min(delta_ss, -coef * max_s_delta);
 							}
 							// Update remaining delta to be covered by the next singletons
-							delta_ss = delta_ss - covered_delta_ss;
+							delta_ss -= covered_delta_ss;
 
 							// Compute singleton delta
 							s_delta = covered_delta_ss / coef;
@@ -598,6 +601,9 @@ void update_slacks(instance* inst, int j, double signed_delta) {
 							// Update objective value
 							inst->objval += (inst->obj[singleton_index] * s_delta);
 						} // end for
+
+						// Delta slack must have been distributed among the singletons
+						assert(zero_double(delta_ss));
 					}
 					else {
 						// Enough row slack, update it
@@ -610,7 +616,7 @@ void update_slacks(instance* inst, int j, double signed_delta) {
 					// Just update row slack
 					print_verbose(120, "[update_slacks][x_%d][row %d '%c']: slack = %f - (%f * %f) = %f\n", j + 1, rowind + 1, inst->sense[rowind], inst->slack[rowind], aij, signed_delta, inst->slack[rowind] - delta_slack);
 					assert(non_positive_double(inst->slack[rowind] - delta_slack));
-					inst->slack[rowind] = inst->slack[rowind] - delta_slack;
+					inst->slack[rowind] -= delta_slack;
 				}
 
 				break;
@@ -679,6 +685,9 @@ void update_slacks(instance* inst, int j, double signed_delta) {
 							// Update objective value
 							inst->objval += (inst->obj[singleton_index] * s_delta);
 						} // end for
+
+						// Delta slack must have been distributed among the singletons
+						assert(zero_double(delta_ss));
 					}
 					else if (delta_ss < -(TOLERANCE)) {
 
@@ -734,6 +743,9 @@ void update_slacks(instance* inst, int j, double signed_delta) {
 							// Update objective value
 							inst->objval += (inst->obj[singleton_index] * s_delta);
 						} // end for
+
+						// Delta slack must have been distributed among the singletons
+						assert(zero_double(delta_ss));
 					}
 				}
 				else {
@@ -817,7 +829,7 @@ void update_singletons(instance* inst, int rowind, double delta_ss) {
 		inst->x[singleton_index] = s_val + s_delta;
 
 		// Update objective value
-		inst->objval = inst->objval + (inst->obj[singleton_index] * s_delta);
+		inst->objval += (inst->obj[singleton_index] * s_delta);
 	}
 }
 
@@ -900,7 +912,7 @@ void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, c
 					inst->slack[rowind] = 0.0; 
 					slack = inst->slack[rowind]; 
 				}
-				assert(slack == inst->slack[rowind]);
+				assert(equals_double(slack, inst->slack[rowind]));
 
 				// [EXTENSION] Update available slack: 'L' constraint --> singletons slack (if any) should decrease
 				if (inst->extension && inst->num_singletons[rowind] > 0) slack = slack + ss_delta_down; // overall slack increases
@@ -940,7 +952,7 @@ void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, c
 					inst->slack[rowind] = 0.0;
 					slack = inst->slack[rowind];
 				}
-				assert(slack == inst->slack[rowind]);
+				assert(equals_double(slack, inst->slack[rowind]));
 
 				// [EXTENSION] Update available slack: 'G' constraint --> singletons slack (if any) should increase
 				if (inst->extension && inst->num_singletons[rowind] > 0) slack = slack - ss_delta_up; // overall slack decreases (increases in absolute value)
@@ -1052,8 +1064,8 @@ void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, c
 	}
 	delta_up[j] = new_delta_up;
 	delta_down[j] = new_delta_down;
-	assert(delta_up[j] == new_delta_up);
-	assert(delta_down[j] == new_delta_down);
+	assert(equals_double(delta_up[j], new_delta_up));
+	assert(equals_double(delta_down[j], new_delta_down));
 }
 
 // [EXTENSION]

@@ -438,6 +438,8 @@ int positive_integer(int num);
 int non_negative_integer(int num);
 int non_negative_double(double num);
 int non_positive_double(double num);
+int zero_double(double num);
+int equals_double(double x, double y);
 int valid_obj_sense(int objsen);
 int no_ranged_constraints(char* sense, int nrows);
 int valid_row_slacks(double* slack, char* sense, int nrows);
