@@ -95,7 +95,7 @@ void read_objective_coefficients(instance* inst) {
 	if (CPXgetobj(inst->env, inst->lp, inst->obj, 0, inst->ncols - 1)) print_error("[read_objective_coefficients]: Failed to obtain objective coefficients.\n");
 
 	// [DEBUG ONLY] Print objective coefficients
-	if (VERBOSE >= 200) {
+	if (VERBOSE >= 201) {
 		printf("\n\n");
 		for (int j = 0; j < inst->ncols; j++) {
 			printf("%f ", inst->obj[j]);
@@ -138,7 +138,7 @@ void read_constraints_senses(instance* inst) {
 	assert(no_ranged_constraints(inst->sense, inst->nrows));
 
 	// [DEBUG ONLY] Print constraints senses
-	if (VERBOSE >= 200) {
+	if (VERBOSE >= 201) {
 		printf("\n\n");
 		for (int i = 0; i < inst->nrows; i++) {
 			printf("%c ", inst->sense[i]);
@@ -175,17 +175,20 @@ void find_singletons(instance* inst) {
 	// Count number of singletons for each row (scan continuous variables)
 	inst->rs_size = 0; // Total number of singletons
 	for (int j = 0; j < inst->ncols; j++) {
-		if (inst->vartype[j] != CPX_CONTINUOUS) continue;
+		
+		// Skip non-continuous variables and FIXED variables (lb = ub)
+		if ((inst->vartype[j] != CPX_CONTINUOUS) || (fabs(inst->ub[j] - inst->lb[j]) < TOLERANCE)) continue;
 		assert(var_type_continuous(inst->vartype[j]));
 
-		int colend = (j < inst->nrows - 1) ? inst->cmatbeg[j + 1] : inst->nzcnt;
+		// Row index of the last constraint in which x_j appears
+		int colend = (j < inst->ncols - 1) ? inst->cmatbeg[j + 1] : inst->nzcnt;
 
 		// If the variable appears in only one constraint
 		if (inst->cmatbeg[j] == colend - 1) {
 
 			int rowind = inst->cmatind[inst->cmatbeg[j]];
 			assert(index_in_bounds(rowind, inst->nrows));
-			print_verbose(200, "[find_singletons][extension]: x_%d = %f in constraint %d ('%c')\n", j, inst->x[j], rowind, inst->sense[rowind]);
+			print_verbose(200, "[find_singletons][extension]: x_%d = %f in constraint %d ('%c')\n", j + 1, inst->x[j], rowind, inst->sense[rowind]);
 			inst->num_singletons[rowind]++;
 			count[rowind]++;
 			inst->rs_size++;
@@ -204,6 +207,8 @@ void find_singletons(instance* inst) {
 	int first = 0;
 	int prev = -1; // Index of previous row with beg index
 	for (int i = 0; i < inst->nrows; i++) {
+
+		// Skip rows that have no singletons
 		if (inst->num_singletons[i] == 0) continue;
 		assert(positive_integer(inst->num_singletons[i]));
 
@@ -227,10 +232,12 @@ void find_singletons(instance* inst) {
 
 	// Populate singleton indices and coefficients for each row
 	for (int j = 0; j < inst->ncols; j++) {
-		if (inst->vartype[j] != CPX_CONTINUOUS) continue; 
+
+		// Skip non-continuous variables and FIXED variables (lb = ub)
+		if ((inst->vartype[j] != CPX_CONTINUOUS) || (fabs(inst->ub[j] - inst->lb[j]) < TOLERANCE)) continue;
 		assert(var_type_continuous(inst->vartype[j]));
 
-		int colend = (j < inst->nrows - 1) ? inst->cmatbeg[j + 1] : inst->nzcnt;
+		int colend = (j < inst->ncols - 1) ? inst->cmatbeg[j + 1] : inst->nzcnt;
 
 		// If the variable appears in only one constraint
 		if (inst->cmatbeg[j] == colend - 1) {
@@ -276,7 +283,9 @@ void compute_singletons_slacks_bounds(instance* inst) {
 
 	// Scan constraints that have singletons
 	for (int i = 0; i < inst->nrows; i++) {
-		if (inst->num_singletons[i] == 0) continue; // Skip rows with no singletons
+
+		// Skip rows with no singletons
+		if (inst->num_singletons[i] == 0) continue;
 		assert(positive_integer(inst->num_singletons[i]));
 
 		int beg = inst->rs_beg[i]; 

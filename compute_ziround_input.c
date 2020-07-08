@@ -37,7 +37,8 @@ void read_MIP_problem(instance* inst, char* filename) {
 
 void save_integer_variables(instance* inst) {
 	
-	int ncols = CPXgetnumcols(inst->env, inst->lp); assert(ncols > 0);
+	int ncols = CPXgetnumcols(inst->env, inst->lp); 
+	assert(positive_integer(ncols));
 
 	// Allocate variable types
 	inst->vartype = (char*)malloc(ncols * sizeof(char)); if (inst->vartype == NULL) print_error("[save_integer_variables]: Failed to allocate vartype.\n");

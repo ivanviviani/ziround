@@ -78,7 +78,7 @@ double sol_fractionality(double* x, int* int_var, int len) {
 	double solfrac = 0.0;
 	for (int j = 0; j < len; j++) {
 		if (!(int_var[j])) continue;
-		solfrac = solfrac + fractionality(x[j]);
+		solfrac += fractionality(x[j]);
 	}
 	return solfrac;
 }

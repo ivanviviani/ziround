@@ -34,6 +34,8 @@ int main(int argc, char** argv) {
 
 	// Remember integer/binary variables of the original MIP
 	save_integer_variables(&inst);            print_verbose(100, "[INFO][OK]: Integer variables saved.\n");
+
+	/**/if (VERBOSE >= 200) print_problem_info(&inst, 0, 1);
 	
 	// Solve continuous relaxation of the MIP problem
 	solve_continuous_relaxation(&inst);       print_verbose(100, "[INFO][OK]: Continuous relaxation solved.\n");

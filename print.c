@@ -96,7 +96,11 @@ void print_problem_info(instance* inst, int sol_available, int to_file) {
 		fprintf(out_stream, "**** Obj value: %f\n", objval);
 	}
 	fprintf(out_stream, "**** Integer or binary variables:\n");
-	for (int j = 0; j < ncols; j++) fprintf(out_stream, "****     x_%d: %s\n", j + 1, ((inst->int_var[j]) ? "BIN/INT" : "CONT"));
+	for (int j = 0; j < ncols; j++) {
+		fprintf(out_stream, "****     x_%d: ", j + 1);
+		if (inst->int_var[j]) fprintf(out_stream, "BIN/INT\n");
+		else fprintf(out_stream, "CONT\n");
+	}
 	fprintf(out_stream, "********************************************************\n");
 	fprintf(out_stream, "********************************************************\n\n");
 	if (to_file) fclose(out_stream);
