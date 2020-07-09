@@ -19,10 +19,21 @@ void zi_round(instance* inst) {
 	double obj_plusUBj;  /**< Objective value for a shifted up variable (used in function zi_round). */
 	double obj_minusLBj; /**< Objective value for a shifted down variable (used in function zi_round). */
 	int updated;	     /**< Flag set to 1 when at least one variable shift has been made. */
+	// double sol_frac;     /**< Current solution fractionality. */
+	double frac[2];      /**< Circular buffer for current solution fractionality. */
+	int bufind = 0;      /**< Current index in the circular buffer. */
 
-	// Allocate
+	// Allocate / Initialize
 	delta_up   = (double*)malloc(inst->ncols * sizeof(double));
 	delta_down = (double*)malloc(inst->ncols * sizeof(double)); if (delta_up == NULL || delta_down == NULL) print_error("[zi_round]: Failed to allocate delta arrays.\n");
+	frac[0] = 0.0;
+	frac[1] = 0.0;
+
+	// [DEBUG ONLY]
+	print_verbose(10, "* Sol.fract. | Objval *\n");
+	frac[bufind] = sol_fractionality(inst->x, inst->int_var, inst->ncols);
+	if (fabs(frac[bufind] - frac[!bufind]) > TOLERANCE) print_verbose(10, "* %f | %f *\n", frac[bufind], inst->objval);
+	bufind = !bufind;
 
 	// Outer loop (repeat until no more updates found)
 	do {
@@ -47,6 +58,9 @@ void zi_round(instance* inst) {
 					assert(var_in_bounds(inst->x[j] + delta_up[j], inst->lb[j], inst->ub[j]));
 					assert(var_in_bounds(inst->x[j] - delta_down[j], inst->lb[j], inst->ub[j]));
 
+					// [DEBUG ONLY]
+					print_verbose(1000, "[ziround][x_%d]: delta_up %f , delta_down %f\n", j + 1, delta_up[j], delta_down[j]);
+
 					// Skip xj if both deltas are equal to zero (no shift necessary)
 					if ((fabs(delta_up[j]) < TOLERANCE) && (fabs(delta_down[j]) < TOLERANCE)) continue;
 
@@ -55,8 +69,7 @@ void zi_round(instance* inst) {
 						(inst->obj[j] <= 0 && fabs(delta_up[j] - 1.0) < TOLERANCE)) {
 
 						// Round xj to improve objective and update slacks
-						updated += round_xj_bestobj(inst, j, delta_up, delta_down, 0); // flag xj non-fractional (0)
-						if (updated == 2) updated--;
+						updated = updated | round_xj_bestobj(inst, j, delta_up, delta_down, 0); // flag xj non-fractional (0)
 					}
 
 					break;
@@ -71,6 +84,9 @@ void zi_round(instance* inst) {
 					assert(var_in_bounds(inst->x[j] + delta_up[j], inst->lb[j], inst->ub[j]));
 					assert(var_in_bounds(inst->x[j] - delta_down[j], inst->lb[j], inst->ub[j]));
 
+					// [DEBUG ONLY]
+					print_verbose(1000, "[ziround][x_%d]: delta_up %f , delta_down %f\n", j + 1, delta_up[j], delta_down[j]);
+
 					// Skip xj if both deltas are equal to zero (no shift necessary)
 					if ((fabs(delta_up[j]) < TOLERANCE) && (fabs(delta_down[j]) < TOLERANCE)) continue;
 
@@ -78,16 +94,18 @@ void zi_round(instance* inst) {
 					ZIplus  = fractionality(inst->x[j] + delta_up[j]);
 					ZIminus = fractionality(inst->x[j] - delta_down[j]);
 
-					// First case: ZIplus = ZIminus && both < ZI
+					// First case: ZIplus = ZIminus && both < ZI --> Round to improve objective
 					if ((fabs(ZIplus - ZIminus) < TOLERANCE) && (ZIplus < ZI - TOLERANCE)) {
 
 						// Round xj to improve objective and update slacks
-						updated += round_xj_bestobj(inst, j, delta_up, delta_down, 1); // flag xj fractional (1)
-						if (updated == 2) updated--;
+						updated = updated | round_xj_bestobj(inst, j, delta_up, delta_down, 1); // flag xj fractional (1)
 					}
 
-					// Second case: ZIplus < ZIminus && ZIplus < ZI
+					// Second case: ZIplus < ZIminus && ZIplus < ZI --> Round UP
 					else if ((ZIplus < ZIminus - TOLERANCE) && (ZIplus < ZI - TOLERANCE)) {
+
+						// Skip variable if delta_up = 0
+						if (fabs(delta_up[j]) < TOLERANCE) continue;
 
 						print_verbose(100, "[zi_round][FRA]        : Round UP >>> Set x_%d = x_%d + delta_up_%d = %f + %f = %f\n", j + 1, j + 1, j + 1, inst->x[j], delta_up[j], inst->x[j] + delta_up[j]);
 
@@ -102,8 +120,11 @@ void zi_round(instance* inst) {
 						inst->objval += (inst->obj[j] * delta_up[j]);
 					}
 
-					// Third case: ZIminus < ZIplus && ZIminus < ZI
+					// Third case: ZIminus < ZIplus && ZIminus < ZI --> Round DOWN
 					else if ((ZIminus < ZIplus - TOLERANCE) && (ZIminus < ZI - TOLERANCE)) {
+
+						// Skip variable if delta_down = 0
+						if (fabs(delta_down[j]) < TOLERANCE) continue;
 						
 						print_verbose(100, "[zi_round][FRA]        : Round DOWN >>> Set x_%d = x_%d - delta_down_%d = %f - %f = %f\n", j + 1, j + 1, j + 1, inst->x[j], delta_down[j], inst->x[j] - delta_down[j]);
 
@@ -123,11 +144,32 @@ void zi_round(instance* inst) {
 				default:
 					print_error(" in function is_fractional.\n");
 			}
+
+			// [DEBUG ONLY]
+			frac[bufind] = sol_fractionality(inst->x, inst->int_var, inst->ncols);
+			if (fabs(frac[bufind] - frac[!bufind]) > TOLERANCE) print_verbose(10, "* %f | %f *\n", frac[bufind], inst->objval);
+			bufind = !bufind;
+
 		} // end inner loop
+
+		// Current solution cost and its fractionality
+		// print_verbose(10, "[ziround]: **** Solution cost: %f\n", inst->objval);
+		// print_verbose(10, "[ziround]: **** Solution fractionality: %f\n", sol_fractionality(inst->x, inst->int_var, inst->ncols));
 		
-		if (updated) { print_verbose(100, "[zi_round] ...Update found, scan variables again...\n"); }
-		else { print_verbose(100, "[zi_round] ...No updates found, exit outer loop...\n"); }
-		
+		// [DEBUG ONLY] If solution fractionality is equal to zero, all integer variables have been rounded
+		/*
+		sol_frac = sol_fractionality(inst->x, inst->int_var, inst->ncols);
+		if (fabs(sol_frac) < TOLERANCE) {
+			print_verbose(10, "[ziround]: ... Solution fractionality equal to zero, exit outer loop ...\n");
+			// [DEBUG ONLY]
+			system("pause");
+			break;
+		}
+		*/
+
+		if (updated) { print_verbose(10, "[zi_round]: ... Update found, scan variables again ...\n"); }
+		else { print_verbose(10, "[zi_round]: ... No updates found, exit outer loop ...\n"); }
+
 		// [DEBUG ONLY] Pause after each inner loop execution
 		system("pause");
 		
@@ -318,7 +360,11 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 			// [] Adding delta_up to x_j improves objval
 			if ((obj_deltaplus < -(TOLERANCE)) && (obj_deltaplus < obj_deltaminus - TOLERANCE)) {
 
+				// Skip variable if delta_up = 0
+				if (fabs(delta_up[j]) < TOLERANCE) return 0;
+
 				print_verbose(100, "[round_xj_bestobj][frac?%d]: >>> Set x_%d = x_%d + delta_up_%d = %f + %f = %f\n", xj_fractional, j + 1, j + 1, j + 1, inst->x[j], delta_up[j], inst->x[j] + delta_up[j]);
+				print_verbose(10, "[round_xj_bestobj]: >>> Round x_%d = %f + %f = %f\n", j + 1, inst->x[j], delta_up[j], inst->x[j] + delta_up[j]);
 				if ((!(xj_fractional)) && (VERBOSE >= 150) && (fabs(delta_up[j] - 1.0) > TOLERANCE)) {
 					print_error("[round_xj_bestobj]: delta_up_%d = %f (should be 1.0).\n", j + 1, delta_up[j]);
 				}
@@ -336,7 +382,11 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 			// [] Adding -delta_down to x_j improves objval
 			else if ((obj_deltaminus < -(TOLERANCE)) && (obj_deltaminus < obj_deltaplus - TOLERANCE)) {
 
+				// Skip variable if delta_down = 0
+				if (fabs(delta_down[j]) < TOLERANCE) return 0;
+
 				print_verbose(100, "[round_xj_bestobj][frac?%d]: >>> Set x_%d = x_%d - delta_down_%d = %f - %f = %f\n", xj_fractional, j + 1, j + 1, j + 1, inst->x[j], delta_down[j], inst->x[j] - delta_down[j]);
+				print_verbose(10, "[round_xj_bestobj]: >>> Round x_%d = %f - %f = %f\n", j + 1, inst->x[j], delta_down[j], inst->x[j] - delta_down[j]);
 				if ((!(xj_fractional)) && (VERBOSE >= 150) && (fabs(delta_down[j] - 1.0) > TOLERANCE)) {
 					print_error("[round_xj_bestobj]: delta_down_%d = %f (should be 1.0).\n", j + 1, delta_down[j]);
 				}
@@ -351,10 +401,14 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 				update_slacks(inst, j, -(delta_down[j]));
 				inst->objval += obj_deltaminus;
 			}
-			// [] Both deltas improve objval of the same amount < 0
+			// [] Both deltas improve objval of the same amount < 0 --> Round arbitrarily (DOWN)
 			else if ((obj_deltaminus < -(TOLERANCE)) && (obj_deltaplus < -(TOLERANCE)) && (fabs(obj_deltaminus - obj_deltaplus) < TOLERANCE)) {
 
+				// Skip variable if delta_down = 0
+				if (fabs(delta_down[j]) < TOLERANCE) return 0;
+
 				print_verbose(120, "[round_xj_bestobj][frac?%d]: obj_deltaplus = %f = %f = obj_deltaminus. >>> Round x_%d arbitrarily.\n", xj_fractional, obj_deltaplus, obj_deltaminus, j + 1);
+				print_verbose(10, "[round_xj_bestobj]: >>> Round x_%d = %f - %f = %f\n", j + 1, inst->x[j], delta_down[j], inst->x[j] - delta_down[j]);
 
 				// Check whether all affected constraints have enough slack for a ROUND DOWN of xj
 				check_slacks(inst, j, delta_up, delta_down, 'D');
@@ -366,23 +420,20 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 				update_slacks(inst, j, -(delta_down[j]));
 				inst->objval += obj_deltaminus;
 			}
-			// [] Both deltas do not change objval (both = 0)
+			// [] Both deltas do not change objval (both = 0) --> Round arbitrarily (UP)
 			else if ((fabs(obj_deltaplus) < TOLERANCE) && (fabs(obj_deltaplus - obj_deltaminus) < TOLERANCE)) {
 
+				// Skip variable if delta_up = 0
+				if (fabs(delta_up[j]) < TOLERANCE) return 0;
+
 				print_verbose(120, "[round_xj_bestobj][frac?%d]: obj_deltaplus = %f = %f = obj_deltaminus. >>> Round x_%d arbitrarily.\n", xj_fractional, obj_deltaplus, obj_deltaminus, j + 1);
-				
-				// Check whether all affected constraints have enough slack for a ROUND DOWN of xj
+				print_verbose(10, "[round_xj_bestobj]: >>> Round x_%d = %f + %f = %f\n", j + 1, inst->x[j], delta_up[j], inst->x[j] + delta_up[j]);
+				// Check whether all affected constraints have enough slack for a ROUND UP of xj
 				check_slacks(inst, j, delta_up, delta_down, 'U');
 
 				// Round arbitrarily (UP)
 				inst->x[j] += delta_up[j];
-
-				// *******************************************************************************************************************************************************************
-				/*
-					Function round_xj_bestobj
-				*/
-				//updated = 1;
-				// *******************************************************************************************************************************************************************
+				updated = 1;
 				update_slacks(inst, j, delta_up[j]);
 				// no objval update
 			}
