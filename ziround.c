@@ -79,11 +79,10 @@ void zi_round(instance* inst) {
 
 					// Calculate deltas (with epsilon = 1.0)
 					delta_updown(inst, j, delta_up, delta_down, 1.0);
-					assert(var_in_bounds(inst->x[j] + delta_up[j], inst->lb[j], inst->ub[j]));
-					assert(var_in_bounds(inst->x[j] - delta_down[j], inst->lb[j], inst->ub[j]));
-
-					// [DEBUG ONLY]
-					print_verbose(1000, "[ziround][x_%d]: delta_up %f , delta_down %f\n", j + 1, delta_up[j], delta_down[j]);
+					assert(
+						var_in_bounds(inst->x[j] + delta_up[j], inst->lb[j], inst->ub[j]) & 
+						var_in_bounds(inst->x[j] - delta_down[j], inst->lb[j], inst->ub[j])
+					);
 
 					// Skip xj if both deltas are equal to zero (no shift necessary)
 					if ((fabs(delta_up[j]) < TOLERANCE) && (fabs(delta_down[j]) < TOLERANCE)) continue;
@@ -105,11 +104,10 @@ void zi_round(instance* inst) {
 
 					// Calculate deltas
 					delta_updown(inst, j, delta_up, delta_down, EPSILON);
-					assert(var_in_bounds(inst->x[j] + delta_up[j], inst->lb[j], inst->ub[j]));
-					assert(var_in_bounds(inst->x[j] - delta_down[j], inst->lb[j], inst->ub[j]));
-
-					// [DEBUG ONLY]
-					print_verbose(1000, "[ziround][x_%d]: delta_up %f , delta_down %f\n", j + 1, delta_up[j], delta_down[j]);
+					assert(
+						var_in_bounds(inst->x[j] + delta_up[j], inst->lb[j], inst->ub[j]) & 
+						var_in_bounds(inst->x[j] - delta_down[j], inst->lb[j], inst->ub[j])
+					);
 
 					// Skip xj if both deltas are equal to zero (no shift necessary)
 					if ((fabs(delta_up[j]) < TOLERANCE) && (fabs(delta_down[j]) < TOLERANCE)) continue;
@@ -182,10 +180,6 @@ void zi_round(instance* inst) {
 
 		} // end inner loop
 
-		// Current solution cost and its fractionality
-		// print_verbose(10, "[ziround]: **** Solution cost: %f\n", inst->objval);
-		// print_verbose(10, "[ziround]: **** Solution fractionality: %f\n", sol_fractionality(inst->x, inst->int_var, inst->ncols));
-
 		if (updated) { print_verbose(10, "[zi_round]: ... Update found, scan variables again ...\n"); }
 		else { print_verbose(10, "[zi_round]: ... No updates found, exit outer loop ...\n"); }
 
@@ -233,14 +227,16 @@ void check_slacks(instance* inst, int j, double* delta_up, double* delta_down, c
 
 	if (round_updown != 'U' && round_updown != 'D') print_error("[check_slacks]: Rounding sense '%c' undefined.\n", round_updown);
 
-	int colend = (j < inst->ncols - 1) ? inst->cmatbeg[j + 1] : inst->nzcnt;
-	int rowind;
-	double aij;
-	double curr_slack;
-	double singletons_slack;
-	double delta_slack;
-	double new_slack;
-	int enough_slack;
+	int colend;              /**< Index of the last constraint containing variable \p j. */
+	int rowind;              /**< Current row index. */
+	double aij;              /**< Current constraint coefficient of variable \p j. */
+	double curr_slack;       /**< Slack of the current constraint. */
+	double singletons_slack; /**< Singletons slack of the current constraint. */
+	double delta_slack;      /**< Delta slack of the current constraint (to be distributed). */
+	double new_slack;        /**< Current row slack after rounding. */
+	int enough_slack;        /**< Support flag. */
+
+	colend = (j < inst->ncols - 1) ? inst->cmatbeg[j + 1] : inst->nzcnt;
 
 	// Check whether all affected constraints have enough slack for a ROUND UP/DOWN of xj
 	for (int k = inst->cmatbeg[j]; k < colend; k++) {
@@ -403,7 +399,7 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 				// Skip variable if delta_up = 0
 				if (fabs(delta_up[j]) < TOLERANCE) return 0;
 
-				print_verbose(100, "[round_xj_bestobj][frac?%d]: >>> Set x_%d = x_%d + delta_up_%d = %f + %f = %f\n", xj_fractional, j + 1, j + 1, j + 1, inst->x[j], delta_up[j], inst->x[j] + delta_up[j]);
+				// print_verbose(100, "[round_xj_bestobj][frac?%d]: >>> Set x_%d = x_%d + delta_up_%d = %f + %f = %f\n", xj_fractional, j + 1, j + 1, j + 1, inst->x[j], delta_up[j], inst->x[j] + delta_up[j]);
 				print_verbose(10, "[round_xj_bestobj]: >>> Round x_%d = %f + %f = %f\n", j + 1, inst->x[j], delta_up[j], inst->x[j] + delta_up[j]);
 				if ((!(xj_fractional)) && (VERBOSE >= 150) && (fabs(delta_up[j] - 1.0) > TOLERANCE)) {
 					print_error("[round_xj_bestobj]: delta_up_%d = %f (should be 1.0).\n", j + 1, delta_up[j]);
@@ -425,7 +421,7 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 				// Skip variable if delta_down = 0
 				if (fabs(delta_down[j]) < TOLERANCE) return 0;
 
-				print_verbose(100, "[round_xj_bestobj][frac?%d]: >>> Set x_%d = x_%d - delta_down_%d = %f - %f = %f\n", xj_fractional, j + 1, j + 1, j + 1, inst->x[j], delta_down[j], inst->x[j] - delta_down[j]);
+				// print_verbose(100, "[round_xj_bestobj][frac?%d]: >>> Set x_%d = x_%d - delta_down_%d = %f - %f = %f\n", xj_fractional, j + 1, j + 1, j + 1, inst->x[j], delta_down[j], inst->x[j] - delta_down[j]);
 				print_verbose(10, "[round_xj_bestobj]: >>> Round x_%d = %f - %f = %f\n", j + 1, inst->x[j], delta_down[j], inst->x[j] - delta_down[j]);
 				if ((!(xj_fractional)) && (VERBOSE >= 150) && (fabs(delta_down[j] - 1.0) > TOLERANCE)) {
 					print_error("[round_xj_bestobj]: delta_down_%d = %f (should be 1.0).\n", j + 1, delta_down[j]);
@@ -447,7 +443,7 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 				// Skip variable if delta_down = 0
 				if (fabs(delta_down[j]) < TOLERANCE) return 0;
 
-				print_verbose(120, "[round_xj_bestobj][frac?%d]: obj_deltaplus = %f = %f = obj_deltaminus. >>> Round x_%d arbitrarily.\n", xj_fractional, obj_deltaplus, obj_deltaminus, j + 1);
+				// print_verbose(120, "[round_xj_bestobj][frac?%d]: obj_deltaplus = %f = %f = obj_deltaminus. >>> Round x_%d arbitrarily.\n", xj_fractional, obj_deltaplus, obj_deltaminus, j + 1);
 				print_verbose(10, "[round_xj_bestobj]: >>> Round x_%d = %f - %f = %f\n", j + 1, inst->x[j], delta_down[j], inst->x[j] - delta_down[j]);
 
 				// Check whether all affected constraints have enough slack for a ROUND DOWN of xj
@@ -466,7 +462,7 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 				// Skip variable if delta_up = 0
 				if (fabs(delta_up[j]) < TOLERANCE) return 0;
 
-				print_verbose(120, "[round_xj_bestobj][frac?%d]: obj_deltaplus = %f = %f = obj_deltaminus. >>> Round x_%d arbitrarily.\n", xj_fractional, obj_deltaplus, obj_deltaminus, j + 1);
+				// print_verbose(120, "[round_xj_bestobj][frac?%d]: obj_deltaplus = %f = %f = obj_deltaminus. >>> Round x_%d arbitrarily.\n", xj_fractional, obj_deltaplus, obj_deltaminus, j + 1);
 				print_verbose(10, "[round_xj_bestobj]: >>> Round x_%d = %f + %f = %f\n", j + 1, inst->x[j], delta_up[j], inst->x[j] + delta_up[j]);
 				
 				// Check whether all affected constraints have enough slack for a ROUND UP of xj
@@ -487,7 +483,7 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 			// [] Adding delta_up to x_j improves objval
 			if ((obj_deltaplus > TOLERANCE) && (obj_deltaplus > obj_deltaminus + TOLERANCE)) {
 				
-				print_verbose(100, "[round_xj_bestobj][frac?%d]: >>> Set x_%d = x_%d + delta_up_%d = %f + %f = %f\n", xj_fractional, j + 1, j + 1, j + 1, inst->x[j], delta_up[j], inst->x[j] + delta_up[j]);
+				// print_verbose(100, "[round_xj_bestobj][frac?%d]: >>> Set x_%d = x_%d + delta_up_%d = %f + %f = %f\n", xj_fractional, j + 1, j + 1, j + 1, inst->x[j], delta_up[j], inst->x[j] + delta_up[j]);
 				print_verbose(10, "[round_xj_bestobj]: >>> Round x_%d = %f + %f = %f\n", j + 1, inst->x[j], delta_up[j], inst->x[j] + delta_up[j]);
 				if ((!(xj_fractional)) && (VERBOSE >= 150) && (fabs(delta_up[j] - 1.0) > TOLERANCE)) {
 					print_error("[round_xj_bestobj]: delta_up_%d = %f (should be 1.0).\n", j + 1, delta_up[j]);
@@ -506,7 +502,7 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 			// [] Adding delta_down to x_j improves objval
 			else if ((obj_deltaminus > TOLERANCE) && (obj_deltaminus > obj_deltaplus + TOLERANCE)) {
 				
-				print_verbose(100, "[round_xj_bestobj][frac?%d]: >>> Set x_%d = x_%d - LB_%d = %f - %f = %f\n", xj_fractional, j + 1, j + 1, j + 1, inst->x[j], delta_down[j], inst->x[j] - delta_down[j]);
+				// print_verbose(100, "[round_xj_bestobj][frac?%d]: >>> Set x_%d = x_%d - LB_%d = %f - %f = %f\n", xj_fractional, j + 1, j + 1, j + 1, inst->x[j], delta_down[j], inst->x[j] - delta_down[j]);
 				print_verbose(10, "[round_xj_bestobj]: >>> Round x_%d = %f - %f = %f\n", j + 1, inst->x[j], delta_down[j], inst->x[j] - delta_down[j]);
 				if (!xj_fractional && VERBOSE >= 150 && fabs(delta_down[j] - 1.0) > TOLERANCE) {
 					print_error("[round_xj_bestobj]: delta_down_%d = %f (should be 1.0).\n", j + 1, delta_down[j]);
@@ -592,40 +588,6 @@ void update_slacks(instance* inst, int j, double signed_delta) {
 		switch (inst->sense[rowind]) {
 
 			case 'L': // (slack non-negative)
-
-				// [EXTENSION] Distinguish inequality constraints with singletons (if extension enabled)
-				if (inst->extension && inst->num_singletons[rowind] > 0) {
-
-					// First, use at most all the row slack available to cover delta_slack
-					temp_slack = curr_slack - delta_slack;
-					// Update row slack
-					inst->slack[rowind] = max(0.0, temp_slack);
-
-					// If not enough row slack (temp_slack negative), resort to singletons slack
-					if (temp_slack < -(TOLERANCE)) {
-
-						// Delta singletons slack to distribute among the singletons [new_ss = ss + delta_ss (+ because signed delta)]
-						delta_ss = temp_slack; // negative
-
-						// Distribute delta among the singletons, stop when done (delta_ss negative --> singletons slack must decrease)
-						update_singletons(inst, rowind, delta_ss);
-					}
-					else {
-						// Enough row slack, update it
-						assert(non_negative_double(inst->slack[rowind] - delta_slack));
-						inst->slack[rowind] -= delta_slack;
-					}
-				}
-				else {
-					// Extension disabled OR enabled but zero singletons
-					// Just update row slack
-					print_verbose(201, "[update_slacks][x_%d][row %d '%c']: slack = %f - (%f * %f) = %f\n", j + 1, rowind + 1, inst->sense[rowind], inst->slack[rowind], aij, signed_delta, inst->slack[rowind] - delta_slack);
-					assert(non_negative_double(inst->slack[rowind] - delta_slack));
-					inst->slack[rowind] -= delta_slack;
-				}
-
-				break;
-
 			case 'G': // (slack non-positive)
 
 				// [EXTENSION] Distinguish inequality constraints with singletons (if extension enabled)
@@ -634,20 +596,24 @@ void update_slacks(instance* inst, int j, double signed_delta) {
 					// First, use at most all the row slack available to cover delta_slack
 					temp_slack = curr_slack - delta_slack;
 					// Update row slack
-					inst->slack[rowind] = min(0.0, temp_slack);
+					inst->slack[rowind] = (inst->sense[rowind] == 'L') ? max(0.0, temp_slack) : min(0.0, temp_slack);
 
-					// If not enough row slack (temp_slack positive), resort to singletons slack
-					if (temp_slack > TOLERANCE) {
+					// If not enough row slack (temp_slack negative for 'L', positive for 'G' constraints), resort to singletons slack
+					if ((inst->sense[rowind] == 'L' && temp_slack < -(TOLERANCE)) || 
+						(inst->sense[rowind] == 'R' && temp_slack > TOLERANCE)) {
 
 						// Delta singletons slack to distribute among the singletons [new_ss = ss + delta_ss (+ because signed delta)]
-						delta_ss = temp_slack; // positive
+						delta_ss = temp_slack; // negative for 'L', positive for 'G' constraints
 
-						// Distribute delta among the singletons, stop when done (delta_ss positive --> singletons slack must increase)
+						// Distribute delta among the singletons, stop when done (delta_ss negative --> singletons slack must decrease)
 						update_singletons(inst, rowind, delta_ss);
 					}
 					else {
 						// Enough row slack, update it
-						assert(non_positive_double(inst->slack[rowind] - delta_slack));
+						assert(
+							(inst->sense[rowind] == 'L' && non_negative_double(inst->slack[rowind] - delta_slack)) ||
+							(inst->sense[rowind] == 'G' && non_positive_double(inst->slack[rowind] - delta_slack))
+						);
 						inst->slack[rowind] -= delta_slack;
 					}
 				}
@@ -655,7 +621,10 @@ void update_slacks(instance* inst, int j, double signed_delta) {
 					// Extension disabled OR enabled but zero singletons
 					// Just update row slack
 					print_verbose(201, "[update_slacks][x_%d][row %d '%c']: slack = %f - (%f * %f) = %f\n", j + 1, rowind + 1, inst->sense[rowind], inst->slack[rowind], aij, signed_delta, inst->slack[rowind] - delta_slack);
-					assert(non_positive_double(inst->slack[rowind] - delta_slack));
+					assert( 
+						(inst->sense[rowind] == 'L' && non_negative_double(inst->slack[rowind] - delta_slack)) || 
+						(inst->sense[rowind] == 'G' && non_positive_double(inst->slack[rowind] - delta_slack))
+					);
 					inst->slack[rowind] -= delta_slack;
 				}
 
@@ -687,6 +656,7 @@ void update_slacks(instance* inst, int j, double signed_delta) {
 	} // end for
 }
 
+// [EXTENSION]
 void update_singletons(instance* inst, int rowind, double delta_ss) {
 
 	int beg = inst->rs_beg[rowind]; /**< Begin index of the singletons for constraint rowind. */
@@ -706,11 +676,15 @@ void update_singletons(instance* inst, int rowind, double delta_ss) {
 	for (int k = 0; k < inst->num_singletons[rowind]; k++) {
 
 		// Stop updating the singletons when delta singletons slack has been covered
-		if ((s_slack_increase && delta_ss < TOLERANCE) || (!s_slack_increase && delta_ss > -(TOLERANCE))) {
+		if ((s_slack_increase && delta_ss < TOLERANCE) || 
+			(!s_slack_increase && delta_ss > -(TOLERANCE))) {
 			print_verbose(200, "[update_singletons][extension][row %d '%c']: delta_ss covered, found %f\n", rowind + 1, inst->sense[rowind], delta_ss);
 			break;
 		}
-		assert((s_slack_increase && non_negative_double(delta_ss)) || (!s_slack_increase && non_positive_double(delta_ss)));
+		assert(
+			(s_slack_increase && non_negative_double(delta_ss)) || 
+			(!s_slack_increase && non_positive_double(delta_ss))
+		);
 		print_verbose(120, "[update_slacks][extension][row %d '%c']: Remaining delta singletons slack to distribute: %f.\n", rowind + 1, inst->sense[rowind], delta_ss);
 
 		// Singleton info
@@ -796,9 +770,11 @@ void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, c
 	delta_down1 = LONG_MAX;
 	delta_up2   = inst->ub[j] - inst->x[j];
 	delta_down2 = inst->x[j] - inst->lb[j];
-	assert(non_negative_double(delta_up2));
-	assert(non_negative_double(delta_down2));
-	colend      = (j < inst->ncols - 1) ? inst->cmatbeg[j + 1] : inst->nzcnt;
+	assert(
+		non_negative_double(delta_up2) & 
+		non_negative_double(delta_down2)
+	);
+	colend = (j < inst->ncols - 1) ? inst->cmatbeg[j + 1] : inst->nzcnt;
 	
 	print_verbose(201, "[delta_updown]: delta_up2_%d = ub_%d - x_%d = %f - %f = %f ; delta_down2_%d = x_%d - lb_%d = %f - %f = %f\n", j + 1, j + 1, j + 1, inst->ub[j], inst->x[j], delta_up2, j + 1, j + 1, j + 1, inst->x[j], inst->lb[j], delta_down2);
 
@@ -829,17 +805,16 @@ void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, c
 			ss_delta_down = singletons_slack - ss_lb;
 			if ((ss_delta_up < 0.0) && (ss_delta_up > -(TOLERANCE))) ss_delta_up = 0.0;
 			if ((ss_delta_down < 0.0) && (ss_delta_down > -(TOLERANCE))) ss_delta_down = 0.0;
-			assert(non_negative_double(ss_delta_up));
-			assert(non_negative_double(ss_delta_down));
+			assert(
+				non_negative_double(ss_delta_up) & 
+				non_negative_double(ss_delta_down)
+			);
 		}
 		
 		// Check sense, then check sign of aij, and update delta_up1, delta_down1
 		switch (inst->sense[rowind]) {
 
 			case 'L': // (slack non-negative)
-
-				// [TEMPORARY]
-				// if (inst->extension && inst->num_singletons[rowind] > 0) print_error("[delta_updown][extension][x_%d][row %d '%c']: Inequality constraint has %d singletons.\n", j + 1, rowind + 1, inst->sense[rowind], inst->num_singletons[rowind]);
 
 				if (inst->slack[rowind] < -(TOLERANCE)) print_error("[delta_updown][row %d 'L']: Found negative row slack = %f\n", rowind + 1, inst->slack[rowind]);
 
@@ -877,9 +852,6 @@ void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, c
 				break;
 
 			case 'G': // (slack non-positive)
-
-				// [TEMPORARY]
-				// if (inst->extension && inst->num_singletons[rowind] > 0) print_error("[delta_updown][extension][x_%d][row %d '%c']: Inequality constraint has %d singletons.\n", j + 1, rowind + 1, inst->sense[rowind], inst->num_singletons[rowind]);
 
 				if (inst->slack[rowind] > TOLERANCE) print_error("[delta_updown][row %d 'G']: Found positive row slack = %f\n", rowind + 1, inst->slack[rowind]);
 
@@ -932,15 +904,16 @@ void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, c
 
 						candidate_down1 = ss_delta_up / aij;
 						candidate_up1 = ss_delta_down / aij;
-						assert(non_negative_double(candidate_down1));
-						assert(non_negative_double(candidate_up1));
+						assert(
+							non_negative_double(candidate_down1) & 
+							non_negative_double(candidate_up1)
+						);
 						// Clip candidates to zero if inaccurate
 						if (fabs(candidate_down1) < TOLERANCE) candidate_down1 = 0.0;
 						if (fabs(candidate_up1) < TOLERANCE) candidate_up1 = 0.0;
 
 						// Check candidates signs
-						if (candidate_down1 < -(TOLERANCE) || candidate_up1 < -(TOLERANCE))
-							print_error("[delta_updown][extension][x_%d][row %d '%c']: Negative candidate deltas. Found %f and %f.", j + 1, rowind + 1, inst->sense[rowind], candidate_down1, candidate_up1);
+						// if (candidate_down1 < -(TOLERANCE) || candidate_up1 < -(TOLERANCE)) print_error("[delta_updown][extension][x_%d][row %d '%c']: Negative candidate deltas. Found %f and %f.", j + 1, rowind + 1, inst->sense[rowind], candidate_down1, candidate_up1);
 
 						delta_down1 = min(candidate_down1, delta_down1);
 						delta_up1 = min(candidate_up1, delta_up1);
@@ -949,21 +922,24 @@ void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, c
 
 						candidate_up1 = -(ss_delta_up) / aij;
 						candidate_down1 = -(ss_delta_down) / aij;
-						assert(non_negative_double(candidate_up1));
-						assert(non_negative_double(candidate_down1));
+						assert(
+							non_negative_double(candidate_up1) & 
+							non_negative_double(candidate_down1)
+						);
 						// Clip candidates to zero if inaccurate
 						if (fabs(candidate_down1) < TOLERANCE) candidate_down1 = 0.0;
 						if (fabs(candidate_up1) < TOLERANCE) candidate_up1 = 0.0;
 
 						// Check candidates signs
-						if (candidate_down1 < -(TOLERANCE) || candidate_up1 < -(TOLERANCE))
-							print_error("[delta_updown][extension][x_%d][row %d '%c']: Negative candidate deltas. Found %f and %f.", j + 1, rowind + 1, inst->sense[rowind], candidate_down1, candidate_up1);
+						// if (candidate_down1 < -(TOLERANCE) || candidate_up1 < -(TOLERANCE)) print_error("[delta_updown][extension][x_%d][row %d '%c']: Negative candidate deltas. Found %f and %f.", j + 1, rowind + 1, inst->sense[rowind], candidate_down1, candidate_up1);
 
 						delta_down1 = min(candidate_down1, delta_down1);
 						delta_up1 = min(candidate_up1, delta_up1);
 					}
-					assert(non_negative_double(delta_down1));
-					assert(non_negative_double(delta_up1));
+					assert(
+						non_negative_double(delta_down1) & 
+						non_negative_double(delta_up1)
+					);
 				}
 				else {
 					// Extension disabled OR enabled but zero singletons
@@ -984,14 +960,17 @@ void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, c
 	print_verbose(200, "[delta_updown][candidates]: delta_up1_%d = %f ; delta_down1_%d = %f\n", j + 1, delta_up1, j + 1, delta_down1);
 
 	// Results
-	assert(non_negative_double(delta_up1));
-	assert(non_negative_double(delta_down1));
+	assert(
+		non_negative_double(delta_up1) & 
+		non_negative_double(delta_down1)
+	);
 	new_delta_up = min(delta_up1, delta_up2);
 	new_delta_down = min(delta_down1, delta_down2);
-	assert(non_negative_double(new_delta_up));
-	assert(non_negative_double(new_delta_down));
-	print_verbose(200, "[delta_updown][results]: (NEW) delta_up_%d = min{%f, %f} = %f ; delta_down_%d = min{%f, %f} = %f\n",
-		j + 1, delta_up1, delta_up2, new_delta_up, j + 1, delta_down1, delta_down2, new_delta_down);
+	assert(
+		non_negative_double(new_delta_up) & 
+		non_negative_double(new_delta_down)
+	);
+	print_verbose(201, "[delta_updown][results]: (NEW) delta_up_%d = min{%f, %f} = %f ; delta_down_%d = min{%f, %f} = %f\n", j + 1, delta_up1, delta_up2, new_delta_up, j + 1, delta_down1, delta_down2, new_delta_down);
 
 	// Update deltas
 	if (new_delta_up < (epsilon - TOLERANCE) && new_delta_down < (epsilon - TOLERANCE)) {
@@ -1000,8 +979,10 @@ void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, c
 	}
 	delta_up[j] = new_delta_up;
 	delta_down[j] = new_delta_down;
-	assert(equals_double(delta_up[j], new_delta_up));
-	assert(equals_double(delta_down[j], new_delta_down));
+	assert(
+		equals_double(delta_up[j], new_delta_up) & 
+		equals_double(delta_down[j], new_delta_down)
+	);
 }
 
 // [EXTENSION]

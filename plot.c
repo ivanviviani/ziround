@@ -1,3 +1,9 @@
+/**
+ * @file plot.c
+ * @author Ivan Viviani
+ * @copyright Copyright (c) 2020
+ */
+
 #include "ziround.h"
 
 void add_point_single_tracker(double point, double** tracker, int* len, int* size) {

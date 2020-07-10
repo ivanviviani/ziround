@@ -102,13 +102,13 @@ typedef struct {
     int objsen; 			/**< Objective function sense, CPX_MIN (default) or CPX_MAX (specified from command line). */
     char* vartype; 		    /**< Variable types (before converting MIP to LP), integer/binary or continuous. */
     int* int_var; 			/**< Flags array that keeps track of integer/binary (value 1) and continuous (value 0) variables. */
-    int* row_singletons;
-    int rs_size;
-    int* rs_beg;
-    double* rs_coef;
-    int* num_singletons;
-    double* ss_ub;
-    double* ss_lb;
+    int* row_singletons;    /**< Singleton indices. */
+    int rs_size;            /**< Total number of singletons. */
+    int* rs_beg;            /**< Begin index of the singleton indices of each row that contains at least one. */
+    double* rs_coef;        /**< Coefficients of the singletons. */
+    int* num_singletons;    /**< Number of singletons for each row. */
+    double* ss_ub;          /**< Upper bounds of the singletons slack for each row. */
+    double* ss_lb;          /**< Lower bounds of the singletons slack for each row. */
 
     // Coefficient matrix
     int nzcnt; 				/**< Number of non-zero coefficients. */

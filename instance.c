@@ -41,27 +41,11 @@ void free_inst(instance* inst) {
 	char* errmsg = (char*)malloc(CPXMESSAGEBUFSIZE * sizeof(char)); if (errmsg == NULL) print_error("[setup_CPLEX_env]: Failed to allocate errmsg.\n");
 	int status = 0;
 
-	free(inst->x);       
-	free(inst->obj);     
-	free(inst->lb);
-	free(inst->ub);      
-	free(inst->slack);   
-	free(inst->vartype);
-	free(inst->int_var);
-	free(inst->row_singletons);
-	free(inst->num_singletons);
-	free(inst->rs_beg);
-	free(inst->rs_coef);
-	free(inst->ss_ub);
-	free(inst->ss_lb);
-	free(inst->rmatbeg); 
-	free(inst->rmatind);
-	free(inst->rmatval); 
-	free(inst->cmatbeg); 
-	free(inst->cmatind);
-	free(inst->cmatval); 
-	free(inst->sense);   
-	free(inst->rhs);
+	free_all(21, inst->x, inst->obj, inst->lb, inst->ub, inst->slack, inst->vartype, 
+		inst->int_var, inst->row_singletons, inst->num_singletons, inst->rs_beg, 
+		inst->rs_coef, inst->ss_ub, inst->ss_lb, inst->rmatbeg, inst->rmatind,
+		inst->rmatval, inst->cmatbeg, inst->cmatind, inst->cmatval, inst->sense,
+		inst->rhs);
 	if (inst->lp != NULL) {
 		if (CPXfreeprob(inst->env, &(inst->lp))) print_error("[free_inst]: CPXfreeprob failed, error code %d.\n", status);
 	}
