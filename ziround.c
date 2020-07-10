@@ -468,6 +468,7 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 
 				print_verbose(120, "[round_xj_bestobj][frac?%d]: obj_deltaplus = %f = %f = obj_deltaminus. >>> Round x_%d arbitrarily.\n", xj_fractional, obj_deltaplus, obj_deltaminus, j + 1);
 				print_verbose(10, "[round_xj_bestobj]: >>> Round x_%d = %f + %f = %f\n", j + 1, inst->x[j], delta_up[j], inst->x[j] + delta_up[j]);
+				
 				// Check whether all affected constraints have enough slack for a ROUND UP of xj
 				check_slacks(inst, j, delta_up, delta_down, 'U');
 
@@ -487,6 +488,7 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 			if ((obj_deltaplus > TOLERANCE) && (obj_deltaplus > obj_deltaminus + TOLERANCE)) {
 				
 				print_verbose(100, "[round_xj_bestobj][frac?%d]: >>> Set x_%d = x_%d + delta_up_%d = %f + %f = %f\n", xj_fractional, j + 1, j + 1, j + 1, inst->x[j], delta_up[j], inst->x[j] + delta_up[j]);
+				print_verbose(10, "[round_xj_bestobj]: >>> Round x_%d = %f + %f = %f\n", j + 1, inst->x[j], delta_up[j], inst->x[j] + delta_up[j]);
 				if ((!(xj_fractional)) && (VERBOSE >= 150) && (fabs(delta_up[j] - 1.0) > TOLERANCE)) {
 					print_error("[round_xj_bestobj]: delta_up_%d = %f (should be 1.0).\n", j + 1, delta_up[j]);
 				}
@@ -505,6 +507,7 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 			else if ((obj_deltaminus > TOLERANCE) && (obj_deltaminus > obj_deltaplus + TOLERANCE)) {
 				
 				print_verbose(100, "[round_xj_bestobj][frac?%d]: >>> Set x_%d = x_%d - LB_%d = %f - %f = %f\n", xj_fractional, j + 1, j + 1, j + 1, inst->x[j], delta_down[j], inst->x[j] - delta_down[j]);
+				print_verbose(10, "[round_xj_bestobj]: >>> Round x_%d = %f - %f = %f\n", j + 1, inst->x[j], delta_down[j], inst->x[j] - delta_down[j]);
 				if (!xj_fractional && VERBOSE >= 150 && fabs(delta_down[j] - 1.0) > TOLERANCE) {
 					print_error("[round_xj_bestobj]: delta_down_%d = %f (should be 1.0).\n", j + 1, delta_down[j]);
 				}
@@ -519,10 +522,11 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 				update_slacks(inst, j, -(delta_down[j]));
 				inst->objval += obj_deltaminus;
 			}
-			// [] Both deltas improve objval of the same amount > 0
+			// [] Both deltas improve objval of the same amount > 0 --> Round arbitrarily (DOWN)
 			else if ((obj_deltaminus > TOLERANCE) && (obj_deltaplus > TOLERANCE) && (fabs(obj_deltaminus - obj_deltaplus) < TOLERANCE)) {
 				
 				print_verbose(120, "[round_xj_bestobj]: obj_deltaplus = %f = %f = obj_deltaminus. >>> Round x_%d arbitrarily.\n", obj_deltaplus, obj_deltaminus, j + 1);
+				print_verbose(10, "[round_xj_bestobj]: >>> Round x_%d = %f - %f = %f\n", j + 1, inst->x[j], delta_down[j], inst->x[j] - delta_down[j]);
 
 				// Check whether all affected constraints have enough slack for a ROUND DOWN of xj
 				check_slacks(inst, j, delta_up, delta_down, 'D');
@@ -533,6 +537,24 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 				updated = 1;
 				update_slacks(inst, j, -(delta_down[j]));
 				inst->objval += obj_deltaminus;
+			}
+			// [] Both deltas do not change objval (both = 0) --> Round arbitrarily (UP)
+			else if ((fabs(obj_deltaplus) < TOLERANCE) && (fabs(obj_deltaplus - obj_deltaminus) < TOLERANCE)) {
+
+				// Skip variable if delta_up = 0
+				if (fabs(delta_up[j]) < TOLERANCE) return 0;
+
+				print_verbose(120, "[round_xj_bestobj][frac?%d]: obj_deltaplus = %f = %f = obj_deltaminus. >>> Round x_%d arbitrarily.\n", xj_fractional, obj_deltaplus, obj_deltaminus, j + 1);
+				print_verbose(10, "[round_xj_bestobj]: >>> Round x_%d = %f + %f = %f\n", j + 1, inst->x[j], delta_up[j], inst->x[j] + delta_up[j]);
+				
+				// Check whether all affected constraints have enough slack for a ROUND UP of xj
+				check_slacks(inst, j, delta_up, delta_down, 'U');
+
+				// Round arbitrarily (UP)
+				inst->x[j] += delta_up[j];
+				updated = 1;
+				update_slacks(inst, j, delta_up[j]);
+				// no objval update
 			}
 
 			break;
@@ -548,14 +570,15 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 // Whenever it is called, only one variable xj has been updated
 void update_slacks(instance* inst, int j, double signed_delta) {
 
-	int colend = (j < inst->ncols - 1) ? inst->cmatbeg[j + 1] : inst->nzcnt;
-	double aij;
-	int rowind;
-	double delta_slack;
-	double curr_slack;
-	double temp_slack;
-	double delta_ss;
-	int beg;
+	int colend;         /**< Index of the last constraint containing variable \p j. */
+	double aij;         /**< Current constraint coefficient of variable \p j. */
+	int rowind;         /**< Current row index. */
+	double delta_slack; /**< Delta slack of the current constraint (to be distributed). */
+	double curr_slack;  /**< Slack of the current constraint. */
+	double temp_slack;  /**< Support variable for \p delta_slack distribution. */
+	double delta_ss;    /**< Delta singletons slack of the current constraint (to be distributed). */
+
+	colend = (j < inst->ncols - 1) ? inst->cmatbeg[j + 1] : inst->nzcnt;
 
 	// Scan constraints of variable j
 	for (int k = inst->cmatbeg[j]; k < colend; k++) {
@@ -585,63 +608,7 @@ void update_slacks(instance* inst, int j, double signed_delta) {
 						delta_ss = temp_slack; // negative
 
 						// Distribute delta among the singletons, stop when done (delta_ss negative --> singletons slack must decrease)
-						beg = inst->rs_beg[rowind];
-						int singleton_index;
-						double coef;
-						double s_lb;
-						double s_ub;
-						double s_val;
-						double covered_delta_ss;
-						double max_s_delta;
-						double s_delta;
-						for (int h = 0; h < inst->num_singletons[rowind]; h++) {
-
-							// Stop updating the singletons when delta singletons slack has been covered
-							if (delta_ss > -(TOLERANCE)) {
-								print_verbose(200, "[update_slacks][extension][row %d '%c']: delta_ss covered, found %f\n", rowind + 1, inst->sense[rowind], delta_ss);
-								break;
-							}
-							assert(non_positive_double(delta_ss));
-							print_verbose(120, "[update_slacks][extension][row %d '%c']: Remaining delta singletons slack to distribute: %f\n", rowind + 1, inst->sense[rowind], delta_ss);
-
-							// Singleton info
-							assert(index_in_bounds(beg + h, inst->rs_size));
-							singleton_index = inst->row_singletons[beg + h];
-							assert(index_in_bounds(singleton_index, inst->ncols));
-							coef = inst->rs_coef[beg + h];
-							s_lb = inst->lb[singleton_index];
-							s_ub = inst->ub[singleton_index];
-							s_val = inst->x[singleton_index];
-							assert(var_in_bounds(s_val, s_lb, s_ub));
-							covered_delta_ss = 0.0;
-							max_s_delta = 0.0;
-							s_delta = 0.0;
-
-							// Compute covered delta of the singleton
-							if (coef > 0.0) {
-								max_s_delta = s_val - s_lb; // delta down
-								covered_delta_ss = max(delta_ss, -coef * max_s_delta);
-							}
-							if (coef < 0.0) {
-								max_s_delta = s_ub - s_val; // delta up
-								covered_delta_ss = max(delta_ss, coef * max_s_delta);
-							}
-							// Update remaining delta to be covered by the next singletons
-							delta_ss -= covered_delta_ss;
-
-							// Compute singleton delta
-							s_delta = covered_delta_ss / coef;
-							// Update singleton
-							assert(var_in_bounds(s_val + s_delta, s_lb, s_ub));
-							inst->x[singleton_index] = s_val + s_delta;
-
-							// Update objective value
-							inst->objval += (inst->obj[singleton_index] * s_delta);
-						} // end for
-
-						// Delta slack must have been distributed among the singletons
-						assert(zero_double(delta_ss));
-						print_verbose(120, "[update_slacks][extension][row %d '%c']: delta_ss distributed, remaining %f\n", rowind + 1, inst->sense[rowind], delta_ss);
+						update_singletons(inst, rowind, delta_ss);
 					}
 					else {
 						// Enough row slack, update it
@@ -676,63 +643,7 @@ void update_slacks(instance* inst, int j, double signed_delta) {
 						delta_ss = temp_slack; // positive
 
 						// Distribute delta among the singletons, stop when done (delta_ss positive --> singletons slack must increase)
-						beg = inst->rs_beg[rowind];
-						int singleton_index;
-						double coef;
-						double s_lb;
-						double s_ub;
-						double s_val;
-						double covered_delta_ss;
-						double max_s_delta;
-						double s_delta;
-						for (int h = 0; h < inst->num_singletons[rowind]; h++) {
-
-							// Stop updating the singletons when delta singletons slack has been covered
-							if (delta_ss < TOLERANCE) {
-								print_verbose(200, "[update_slacks][extension][row %d '%c']: delta_ss covered, found %f\n", rowind + 1, inst->sense[rowind], delta_ss);
-								break;
-							}
-							assert(non_negative_double(delta_ss));
-							print_verbose(120, "[update_slacks][extension][row %d '%c']: Remaining delta singletons slack to distribute: %f\n", rowind + 1, inst->sense[rowind], delta_ss);
-
-							// Singleton info
-							assert(index_in_bounds(beg + h, inst->rs_size));
-							singleton_index = inst->row_singletons[beg + h];
-							assert(index_in_bounds(singleton_index, inst->ncols));
-							coef = inst->rs_coef[beg + h];
-							s_lb = inst->lb[singleton_index];
-							s_ub = inst->ub[singleton_index];
-							s_val = inst->x[singleton_index];
-							assert(var_in_bounds(s_val, s_lb, s_ub));
-							covered_delta_ss = 0.0;
-							max_s_delta = 0.0;
-							s_delta = 0.0;
-
-							// Compute covered delta of the singleton
-							if (coef > 0.0) {
-								max_s_delta = s_ub - s_val; // delta up
-								covered_delta_ss = min(delta_ss, coef * max_s_delta);
-							}
-							if (coef < 0.0) {
-								max_s_delta = s_val - s_lb; // delta down
-								covered_delta_ss = min(delta_ss, -coef * max_s_delta);
-							}
-							// Update remaining delta to be covered by the next singletons
-							delta_ss -= covered_delta_ss;
-
-							// Compute singleton delta
-							s_delta = covered_delta_ss / coef;
-							// Update singleton
-							assert(var_in_bounds(s_val + s_delta, s_lb, s_ub));
-							inst->x[singleton_index] = s_val + s_delta;
-
-							// Update objective value
-							inst->objval += (inst->obj[singleton_index] * s_delta);
-						} // end for
-
-						// Delta slack must have been distributed among the singletons
-						assert(zero_double(delta_ss));
-						print_verbose(120, "[update_slacks][extension][row %d '%c']: delta_ss distributed, remaining %f\n", rowind + 1, inst->sense[rowind], delta_ss);
+						update_singletons(inst, rowind, delta_ss);
 					}
 					else {
 						// Enough row slack, update it
@@ -760,130 +671,8 @@ void update_slacks(instance* inst, int j, double signed_delta) {
 					// Delta singletons slack to distribute among the singletons (could be positive or negative)
 					delta_ss = -(delta_slack);
 					
-					if (delta_ss > TOLERANCE) {
-
-						// Singletons slack should increase
-						// Distribute delta among the singletons, stop when done (delta_ss positive --> singletons slack must increase)
-						beg = inst->rs_beg[rowind];
-						int singleton_index;
-						double coef;
-						double s_lb;
-						double s_ub;
-						double s_val;
-						double covered_delta_ss;
-						double max_s_delta;
-						double s_delta;
-						for (int h = 0; h < inst->num_singletons[rowind]; h++) {
-
-							// Stop updating the singletons when delta singletons slack has been covered
-							if (delta_ss < TOLERANCE) {
-								print_verbose(200, "[update_slacks][extension][row %d '%c']: delta_ss covered, found %f\n", rowind + 1, inst->sense[rowind], delta_ss);
-								break;
-							}
-							assert(non_negative_double(delta_ss));
-							print_verbose(120, "[update_slacks][extension][row %d '%c']: Remaining delta singletons slack to distribute: %f\n", rowind + 1, inst->sense[rowind], delta_ss);
-
-							// Singleton info
-							assert(index_in_bounds(beg + h, inst->rs_size));
-							singleton_index = inst->row_singletons[beg + h];
-							assert(index_in_bounds(singleton_index, inst->ncols));
-							coef = inst->rs_coef[beg + h];
-							s_lb = inst->lb[singleton_index];
-							s_ub = inst->ub[singleton_index];
-							s_val = inst->x[singleton_index];
-							assert(var_in_bounds(s_val, s_lb, s_ub));
-							covered_delta_ss = 0.0;
-							max_s_delta = 0.0;
-							s_delta = 0.0;
-
-							// Compute covered delta of the singleton
-							if (coef > 0.0) {
-								max_s_delta = s_ub - s_val; // delta up
-								covered_delta_ss = min(delta_ss, coef * max_s_delta);
-							}
-							if (coef < 0.0) {
-								max_s_delta = s_val - s_lb; // delta down
-								covered_delta_ss = min(delta_ss, -coef * max_s_delta);
-							}
-							// Update remaining delta to be covered by the next singletons
-							delta_ss -= covered_delta_ss;
-
-							// Compute singleton delta
-							s_delta = covered_delta_ss / coef;
-							// Update singleton
-							assert(var_in_bounds(s_val + s_delta, s_lb, s_ub));
-							inst->x[singleton_index] = s_val + s_delta;
-
-							// Update objective value
-							inst->objval += (inst->obj[singleton_index] * s_delta);
-						} // end for
-
-						// Delta slack must have been distributed among the singletons
-						assert(zero_double(delta_ss));
-						print_verbose(120, "[update_slacks][extension][row %d '%c']: delta_ss distributed, remaining %f\n", rowind + 1, inst->sense[rowind], delta_ss);
-					}
-					else if (delta_ss < -(TOLERANCE)) {
-
-						// Singletons slack should decrease
-						// Distribute delta among the singletons, stop when done (delta_ss negative --> singletons slack must decrease)
-						beg = inst->rs_beg[rowind];
-						int singleton_index;
-						double coef;
-						double s_lb;
-						double s_ub;
-						double s_val;
-						double covered_delta_ss;
-						double max_s_delta;
-						double s_delta;
-						for (int h = 0; h < inst->num_singletons[rowind]; h++) {
-
-							// Stop updating the singletons when delta singletons slack has been covered
-							if (delta_ss > -(TOLERANCE)) {
-								print_verbose(200, "[update_slacks][extension][row %d '%c']: delta_ss covered, found %f\n", rowind + 1, inst->sense[rowind], delta_ss);
-								break; 
-							}
-							assert(non_positive_double(delta_ss));
-							print_verbose(120, "[update_slacks][extension][row %d '%c']: Remaining delta singletons slack to distribute: %f\n", rowind + 1, inst->sense[rowind], delta_ss);
-
-							// Singleton info
-							assert(index_in_bounds(beg + h, inst->rs_size));
-							singleton_index = inst->row_singletons[beg + h];
-							assert(index_in_bounds(singleton_index, inst->ncols));
-							coef = inst->rs_coef[beg + h];
-							s_lb = inst->lb[singleton_index];
-							s_ub = inst->ub[singleton_index];
-							s_val = inst->x[singleton_index];
-							assert(var_in_bounds(s_val, s_lb, s_ub));
-							covered_delta_ss = 0.0;
-							max_s_delta = 0.0;
-							s_delta = 0.0;
-
-							// Compute covered delta of the singleton
-							if (coef > 0.0) {
-								max_s_delta = s_val - s_lb;
-								covered_delta_ss = max(delta_ss, -coef * max_s_delta);
-							}
-							if (coef < 0.0) {
-								max_s_delta = s_ub - s_val;
-								covered_delta_ss = max(delta_ss, coef * max_s_delta);
-							}
-							// Update remaining delta to be covered by the next singletons
-							delta_ss = delta_ss - covered_delta_ss;
-
-							// Compute singleton delta
-							s_delta = covered_delta_ss / coef;
-							// Update singleton
-							assert(var_in_bounds(s_val + s_delta, s_lb, s_ub));
-							inst->x[singleton_index] = s_val + s_delta;
-
-							// Update objective value
-							inst->objval += (inst->obj[singleton_index] * s_delta);
-						} // end for
-
-						// Delta slack must have been distributed among the singletons
-						assert(zero_double(delta_ss));
-						print_verbose(120, "[update_slacks][extension][row %d '%c']: delta_ss distributed, remaining %f\n", rowind + 1, inst->sense[rowind], delta_ss);
-					}
+					// Distribute delta among the singletons, stop when done
+					update_singletons(inst, rowind, delta_ss);
 				}
 				else {
 					// Extension disabled OR enabled but zero singletons
@@ -898,7 +687,6 @@ void update_slacks(instance* inst, int j, double signed_delta) {
 	} // end for
 }
 
-// [EXTENSION] TO BE ADDED
 void update_singletons(instance* inst, int rowind, double delta_ss) {
 
 	int beg = inst->rs_beg[rowind]; /**< Begin index of the singletons for constraint rowind. */
@@ -918,16 +706,22 @@ void update_singletons(instance* inst, int rowind, double delta_ss) {
 	for (int k = 0; k < inst->num_singletons[rowind]; k++) {
 
 		// Stop updating the singletons when delta singletons slack has been covered
-		if (s_slack_increase && delta_ss < TOLERANCE) break;
-		if (!s_slack_increase && delta_ss > -(TOLERANCE)) break;
+		if ((s_slack_increase && delta_ss < TOLERANCE) || (!s_slack_increase && delta_ss > -(TOLERANCE))) {
+			print_verbose(200, "[update_singletons][extension][row %d '%c']: delta_ss covered, found %f\n", rowind + 1, inst->sense[rowind], delta_ss);
+			break;
+		}
+		assert((s_slack_increase && non_negative_double(delta_ss)) || (!s_slack_increase && non_positive_double(delta_ss)));
 		print_verbose(120, "[update_slacks][extension][row %d '%c']: Remaining delta singletons slack to distribute: %f.\n", rowind + 1, inst->sense[rowind], delta_ss);
 
 		// Singleton info
+		assert(index_in_bounds(beg + k, inst->rs_size));
 		singleton_index = inst->row_singletons[beg + k];
+		assert(index_in_bounds(singleton_index, inst->ncols));
 		coef = inst->rs_coef[beg + k];
 		s_lb = inst->lb[singleton_index];
 		s_ub = inst->ub[singleton_index];
 		s_val = inst->x[singleton_index];
+		assert(var_in_bounds(s_val, s_lb, s_ub));
 		covered_delta_ss = 0.0;
 		max_s_delta = 0.0;
 		s_delta = 0.0;
@@ -958,16 +752,21 @@ void update_singletons(instance* inst, int rowind, double delta_ss) {
 			}
 		}
 		// Update remaining delta to be covered by the next singletons
-		delta_ss = delta_ss - covered_delta_ss;
+		delta_ss -= covered_delta_ss;
 
 		// Compute singleton delta
 		s_delta = covered_delta_ss / coef;
 		// Update singleton
+		assert(var_in_bounds(s_val + s_delta, s_lb, s_ub));
 		inst->x[singleton_index] = s_val + s_delta;
 
 		// Update objective value
 		inst->objval += (inst->obj[singleton_index] * s_delta);
-	}
+	} // end for
+
+	// Delta slack must have been distributed among the singletons
+	assert(zero_double(delta_ss));
+	print_verbose(120, "[update_singletons][extension][row %d '%c']: delta_ss distributed, remaining %f\n", rowind + 1, inst->sense[rowind], delta_ss);
 }
 
 /*
