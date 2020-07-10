@@ -155,6 +155,7 @@
     <ClCompile Include="cmd_interface.c" />
     <ClCompile Include="compute_ziround_input.c" />
     <ClCompile Include="instance.c" />
+    <ClCompile Include="plot.c" />
     <ClCompile Include="print.c" />
     <ClCompile Include="util.c" />
     <ClCompile Include="ziround.c" />

@@ -42,6 +42,9 @@
     <ClCompile Include="asserts.c">
       <Filter>File di origine</Filter>
     </ClCompile>
+    <ClCompile Include="plot.c">
+      <Filter>File di origine</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ziround.h">

@@ -67,11 +67,12 @@
 #include <stdarg.h>
 #include <math.h>
 #include <assert.h>
+#include <time.h>
 
 /**
  * @brief Verbosity level.
  */
-#define VERBOSE 10
+#define VERBOSE 20
 
 /**
  * @brief Tolerance for non-integer numbers as considered by CPLEX.
@@ -406,6 +407,88 @@ double dot_product(double* coef, double* var_value, int len);
  * @param len Length of the array.
  */
 void clone_array(double* arr, double* clo, int len);
+
+/**
+ * @brief Free memory allocated to multiple pointers.
+ *
+ * @details It does not check the type of the passed ellipsis parameters, so
+ * be sure that actual pointers are passed. Use with care.
+ *
+ * @param count The number of pointers.
+ * @param ... The actual pointers.
+ */
+void free_all(int count, ...);
+
+/**
+ * @brief Given a tracker, add a new point to it.
+ *
+ * @param point The point to add to the \p tracker.
+ * @param tracker The tracking array.
+ * @param len The actual length of the \p tracker.
+ * @param size The number of \p point elements currently in the tracker.
+ */
+void add_point_single_tracker(double point, double** tracker, int* len, int* size);
+
+/**
+ *  @brief Given a list of trackers, add a new point to each tracker.
+ *
+ *  @param point   The new points to add to the trackers, represented by an array.
+ *  @param tracker The tracking matrix.
+ *  @param num     The number of trackers.
+ *  @param len     The actual length of each tracker.
+ *  @param size    The number of elements currently in each tracker.
+ */
+void add_point_multiple_trackers(double* point, double** tracker, int num, int* len, int* size);
+
+/**
+ * @brief Plot the results of the tracking.
+ *
+ * @param tracker The array with the tracking information.
+ * @param name The name of the tracker.
+ * @param label The labels of x and y axes.
+ * @param size The size of the array.
+ * @param filename The name of the file, where the plot is saved, this file
+ *        should have the `.png` extension. If this parameter is `NULL` the plot
+ *        is displayed on the screen.
+ */
+void plot_tracker(double* tracker, char* name, char** label, int size, char* filename);
+
+/**
+ * @brief Plot the result of two tracker on the same plot.
+ *
+ * @param tracker  The matrix with tracking information.
+ * @param name     The names of the trackers.
+ * @param label    The labels of x and y axes.
+ * @param num      The number of trackers.
+ * @param size     The size of each tracker.
+ * @param filename The name of the file, where the plot is saved, this file
+ *        should have the .png extension. If this parameter is null, the plot
+ *        is displayed on the screen.
+ */
+void plot_multiple_trackers(double** tracker, char** name, char** label, int num, int size, char* filename);
+
+/**
+ * @brief Open a pipe, and set basic properties.
+ *
+ * @details The pipe is opened and the FILE* of the pipe is inserted in the
+ * pointer at address \p pointer_to_g_plot_pipe. \p filename is used to
+ * choose if the plot must be displayed or saved as an image: according to it,
+ * gnuplot is properly set. Finally a set of `6` styles is defined: `(1,2,...6)`.
+ *
+ * @param pointer_to_g_plot_pipe The pointer to the pointer to the file that
+ *        represents the pipe. This indirection is required to modify the
+ *        value of the pointer to the file.
+ * @param filename The name of the file, with the meaning described in the
+ *        main plot functions.
+ */
+static void open_pipe(FILE** pointer_to_g_plot_pipe, char* filename);
+
+/**
+ * @brief Close the pipe, forcing a flush.
+ *
+ * @param g_plot_pipe The pipe to close.
+ */
+static void close_pipe(FILE* g_plot_pipe);
 
 /**
  *	@brief Print a warning message. The message is preceeded by `"\n\nWARNING: "`.

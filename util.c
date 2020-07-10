@@ -92,3 +92,16 @@ double dot_product(double* coef, double* var_value, int len) {
 }
 
 void clone_array(double* arr, double* clo, int len) { for (int i = 0; i < len; i++) clo[i] = arr[i]; }
+
+void free_all(int count, ...) {
+	va_list args;
+	va_start(args, count);
+
+	for (int i = 0; i < count; i++) {
+		void* elem = va_arg(args, void*);
+		free(elem);
+	}
+
+	va_end(args);
+	fflush(NULL);
+}
