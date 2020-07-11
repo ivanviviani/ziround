@@ -72,6 +72,21 @@ void check_rounding(instance* inst) {
 	if (!rounded) print_error("[check_rounding]: ... Failed to round all integer/binary variables of the MIP ...\n");
 }
 
+int count_rounded(double* x, int ncols, int* int_var, char* vartype) {
+
+	int count = 0;
+
+	// Scan integer/binary variables
+	for (int j = 0; j < ncols; j++) {
+		if (!(int_var[j])) continue;
+		assert(var_type_integer_or_binary(vartype[j]));
+
+		count += (!is_fractional(x[j]));
+	}
+
+	return count;
+}
+
 double fractionality(double xj) {
 	double minusfloor = xj - floor(xj);
 	double minusceil = ceil(xj) - xj;

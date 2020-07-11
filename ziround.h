@@ -85,6 +85,11 @@
 #define PLOT_SOL_COST 1
 
 /**
+ * @brief Plot number of rounded variables flag (0-1).
+ */
+#define PLOT_NUM_ROUNDED_VARS 1
+
+/**
  * @brief Tolerance for non-integer numbers as considered by CPLEX.
  */
 #define TOLERANCE 1e-6
@@ -383,6 +388,17 @@ void check_constraints(instance* inst, double* x);
  * @param inst Pointer to the instance.
  */
 void check_rounding(instance* inst);
+
+/**
+ * @brief Count number of variables rounded so far.
+ *
+ * @param x Current solution.
+ * @param ncols Number of variables.
+ * @param int_var Array of flags for binary/integer variables in the original MIP.
+ * @param vartype Array of variable types.
+ * @return Number of variables rounded so far.
+ */
+int count_rounded(double* x, int ncols, int* int_var, char* vartype);
 
 /**
  * @brief Deallocate all the fields of the instance.
