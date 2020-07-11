@@ -187,7 +187,7 @@ void zi_round(instance* inst) {
 		system("pause");
 		
 		// [DEBUG ONLY] (BRUTE FORCE)  Check variable bounds and constraints
-		if (VERBOSE >= 120) {
+		if (VERBOSE >= 1) {
 			check_bounds(inst, inst->x);
 			check_constraints(inst, inst->x);
 		}
@@ -235,6 +235,10 @@ void check_slacks(instance* inst, int j, double* delta_up, double* delta_down, c
 	double delta_slack;      /**< Delta slack of the current constraint (to be distributed). */
 	double new_slack;        /**< Current row slack after rounding. */
 	int enough_slack;        /**< Support flag. */
+	double ss_lb;            /**< Lower bound of current singletons slack (in its row). */
+	double ss_ub;            /**< Upper bound of current singletons slack (in its row). */
+	double delta_ss;         /**< Delta singletons slack after rounding. */
+	double new_ss;           /**< Singletons slack after rounding. */
 
 	colend = (j < inst->ncols - 1) ? inst->cmatbeg[j + 1] : inst->nzcnt;
 
@@ -271,14 +275,14 @@ void check_slacks(instance* inst, int j, double* delta_up, double* delta_down, c
 					if (new_slack < -(TOLERANCE)) {
 
 						// Compute singletons slack of constraint rowind and get bounds
-						double ss_lb = inst->ss_lb[rowind];
-						double ss_ub = inst->ss_ub[rowind];
+						ss_lb = inst->ss_lb[rowind];
+						ss_ub = inst->ss_ub[rowind];
 						singletons_slack = compute_singletons_slack(inst, rowind);
 						assert(var_in_bounds(singletons_slack, ss_lb, ss_ub));
 
 						// Singletons slack after rounding
-						double delta_ss = new_slack;
-						double new_ss = singletons_slack + delta_ss; // + because signed delta
+						delta_ss = new_slack;
+						new_ss = singletons_slack + delta_ss; // + because signed delta
 
 						// New singletons slack must stay within its bounds
 						enough_slack = !((new_ss < ss_lb - TOLERANCE) || (new_ss > ss_ub + TOLERANCE));
@@ -316,14 +320,14 @@ void check_slacks(instance* inst, int j, double* delta_up, double* delta_down, c
 					if (new_slack > TOLERANCE) {
 
 						// Compute singletons slack of constraint rowind and get bounds
-						double ss_lb = inst->ss_lb[rowind];
-						double ss_ub = inst->ss_ub[rowind];
+						ss_lb = inst->ss_lb[rowind];
+						ss_ub = inst->ss_ub[rowind];
 						singletons_slack = compute_singletons_slack(inst, rowind);
 						assert(var_in_bounds(singletons_slack, ss_lb, ss_ub));
 
 						// Singletons slack after rounding
-						double delta_ss = new_slack;
-						double new_ss = singletons_slack + delta_ss; // + because signed delta
+						delta_ss = new_slack;
+						new_ss = singletons_slack + delta_ss; // + because signed delta
 
 						// New singletons slack must stay within its bounds
 						enough_slack = !((new_ss < ss_lb - TOLERANCE) || (new_ss > ss_ub + TOLERANCE));
@@ -348,14 +352,14 @@ void check_slacks(instance* inst, int j, double* delta_up, double* delta_down, c
 				if (inst->extension && inst->num_singletons[rowind] > 0) {
 
 					// Compute singletons slack of constraint rowind (with bounds)
-					double ss_lb = inst->ss_lb[rowind];
-					double ss_ub = inst->ss_ub[rowind];
+					ss_lb = inst->ss_lb[rowind];
+					ss_ub = inst->ss_ub[rowind];
 					curr_slack = compute_singletons_slack(inst, rowind);
 					assert(var_in_bounds(curr_slack, ss_lb, ss_ub));
 					delta_slack = (round_updown == 'U') ? (aij * delta_up[j]) : (aij * (-delta_down[j]));
 
 					// Singletons slack after rounding
-					double new_ss = curr_slack - delta_slack;
+					new_ss = curr_slack - delta_slack;
 
 					// New singletons slack must stay within its bounds
 					enough_slack = !((new_ss < ss_lb - TOLERANCE) || (new_ss > ss_ub + TOLERANCE));
@@ -756,15 +760,23 @@ void update_singletons(instance* inst, int rowind, double delta_ss) {
 */
 void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, const double epsilon) {
 
-	double delta_up1;		/**< First delta_up[j] major candidate. */
-	double delta_down1;		/**< First delta_down[j] major candidate. */
-	double delta_up2;		/**< Second delta_up[j] major candidate. */
-	double delta_down2;		/**< Second delta_down[j] major candidate. */
-	double candidate_up1;	/**< Current delta_up[j] minor candidate. */
-	double candidate_down1; /**< Current delta_down[j] minor candidate. */
-	double new_delta_up;    /**< Final delta_up[j] winner. */
-	double new_delta_down;  /**< Final delta_down[j] winner. */
-	int colend;				/**< Index of the last non-zero coefficient of column j. */
+	double delta_up1;		 /**< First delta_up[j] major candidate. */
+	double delta_down1;		 /**< First delta_down[j] major candidate. */
+	double delta_up2;		 /**< Second delta_up[j] major candidate. */
+	double delta_down2;		 /**< Second delta_down[j] major candidate. */
+	double candidate_up1;	 /**< Current delta_up[j] minor candidate. */
+	double candidate_down1;  /**< Current delta_down[j] minor candidate. */
+	double new_delta_up;     /**< Final delta_up[j] winner. */
+	double new_delta_down;   /**< Final delta_down[j] winner. */
+	int colend;				 /**< Index of the last constraint containing variable x_j. */
+	double aij;              /**< Coefficient of xj in the constraint. */
+	int rowind;              /**< Constraint index. */
+	double slack;            /**< Row slack (no singleton slack included). */
+	double ss_lb;            /**< Lower bound of singletons slack (in its row). */
+	double ss_ub;            /**< Upper bound of singletons slack (in its row). */
+	double singletons_slack; /**< Singletons slack value (in its row). */
+	double ss_delta_up;      /**< Maximum delta up for current singletons slack. */
+	double ss_delta_down;    /**< Maximum delta down for current singletons slack. */
 
 	delta_up1   = LONG_MAX;
 	delta_down1 = LONG_MAX;
@@ -781,17 +793,17 @@ void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, c
 	// Scan constraints of variable xj
 	for (int k = inst->cmatbeg[j]; k < colend; k++) {
 
-		double aij = inst->cmatval[k];      // Coefficient of xj in the constraint
-		int rowind = inst->cmatind[k];      // Constraint index
+		aij = inst->cmatval[k];
+		rowind = inst->cmatind[k];
 		assert(index_in_bounds(rowind, inst->nrows));
-		double slack = inst->slack[rowind]; // Row slack (no singleton slack included)
+		slack = inst->slack[rowind]; // (no singleton slack included)
 
 		// [EXTENSION] Get singletons slack info (if any)
-		double ss_lb = LONG_MAX;
-		double ss_ub = LONG_MIN;
-		double singletons_slack = 0.0;
-		double ss_delta_up = 0.0;
-		double ss_delta_down = 0.0;
+		ss_lb = LONG_MAX;
+		ss_ub = LONG_MIN;
+		singletons_slack = 0.0;
+		ss_delta_up = 0.0;
+		ss_delta_down = 0.0;
 		if (inst->extension && inst->num_singletons[rowind] > 0) {
 
 			// Compute singletons slack of constraint rowind and get bounds
@@ -991,16 +1003,21 @@ double compute_singletons_slack(instance* inst, int rowind) {
 	assert(index_in_bounds(rowind, inst->nrows));
 	if (inst->num_singletons[rowind] <= 0) print_error("[compute_singletons_slack][extension]: Tried to compute singletons slack of row %d with no singletons.\n", rowind + 1);
 
+	double singletons_slack; /**< Current singletons slack value. */
+	int beg;                 /**< Begin index of singleton indices for row \p rowind. */
+	int singleton_index;     /**< Current singleton index. */
+	double coef;             /**< Current singleton coefficient in row \p rowind. */
+
 	// Compute singletons slack
-	double singletons_slack = 0.0;
-	int beg = inst->rs_beg[rowind];
+	singletons_slack = 0.0;
+	beg = inst->rs_beg[rowind];
 	assert(index_in_bounds(beg, inst->rs_size));
 	for (int k = 0; k < inst->num_singletons[rowind]; k++) {
 
 		assert(index_in_bounds(beg + k, inst->rs_size));
-		int singleton_index = inst->row_singletons[beg + k];
+		singleton_index = inst->row_singletons[beg + k];
 		assert(index_in_bounds(singleton_index, inst->ncols));
-		double coef = inst->rs_coef[beg + k];
+		coef = inst->rs_coef[beg + k];
 		singletons_slack += (coef * inst->x[singleton_index]);
 	}
 	assert(var_in_bounds(singletons_slack, inst->ss_lb[rowind], inst->ss_ub[rowind]));

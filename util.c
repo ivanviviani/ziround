@@ -18,16 +18,20 @@ void check_bounds(instance* inst, double* x) {
 
 void check_constraints(instance* inst, double* x) {
 
+	int rowend;    /**< Last variable index of the current row. */
+	double rowact; /**< Current row activity. */
+	int varind;    /**< Current variable index. */
+
 	// Scan constraints
 	for (int i = 0; i < inst->nrows; i++) {
 
-		int rowend = (i < inst->nrows - 1) ? inst->rmatbeg[i + 1] : inst->nzcnt;
-		double rowact = 0.0;
+		rowend = (i < inst->nrows - 1) ? inst->rmatbeg[i + 1] : inst->nzcnt;
+		rowact = 0.0;
 
 		// Scan non-zero coefficients of the constraint and compute row activity
 		for (int k = inst->rmatbeg[i]; k < rowend; k++) {
 
-			int varind = inst->rmatind[k];
+			varind = inst->rmatind[k];
 			assert(index_in_bounds(varind, inst->ncols));
 			rowact += (inst->rmatval[k] * x[varind]);
 		}
