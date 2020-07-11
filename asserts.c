@@ -18,12 +18,12 @@ int non_negative_integer(int num) {
 
 int non_negative_double(double num) {
 
-	return (num >= 0.0);
+	return (num >= 0.0 - TOLERANCE);
 }
 
 int non_positive_double(double num) {
 
-	return (num <= 0.0);
+	return (num <= 0.0 + TOLERANCE);
 }
 
 int zero_double(double num) {
