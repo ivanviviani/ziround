@@ -187,7 +187,7 @@ void zi_round(instance* inst) {
 		system("pause");
 		
 		// [DEBUG ONLY] (BRUTE FORCE)  Check variable bounds and constraints
-		if (VERBOSE >= 1) {
+		if (VERBOSE >= 100) {
 			check_bounds(inst, inst->x);
 			check_constraints(inst, inst->x);
 		}
