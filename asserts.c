@@ -26,6 +26,16 @@ int non_positive_double(double num) {
 	return (num <= 0.0 + TOLERANCE);
 }
 
+int negative_double(double num) {
+
+	return (num < 0.0 - TOLERANCE);
+}
+
+int positive_double(double num) {
+
+	return (num > 0.0 + TOLERANCE);
+}
+
 int zero_double(double num) {
 
 	return (fabs(num) < TOLERANCE);

@@ -621,6 +621,22 @@ int non_negative_double(double num);
 int non_positive_double(double num);
 
 /**
+ * @brief Check whether a floating point number is negative.
+ *
+ * @param num Number.
+ * @return 1 If the assert succeeds, 0 otherwise.
+ */
+int negative_double(double num);
+
+/**
+ * @brief Check whether a floating point number is positive.
+ *
+ * @param num Number.
+ * @return 1 If the assert succeeds, 0 otherwise.
+ */
+int positive_double(double num);
+
+/**
  * @brief Check whether a floating point number is equal to zero.
  *
  * @param num Number.
