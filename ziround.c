@@ -37,13 +37,16 @@ void zi_round(instance* inst) {
 	double* tracker_sol_frac; /**< Tracker of solution fractionality. */
 	double* tracker_sol_cost; /**< Tracker of solution cost. */
 	if (VERBOSE >= 10) {
-		size_frac = 0;
-		size_cost = 0;
-		len_frac = 10;
-		len_cost = 10;
-		tracker_sol_frac = (double*)calloc(len_frac, sizeof(double));
-		tracker_sol_cost = (double*)calloc(len_cost, sizeof(double)); 
-		if (tracker_sol_frac == NULL || tracker_sol_cost == NULL) print_error("[ziround]: Failed to allocate trackers.\n");
+		if (PLOT_SOL_FRAC) {
+			size_frac = 0;
+			len_frac = 10;
+			tracker_sol_frac = (double*)calloc(len_frac, sizeof(double)); if (tracker_sol_frac == NULL) print_error("[ziround]: Failed to allocate solution fractionality tracker.\n");
+		}
+		if (PLOT_SOL_COST) {
+			size_cost = 0;
+			len_cost = 10;
+			tracker_sol_cost = (double*)calloc(len_cost, sizeof(double)); if (tracker_sol_cost == NULL) print_error("[ziround]: Failed to allocate solution cost tracker.\n");
+		}
 	}
 	// ----------------------------------------------------------------------------------------------------------------------
 
@@ -53,8 +56,8 @@ void zi_round(instance* inst) {
 	frac[bufind] = curr_frac;
 	if (fabs(frac[bufind] - frac[!bufind]) > TOLERANCE) print_verbose(10, "* %f | %f *\n", frac[bufind], inst->objval);
 	if (VERBOSE >= 10) {
-		add_point_single_tracker(curr_frac, &tracker_sol_frac, &len_frac, &size_frac);
-		add_point_single_tracker(inst->objval, &tracker_sol_cost, &len_cost, &size_cost);
+		if (PLOT_SOL_FRAC) add_point_single_tracker(curr_frac, &tracker_sol_frac, &len_frac, &size_frac);
+		if (PLOT_SOL_COST) add_point_single_tracker(inst->objval, &tracker_sol_cost, &len_cost, &size_cost);
 	}
 	bufind = !bufind;
 	// ----------------------------------------------------------------------------------------------------------------------
@@ -172,8 +175,8 @@ void zi_round(instance* inst) {
 			frac[bufind] = curr_frac;
 			if (fabs(frac[bufind] - frac[!bufind]) > TOLERANCE) print_verbose(10, "* %f | %f *\n", frac[bufind], inst->objval);
 			if (VERBOSE >= 10) {
-				add_point_single_tracker(curr_frac, &tracker_sol_frac, &len_frac, &size_frac);
-				add_point_single_tracker(inst->objval, &tracker_sol_cost, &len_cost, &size_cost);
+				if (PLOT_SOL_FRAC) add_point_single_tracker(curr_frac, &tracker_sol_frac, &len_frac, &size_frac);
+				if (PLOT_SOL_COST) add_point_single_tracker(inst->objval, &tracker_sol_cost, &len_cost, &size_cost);
 			}
 			bufind = !bufind;
 			// -------------------------------------------------------------------------------------------------------------------
@@ -184,7 +187,7 @@ void zi_round(instance* inst) {
 		else { print_verbose(10, "[zi_round]: ... No updates found, exit outer loop ...\n"); }
 
 		// [DEBUG ONLY] Pause after each inner loop execution
-		system("pause");
+		if (VERBOSE >= 100) system("pause");
 		
 		// [DEBUG ONLY] (BRUTE FORCE)  Check variable bounds and constraints
 		if (VERBOSE >= 100) {
@@ -196,22 +199,28 @@ void zi_round(instance* inst) {
 
 	// [DEBUG ONLY]: Plot solution fractionality and cost trackers -------------------------------------------------
 	if (VERBOSE >= 10) {
-		char** labels_sol_frac = (char**)calloc(2, sizeof(char*));
-		labels_sol_frac[0] = (char*)calloc(20, sizeof(char));
-		labels_sol_frac[1] = (char*)calloc(20, sizeof(char));
-		char** labels_sol_cost = (char**)calloc(2, sizeof(char*));
-		labels_sol_cost[0] = (char*)calloc(20, sizeof(char));
-		labels_sol_cost[1] = (char*)calloc(20, sizeof(char));
-		char* name = (char*)calloc(20, sizeof(char));
-		sprintf(labels_sol_frac[0], "Round");
-		sprintf(labels_sol_frac[1], "Fractionality");
-		sprintf(labels_sol_cost[0], "Round");
-		sprintf(labels_sol_cost[1], "Cost");
-		sprintf(name, "Solution");
-		plot_tracker(tracker_sol_frac, name, labels_sol_frac, size_frac, NULL);
-		plot_tracker(tracker_sol_cost, name, labels_sol_cost, size_cost, NULL);
-		free_all(9, tracker_sol_frac, tracker_sol_cost, labels_sol_frac[0], labels_sol_frac[1],
-				labels_sol_cost[0], labels_sol_cost[1], labels_sol_frac, labels_sol_cost, name);
+		if (PLOT_SOL_FRAC) {
+			char** labels_sol_frac = (char**)calloc(2, sizeof(char*));
+			labels_sol_frac[0] = (char*)calloc(20, sizeof(char));
+			labels_sol_frac[1] = (char*)calloc(20, sizeof(char));
+			char* name = (char*)calloc(20, sizeof(char));
+			sprintf(labels_sol_frac[0], "Round");
+			sprintf(labels_sol_frac[1], "Fractionality");
+			sprintf(name, "Solution");
+			plot_tracker(tracker_sol_frac, name, labels_sol_frac, size_frac, NULL);
+			free_all(5, tracker_sol_frac, labels_sol_frac[0], labels_sol_frac[1], labels_sol_frac, name);
+		}
+		if (PLOT_SOL_COST) {
+			char** labels_sol_cost = (char**)calloc(2, sizeof(char*));
+			labels_sol_cost[0] = (char*)calloc(20, sizeof(char));
+			labels_sol_cost[1] = (char*)calloc(20, sizeof(char));
+			char* name = (char*)calloc(20, sizeof(char));
+			sprintf(labels_sol_cost[0], "Round");
+			sprintf(labels_sol_cost[1], "Cost");
+			sprintf(name, "Solution");
+			plot_tracker(tracker_sol_cost, name, labels_sol_cost, size_cost, NULL);
+			free_all(5, tracker_sol_cost, labels_sol_cost[0], labels_sol_cost[1], labels_sol_cost, name);
+		}
 	}
 	// -------------------------------------------------------------------------------------------------------------
 

@@ -75,6 +75,16 @@
 #define VERBOSE 10
 
 /**
+ * @brief Plot solution fractionality flag (0-1).
+ */
+#define PLOT_SOL_FRAC 1
+
+ /**
+  * @brief Plot solution cost flag (0-1).
+  */
+#define PLOT_SOL_COST 1
+
+/**
  * @brief Tolerance for non-integer numbers as considered by CPLEX.
  */
 #define TOLERANCE 1e-6
@@ -102,6 +112,8 @@ typedef struct {
     int objsen; 			/**< Objective function sense, CPX_MIN (default) or CPX_MAX (specified from command line). */
     char* vartype; 		    /**< Variable types (before converting MIP to LP), integer/binary or continuous. */
     int* int_var; 			/**< Flags array that keeps track of integer/binary (value 1) and continuous (value 0) variables. */
+
+    // Singletons
     int* row_singletons;    /**< Singleton indices. */
     int rs_size;            /**< Total number of singletons. */
     int* rs_beg;            /**< Begin index of the singleton indices of each row that contains at least one. */
