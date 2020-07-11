@@ -132,7 +132,7 @@ void zi_round(instance* inst) {
 						print_verbose(100, "[zi_round][FRA]        : Round UP >>> Set x_%d = x_%d + delta_up_%d = %f + %f = %f\n", j + 1, j + 1, j + 1, inst->x[j], delta_up[j], inst->x[j] + delta_up[j]);
 
 						// Check whether all affected constraints have enough slack for a ROUND UP of xj
-						check_slacks(inst, j, delta_up, delta_down, 'U');
+						check_slacks(inst, j, delta_up[j], delta_down[j], 'U');
 						
 						// Round UP
 						inst->x[j] = inst->x[j] + delta_up[j];
@@ -151,7 +151,7 @@ void zi_round(instance* inst) {
 						print_verbose(100, "[zi_round][FRA]        : Round DOWN >>> Set x_%d = x_%d - delta_down_%d = %f - %f = %f\n", j + 1, j + 1, j + 1, inst->x[j], delta_down[j], inst->x[j] - delta_down[j]);
 
 						// Check whether all affected constraints have enough slack for a ROUND DOWN of xj
-						check_slacks(inst, j, delta_up, delta_down, 'D');
+						check_slacks(inst, j, delta_up[j], delta_down[j], 'D');
 						
 						// Round DOWN
 						inst->x[j] = inst->x[j] - delta_down[j];
@@ -223,7 +223,7 @@ void zi_round(instance* inst) {
 //**************************************************************************************************************************************************************
 //**************************************************************************************************************************************************************
 
-void check_slacks(instance* inst, int j, double* delta_up, double* delta_down, const char round_updown) {
+void check_slacks(instance* inst, int j, double delta_up, double delta_down, const char round_updown) {
 
 	if (round_updown != 'U' && round_updown != 'D') print_error("[check_slacks]: Rounding sense '%c' undefined.\n", round_updown);
 
@@ -261,7 +261,7 @@ void check_slacks(instance* inst, int j, double* delta_up, double* delta_down, c
 
 				curr_slack = inst->slack[rowind];
 				(inst->sense[rowind] == 'L') ? assert(non_negative_double(curr_slack)) : assert(non_positive_double(curr_slack));
-				delta_slack = (round_updown == 'U') ? (aij * delta_up[j]) : (aij * (-delta_down[j]));
+				delta_slack = (round_updown == 'U') ? (aij * delta_up) : (aij * (-delta_down));
 
 				// Row slack after rounding (negative for 'L', positive for 'G' constraints iff also singletons slack should be used)
 				new_slack = curr_slack - delta_slack;
@@ -312,7 +312,7 @@ void check_slacks(instance* inst, int j, double* delta_up, double* delta_down, c
 					ss_ub = inst->ss_ub[rowind];
 					curr_slack = compute_singletons_slack(inst, rowind);
 					assert(var_in_bounds(curr_slack, ss_lb, ss_ub));
-					delta_slack = (round_updown == 'U') ? (aij * delta_up[j]) : (aij * (-delta_down[j]));
+					delta_slack = (round_updown == 'U') ? (aij * delta_up) : (aij * (-delta_down));
 
 					// Singletons slack after rounding
 					new_ss = curr_slack - delta_slack;
@@ -366,7 +366,7 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 				}
 
 				// Check whether all affected constraints have enough slack for a ROUND UP of xj
-				check_slacks(inst, j, delta_up, delta_down, 'U');
+				check_slacks(inst, j, delta_up[j], delta_down[j], 'U');
 
 				// Round UP (if xj is not fractional then delta_up[j] must be 1.0)
 				inst->x[j] += delta_up[j];
@@ -388,7 +388,7 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 				}
 
 				// Check whether all affected constraints have enough slack for a ROUND DOWN of xj
-				check_slacks(inst, j, delta_up, delta_down, 'D');
+				check_slacks(inst, j, delta_up[j], delta_down[j], 'D');
 
 				// Round DOWN (if xj is not fractional then delta_down[j] must be 1.0)
 				inst->x[j] -= delta_down[j];
@@ -407,7 +407,7 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 				print_verbose(10, "[round_xj_bestobj]: >>> Round x_%d = %f - %f = %f\n", j + 1, inst->x[j], delta_down[j], inst->x[j] - delta_down[j]);
 
 				// Check whether all affected constraints have enough slack for a ROUND DOWN of xj
-				check_slacks(inst, j, delta_up, delta_down, 'D');
+				check_slacks(inst, j, delta_up[j], delta_down[j], 'D');
 
 				// Round arbitrarily (DOWN)
 				inst->x[j] -= delta_down[j];
@@ -426,7 +426,7 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 				print_verbose(10, "[round_xj_bestobj]: >>> Round x_%d = %f + %f = %f\n", j + 1, inst->x[j], delta_up[j], inst->x[j] + delta_up[j]);
 				
 				// Check whether all affected constraints have enough slack for a ROUND UP of xj
-				check_slacks(inst, j, delta_up, delta_down, 'U');
+				check_slacks(inst, j, delta_up[j], delta_down[j], 'U');
 
 				// Round arbitrarily (UP)
 				inst->x[j] += delta_up[j];
@@ -450,7 +450,7 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 				}
 
 				// Check whether all affected constraints have enough slack for a ROUND UP of xj
-				check_slacks(inst, j, delta_up, delta_down, 'U');
+				check_slacks(inst, j, delta_up[j], delta_down[j], 'U');
 
 				// Round UP (if xj is not fractional then delta_up[j] must be 1.0)
 				inst->x[j] += delta_up[j];
@@ -469,7 +469,7 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 				}
 
 				// Check whether all affected constraints have enough slack for a ROUND DOWN of xj
-				check_slacks(inst, j, delta_up, delta_down, 'D');
+				check_slacks(inst, j, delta_up[j], delta_down[j], 'D');
 
 				// Round DOWN (if xj is not fractional then delta_down[j] must be 1.0)
 				inst->x[j] -= delta_down[j];
@@ -485,7 +485,7 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 				print_verbose(10, "[round_xj_bestobj]: >>> Round x_%d = %f - %f = %f\n", j + 1, inst->x[j], delta_down[j], inst->x[j] - delta_down[j]);
 
 				// Check whether all affected constraints have enough slack for a ROUND DOWN of xj
-				check_slacks(inst, j, delta_up, delta_down, 'D');
+				check_slacks(inst, j, delta_up[j], delta_down[j], 'D');
 
 				// Round arbitrarily (DOWN)
 				inst->x[j] -= delta_down[j];
@@ -504,7 +504,7 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 				print_verbose(10, "[round_xj_bestobj]: >>> Round x_%d = %f + %f = %f\n", j + 1, inst->x[j], delta_up[j], inst->x[j] + delta_up[j]);
 				
 				// Check whether all affected constraints have enough slack for a ROUND UP of xj
-				check_slacks(inst, j, delta_up, delta_down, 'U');
+				check_slacks(inst, j, delta_up[j], delta_down[j], 'U');
 
 				// Round arbitrarily (UP)
 				inst->x[j] += delta_up[j];

@@ -246,12 +246,18 @@ void read_constraints_right_hand_sides(instance* inst);
 void read_row_slacks(instance* inst);
 
 /**
- * @brief TODO
+ * @brief Find singletons of the problem, i.e. continuous variables that
+ * appear in only one constraint, and populate the corresponding data structures.
+ *
+ * @param inst Pointer to the instance.
  */
 void find_singletons(instance* inst);
 
 /**
- * @brief TODO
+ * @brief Compute bounds of the singletons slacks, seen as a single variable 
+ * (sum of each singleton contribution in the row).
+ *
+ * @param inst Pointer to the instance.
  */
 void compute_singletons_slacks_bounds(instance* inst);
 
@@ -273,9 +279,15 @@ void populate_inst(instance* inst);
 void zi_round(instance* inst);
 
 /**
- * @brief TODO
+ * @brief Check whether all constraints affected by a round up/down of xj have enough slack for it.
+ *
+ * @param inst Pointer to the instance.
+ * @param j Variable index.
+ * @param delta_up Delta up of variable \p j.
+ * @param delta_down Delta down of variable \p j.
+ * @param round_updown
  */
-void check_slacks(instance* inst, int j, double* delta_up, double* delta_down, const char round_updown);
+void check_slacks(instance* inst, int j, double delta_up, double delta_down, const char round_updown);
 
 /**
  * @brief Update variable xj to improve objective, according to the values
@@ -303,7 +315,11 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 void update_slacks(instance* inst, int j, double signed_delta);
 
 /**
- * TODO
+ * @brief Update singletons of the constraint \p rowind by distributing \p delta_ss.
+ *
+ * @param inst Pointer to the instance.
+ * @param rowind Index of the constraint.
+ * @param delta_ss Delta singletons slack to distribute among the singletons of the constraint.
  */
 void update_singletons(instance* inst, int rowind, double delta_ss);
 
@@ -320,9 +336,16 @@ void update_singletons(instance* inst, int rowind, double delta_ss);
 void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, const double epsilon);
 
 /**
- * @brief TODO
+ * @brief Compute singletons slack of a given constraint (row).
+ *
+ * @param inst Pointer to the instance.
+ * @param rowind Index of the constraint.
+ * @return Singletons slack of the constraint.
  */
 double compute_singletons_slack(instance* inst, int rowind);
+// ---------------------------------------------------------------------------------------------------
+
+// UTIL ----------------------------------------------------------------------------------------------
 
 /**
  * @brief Check that all the variable bounds are satisfied, for the
@@ -343,7 +366,9 @@ void check_bounds(instance* inst, double* x);
 void check_constraints(instance* inst, double* x);
 
 /**
- * @brief TODO
+ * @brief Check whther all the integer variables of the original MIP have been rounded.
+ *
+ * @param inst Pointer to the instance.
  */
 void check_rounding(instance* inst);
 
@@ -418,6 +443,9 @@ void clone_array(double* arr, double* clo, int len);
  * @param ... The actual pointers.
  */
 void free_all(int count, ...);
+// ---------------------------------------------------------------------------------------------------
+
+// PLOT ----------------------------------------------------------------------------------------------
 
 /**
  * @brief Given a tracker, add a new point to it.
@@ -489,6 +517,9 @@ static void open_pipe(FILE** pointer_to_g_plot_pipe, char* filename);
  * @param g_plot_pipe The pipe to close.
  */
 static void close_pipe(FILE* g_plot_pipe);
+// ---------------------------------------------------------------------------------------------------
+
+// PRINT ---------------------------------------------------------------------------------------------
 
 /**
  *	@brief Print a warning message. The message is preceeded by `"\n\nWARNING: "`.
@@ -515,23 +546,152 @@ void print_error(const char* err, ...);
  *	@param ... The multiple parameters.
  */
 void print_verbose(int msg_verb, const char* format, ...);
+// ---------------------------------------------------------------------------------------------------
 
-// ASSERTS
+// ASSERTS -------------------------------------------------------------------------------------------
+
+/**
+ * @brief Check whether an integer number is positive.
+ *
+ * @param num Integer number.
+ * @return 1 If the assert succeeds, 0 otherwise.
+ */
 int positive_integer(int num);
+
+/**
+ * @brief Check whether an integer number is non-negative.
+ *
+ * @param num Integer number.
+ * @return 1 If the assert succeeds, 0 otherwise.
+ */
 int non_negative_integer(int num);
+
+/**
+ * @brief Check whether a floating point number is non-negative.
+ *
+ * @param num Number.
+ * @return 1 If the assert succeeds, 0 otherwise.
+ */
 int non_negative_double(double num);
+
+/**
+ * @brief Check whether a floating point number is non-positive.
+ *
+ * @param num Number.
+ * @return 1 If the assert succeeds, 0 otherwise.
+ */
 int non_positive_double(double num);
+
+/**
+ * @brief Check whether a floating point number is equal to zero.
+ *
+ * @param num Number.
+ * @return 1 If the assert succeeds, 0 otherwise.
+ */
 int zero_double(double num);
+
+/**
+ * @brief Check whether two floating point numbers are equal.
+ *
+ * @param x First number.
+ * @param y Second number.
+ * @return 1 If the assert succeeds, 0 otherwise.
+ */
 int equals_double(double x, double y);
+
+/**
+ * @brief Check whether the numeric code for the objective sense is valid
+ * according to CPLEX.
+ *
+ * @param objsen Objective sense code.
+ * @return 1 If the assert succeeds, 0 otherwise.
+ */
 int valid_obj_sense(int objsen);
+
+/**
+ * @brief Check whether there is a ranged constraint in an array of
+ * constraint senses.
+ *
+ * @param sense Array of constraint senses.
+ * @param nrows Size of the array.
+ * @return 1 If the assert succeeds, 0 otherwise.
+ */
 int no_ranged_constraints(char* sense, int nrows);
+
+/**
+ * @brief Check whether row slacks are valid, i.e. have the correct sign.
+ *
+ * @param slack Array of row slacks.
+ * @param sense Array of constraint senses.
+ * @param nrows Size of the two arrays.
+ * @return 1 If the assert succeeds, 0 otherwise.
+ */
 int valid_row_slacks(double* slack, char* sense, int nrows);
+
+/**
+ * @brief Check whether variable types are supported in the program.
+ *
+ * @param vartype Array of variable types.
+ * @param ncols Size of the array.
+ * @return 1 If the assert succeeds, 0 otherwise.
+ */
 int valid_var_types(char* vartype, int ncols);
+
+/**
+ * @brief Check whether a variable type is integer or binary.
+ *
+ * @param vartype Variable type.
+ * @return 1 If the assert succeeds, 0 otherwise.
+ */
 int var_type_integer_or_binary(char vartype);
+
+/**
+ * @brief Check whether a variable type is continuous.
+ *
+ * @param vartype Variable type.
+ * @return 1 If the assert succeeds, 0 otherwise.
+ */
 int var_type_continuous(char vartype);
+
+/**
+ * @brief Check whether an index is within its bounds 
+ * (it is assumed to have a lower bound of zero).
+ *
+ * @param ind Index.
+ * @param len Upper bound.
+ * @return 1 If the assert succeeds, 0 otherwise.
+ */
 int index_in_bounds(int ind, int len);
+
+/**
+ * @brief Check whether an array of integers is all zeros.
+ *
+ * @param arr Array of integers.
+ * @param len Size of the array.
+ * @return 1 If the assert succeeds, 0 otherwise.
+ */
 int array_of_zeros(int* arr, int len);
+
+/**
+ * @brief Check whether a set of bounds is valid, i.e. lower bounds
+ * less than upper bounds.
+ *
+ * @param lower Array of lower bounds.
+ * @param upper Array of upper bounds.
+ * @param nvars Size of the two arrays.
+ * @return 1 If the assert succeeds, 0 otherwise.
+ */
 int valid_bounds(double* lower, double* upper, int nvars);
+
+/**
+ * @brief Check whether a variable is within its bounds.
+ *
+ * @param var Variable value.
+ * @param lb Lower bound.
+ * @param ub Upper bound.
+ * @return 1 If the assert succeeds, 0 otherwise.
+ */
 int var_in_bounds(double var, double lb, double ub);
+// ---------------------------------------------------------------------------------------------------
 
 #endif /* ZIROUND_H_ */
