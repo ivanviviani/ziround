@@ -82,12 +82,12 @@ int main(int argc, char** argv) {
 	// Check variable bounds and constraints for the candidate rounded solution
 	print_verbose(100, "[INFO]: ... verifying variable bounds and constraints ...\n");
 	check_bounds(&inst, inst.x);
-	check_constraints(&inst, inst.x);
+	check_constraints(inst.x, inst.ncols, inst.nrows, inst.nzcnt, inst.rmatbeg, inst.rmatind, inst.rmatval, inst.sense, inst.rhs);
 	print_verbose(100, "[INFO][OK]: Variable bounds and constraints satisfied.\n");
 
 	// Check whether all integer/binary variables of the original MIP have been rounded
 	print_verbose(100, "[INFO]: ... verifying whether all integer variables of the original MIP have been rounded ...\n");
-	check_rounding(&inst);
+	check_rounding(inst.x, inst.ncols, inst.int_var, inst.vartype);
 	print_verbose(100, "[INFO][OK]: All integer/binary variables of the MIP have been rounded.\n");
 	
 	// Print objective value of rounded solution

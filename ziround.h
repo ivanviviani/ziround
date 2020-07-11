@@ -127,7 +127,7 @@ typedef struct {
     double* ss_ub;          /**< Upper bounds of the singletons slack for each row. */
     double* ss_lb;          /**< Lower bounds of the singletons slack for each row. */
 
-    // Coefficient matrix
+    // Constraints
     int nzcnt; 				/**< Number of non-zero coefficients. */
     int* rmatbeg; 			/**< Begin row indices of non-zero coefficients for rmatind and rmatval. */
     int* rmatind; 			/**< Column indices of non-zero coefficients. */
@@ -374,20 +374,29 @@ double compute_singletons_slack(instance* inst, int rowind);
 void check_bounds(instance* inst, double* x);
 
 /**
- * @brief Check that all the constraints are satisfied, for the
- * 		  given solution x.
+ * @brief Check whether all the constraints are satisfied, for the given solution \p x.
  *
- * @param inst Pointer to the already populated instance.
  * @param x Solution to be used for evaluating constraints satisfiability.
+ * @param ncols Number of variables.
+ * @param nrows Number of constraints.
+ * @param nzcnt Number of non-zero coefficients in the constraints.
+ * @param rmatbeg Constraints begin indices structure.
+ * @param rmatind Constraints column indices structure.
+ * @param rmatval Constraint coefficients.
+ * @param sense Constraint senses.
+ * @param rhs Constraint right hand sides.
  */
-void check_constraints(instance* inst, double* x);
+void check_constraints(double* x, int ncols, int nrows, int nzcnt, int* rmatbeg, int* rmatind, double* rmatval, char* sense, double* rhs);
 
 /**
- * @brief Check whther all the integer variables of the original MIP have been rounded.
+ * @brief Check whether all the integer variables of the original MIP have been rounded.
  *
- * @param inst Pointer to the instance.
+ * @param x Current solution.
+ * @param ncols Number of variables.
+ * @param int_var Array of flags for binary/integer variables in the original MIP.
+ * @param vartype Array of variable types.
  */
-void check_rounding(instance* inst);
+void check_rounding(double* x, int ncols, int* int_var, char* vartype);
 
 /**
  * @brief Count number of variables rounded so far.

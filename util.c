@@ -16,56 +16,63 @@ void check_bounds(instance* inst, double* x) {
 	}
 }
 
-void check_constraints(instance* inst, double* x) {
+void check_constraints(double* x, int ncols, int nrows, int nzcnt, int* rmatbeg, int* rmatind, double* rmatval, char* sense, double* rhs) {
 
 	int rowend;    /**< Last variable index of the current row. */
 	double rowact; /**< Current row activity. */
 	int varind;    /**< Current variable index. */
+	int violated;  /**< Violated constraints flag. */
+
+	violated = 0;
 
 	// Scan constraints
-	for (int i = 0; i < inst->nrows; i++) {
+	for (int i = 0; i < nrows; i++) {
 
-		rowend = (i < inst->nrows - 1) ? inst->rmatbeg[i + 1] : inst->nzcnt;
+		rowend = (i < nrows - 1) ? rmatbeg[i + 1] : nzcnt;
 		rowact = 0.0;
 
 		// Scan non-zero coefficients of the constraint and compute row activity
-		for (int k = inst->rmatbeg[i]; k < rowend; k++) {
+		for (int k = rmatbeg[i]; k < rowend; k++) {
 
-			varind = inst->rmatind[k];
-			assert(index_in_bounds(varind, inst->ncols));
-			rowact += (inst->rmatval[k] * x[varind]);
+			varind = rmatind[k];
+			assert(index_in_bounds(varind, ncols));
+			rowact += (rmatval[k] * x[varind]);
 		}
 
 		// Check compliance with the constraint sense
-		switch (inst->sense[i]) {
+		switch (sense[i]) {
 			case 'L':
-				if (rowact > inst->rhs[i] + TOLERANCE) print_error("[check_constraints]: Constraint %d violated: rowact %f <= rhs %f\n", i + 1, rowact, inst->rhs[i]);
+				if (rowact > rhs[i] + TOLERANCE) violated = 1; // print_error("[check_constraints]: Constraint %d violated: rowact %f <= rhs %f\n", i + 1, rowact, rhs[i]);
 				break;
 			case 'G':
-				if (rowact < inst->rhs[i] - TOLERANCE) print_error("[check_constraints]: Constraint %d violated: rowact %f >= rhs %f\n", i + 1, rowact, inst->rhs[i]);
+				if (rowact < rhs[i] - TOLERANCE) violated = 1; // print_error("[check_constraints]: Constraint %d violated: rowact %f >= rhs %f\n", i + 1, rowact, rhs[i]);
 				break;
 			case 'E':
-				if (fabs(rowact - inst->rhs[i]) > TOLERANCE) print_error("[check_constraints]: Constraint %d violated: rowact %f = rhs %f\n", i + 1, rowact, inst->rhs[i]);
+				if (fabs(rowact - rhs[i]) > TOLERANCE) violated = 1; // print_error("[check_constraints]: Constraint %d violated: rowact %f = rhs %f\n", i + 1, rowact, rhs[i]);
 				break;
 			default:
-				print_error("[check_constraints]: Constraint sense '%c' not supported.\n", inst->sense[i]);
+				print_error("[check_constraints]: Constraint sense '%c' not supported.\n", sense[i]);
 		}
+
+		// Terminate program at the first violated constraint
+		if (violated) print_error("[check_constraints]: Some constraints are not satisfied!\n");
 	}
 	print_verbose(100, "[check_constraints][OK]: Constraints satisfied.\n");
 }
 
-void check_rounding(instance* inst) {
+void check_rounding(double* x, int ncols, int* int_var, char* vartype) {
 
 	int rounded = 1;
 
 	// Scan integer/binary variables
-	for (int j = 0; j < inst->ncols; j++) {
-		if (!(inst->int_var[j])) continue;
-		assert(var_type_integer_or_binary(inst->vartype[j]));
+	for (int j = 0; j < ncols; j++) {
+		if (!(int_var[j])) continue;
+		assert(var_type_integer_or_binary(vartype[j]));
 
-		if (is_fractional(inst->x[j])) {
-			print_warning("[check_rounding]: Variable (type '%c') x_%d = %f has not been rounded!\n", inst->vartype[j], j + 1, inst->x[j]);
+		if (is_fractional(x[j])) {
+			// print_warning("[check_rounding]: Variable (type '%c') x_%d = %f has not been rounded!\n", vartype[j], j + 1, x[j]);
 			rounded = 0;
+			break;
 		}
 	}
 
