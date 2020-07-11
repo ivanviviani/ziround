@@ -95,7 +95,7 @@ void zi_round(instance* inst) {
 					);
 
 					// Skip xj if both deltas are equal to zero (no shift necessary)
-					if ((fabs(delta_up[j]) < TOLERANCE) && (fabs(delta_down[j]) < TOLERANCE)) continue;
+					if (zero_double(delta_up[j]) && zero_double(delta_down[j])) continue;
 
 					// Condition(s) for rounding of xj (>= to include the case of a zero obj coefficient)
 					if ((inst->obj[j] >= 0 && fabs(delta_down[j] - 1.0) < TOLERANCE) ||
@@ -118,14 +118,14 @@ void zi_round(instance* inst) {
 					);
 
 					// Skip xj if both deltas are equal to zero (no shift necessary)
-					if ((fabs(delta_up[j]) < TOLERANCE) && (fabs(delta_down[j]) < TOLERANCE)) continue;
+					if (zero_double(delta_up[j]) && zero_double(delta_down[j])) continue;
 
 					ZI      = fractionality(inst->x[j]);
 					ZIplus  = fractionality(inst->x[j] + delta_up[j]);
 					ZIminus = fractionality(inst->x[j] - delta_down[j]);
 
 					// First case: ZIplus = ZIminus && both < ZI --> Round to improve objective
-					if ((fabs(ZIplus - ZIminus) < TOLERANCE) && (ZIplus < ZI - TOLERANCE)) {
+					if (equals_double(ZIplus, ZIminus) && (ZIplus < ZI - TOLERANCE)) {
 
 						// Round xj to improve objective and update slacks
 						updated = updated | round_xj_bestobj(inst, j, delta_up, delta_down, 1); // flag xj fractional (1)
@@ -135,7 +135,7 @@ void zi_round(instance* inst) {
 					else if ((ZIplus < ZIminus - TOLERANCE) && (ZIplus < ZI - TOLERANCE)) {
 
 						// Skip variable if delta_up = 0
-						if (fabs(delta_up[j]) < TOLERANCE) continue;
+						if (zero_double(delta_up[j])) continue;
 
 						print_verbose(20, "[ziround]: >>> Round x_%d = %f + %f = %f\n", j + 1, inst->x[j], delta_up[j], inst->x[j] + delta_up[j]);
 
@@ -143,7 +143,7 @@ void zi_round(instance* inst) {
 						check_slacks(inst, j, delta_up[j], delta_down[j], 'U');
 						
 						// Round UP
-						inst->x[j] = inst->x[j] + delta_up[j];
+						inst->x[j] += delta_up[j];
 
 						updated = 1;
 						update_slacks(inst, j, delta_up[j]);
@@ -154,7 +154,7 @@ void zi_round(instance* inst) {
 					else if ((ZIminus < ZIplus - TOLERANCE) && (ZIminus < ZI - TOLERANCE)) {
 
 						// Skip variable if delta_down = 0
-						if (fabs(delta_down[j]) < TOLERANCE) continue;
+						if (zero_double(delta_down[j])) continue;
 						
 						print_verbose(20, "[ziround]: >>> Round x_%d = %f - %f = %f\n", j + 1, inst->x[j], delta_down[j], inst->x[j] - delta_down[j]);
 
@@ -162,7 +162,7 @@ void zi_round(instance* inst) {
 						check_slacks(inst, j, delta_up[j], delta_down[j], 'D');
 						
 						// Round DOWN
-						inst->x[j] = inst->x[j] - delta_down[j];
+						inst->x[j] -= delta_down[j];
 
 						updated = 1;
 						update_slacks(inst, j, -(delta_down[j]));
