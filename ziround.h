@@ -77,17 +77,17 @@
 /**
  * @brief Plot solution fractionality flag (0-1).
  */
-#define PLOT_SOL_FRAC 1
+#define PLOT_SOL_FRAC 0
 
  /**
   * @brief Plot solution cost flag (0-1).
   */
-#define PLOT_SOL_COST 1
+#define PLOT_SOL_COST 0
 
 /**
  * @brief Plot number of rounded variables flag (0-1).
  */
-#define PLOT_NUM_ROUNDED_VARS 1
+#define PLOT_NUM_ROUNDED_VARS 0
 
 /**
  * @brief Tolerance for non-integer numbers as considered by CPLEX.
@@ -365,13 +365,14 @@ double compute_singletons_slack(instance* inst, int rowind);
 // UTIL ----------------------------------------------------------------------------------------------
 
 /**
- * @brief Check that all the variable bounds are satisfied, for the
- * 		  given solution x.
+ * @brief Check that all the variable bounds are satisfied, for the given solution \p x.
  *
- * @param inst Pointer to the already populated instance.
  * @param x Solution to be used for evaluating bounds satisfiability.
+ * @param lb Lower bounds of the variables.
+ * @param ub Upper bounds of the variables.
+ * @param ncols Number of variables.
  */
-void check_bounds(instance* inst, double* x);
+void check_bounds(double* x, double* lb, double* ub, int ncols);
 
 /**
  * @brief Check whether all the constraints are satisfied, for the given solution \p x.

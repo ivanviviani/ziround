@@ -15,9 +15,7 @@
  */
 int main(int argc, char** argv) {
 
-	// Local variables
 	instance inst;       /**< General support structure. */
-	int rounded = 1;     /**< Support flag. */
 	FILE* output = NULL; /**< Output file pointer. */
 	
 	// Initialize instance
@@ -35,7 +33,7 @@ int main(int argc, char** argv) {
 	// Remember integer/binary variables of the original MIP
 	save_integer_variables(&inst);            print_verbose(100, "[INFO][OK]: Integer variables saved.\n");
 
-	/**/if (VERBOSE >= 200) print_problem_info(&inst, 0, 1);
+	if (VERBOSE >= 201) print_problem_info(&inst, 0, 1);
 	
 	// Solve continuous relaxation of the MIP problem
 	solve_continuous_relaxation(&inst);       print_verbose(100, "[INFO][OK]: Continuous relaxation solved.\n");
@@ -47,8 +45,8 @@ int main(int argc, char** argv) {
 	populate_inst(&inst);                     print_verbose(100, "[INFO][OK]: Problem data read.\n");
 
 	// Print problem info to file
-	if (VERBOSE >= 200) print_problem_info(&inst, 1, 1);
-	if (VERBOSE >= 150) {
+	if (VERBOSE >= 201) print_problem_info(&inst, 1, 1);
+	if (VERBOSE >= 201) {
 		output = fopen("output.txt", "a");
 		fprintf(output, "\n[INFO]: Continuous relaxation objective value: %.10g.\n", inst.objval);
 		fprintf(output, "[INFO]: Solution of continuous relaxation: \n");
@@ -70,7 +68,7 @@ int main(int argc, char** argv) {
 	print_verbose(100, "[INFO]: Candidate objective value: %f\n", inst.objval);
 
 	// Print candidate rounded solution and its objective value to file
-	if (VERBOSE >= 150) {
+	if (VERBOSE >= 201) {
 		output = fopen("output.txt", "a");
 		fprintf(output, "\n[INFO]: Candidate objective value: %f\n", inst.objval);
 		fprintf(output, "[INFO]: Candidate rounded x: ");
@@ -81,7 +79,7 @@ int main(int argc, char** argv) {
 
 	// Check variable bounds and constraints for the candidate rounded solution
 	print_verbose(100, "[INFO]: ... verifying variable bounds and constraints ...\n");
-	check_bounds(&inst, inst.x);
+	check_bounds(inst.x, inst.lb, inst.ub, inst.ncols);
 	check_constraints(inst.x, inst.ncols, inst.nrows, inst.nzcnt, inst.rmatbeg, inst.rmatind, inst.rmatval, inst.sense, inst.rhs);
 	print_verbose(100, "[INFO][OK]: Variable bounds and constraints satisfied.\n");
 
@@ -94,7 +92,7 @@ int main(int argc, char** argv) {
 	fprintf(stdout, "[FINAL RESULT]: Objective value of rounded solution: %f\n\n", inst.objval);
 
 	// Print rounded solution to file
-	if (VERBOSE >= 150) {
+	if (VERBOSE >= 201) {
 		output = fopen("output.txt", "a");
 		fprintf(output, "[INFO][FINAL ROUNDED SOLUTION]: Rounded x: \n");
 		for (int j = 0; j < inst.ncols; j++) fprintf(output, "%f ", inst.x[j]);

@@ -6,12 +6,12 @@
 
 #include "ziround.h"
 
-void check_bounds(instance* inst, double* x) {
+void check_bounds(double* x, double* lb, double* ub, int ncols) {
 
 	// Scan xj variables
-	for (int j = 0; j < inst->ncols; j++) {
-		if ((x[j] < inst->lb[j] - TOLERANCE) || (x[j] > inst->ub[j] + TOLERANCE)) {
-			print_error("[check_bounds]: Bound %d violated: %f <= x_%d %f <= %f\n", j + 1, inst->lb[j], j + 1, inst->x[j], inst->ub[j]);
+	for (int j = 0; j < ncols; j++) {
+		if ((x[j] < lb[j] - TOLERANCE) || (x[j] > ub[j] + TOLERANCE)) {
+			print_error("[check_bounds]: Bound %d violated: %f <= x_%d %f <= %f\n", j + 1, lb[j], j + 1, x[j], ub[j]);
 		}
 	}
 }

@@ -87,8 +87,6 @@ void zi_round(instance* inst) {
 				// xj non fractional
 				case 0:
 
-					print_verbose(150, "[zi_round]: -x- x_%d is non-fractional\n", j + 1);
-
 					// Calculate deltas (with epsilon = 1.0)
 					delta_updown(inst, j, delta_up, delta_down, 1.0);
 					assert(
@@ -111,8 +109,6 @@ void zi_round(instance* inst) {
 
 				// xj fractional
 				case 1:
-
-					print_verbose(150, "[zi_round]: -x- x_%d is fractional\n", j + 1);
 
 					// Calculate deltas
 					delta_updown(inst, j, delta_up, delta_down, EPSILON);
@@ -141,7 +137,7 @@ void zi_round(instance* inst) {
 						// Skip variable if delta_up = 0
 						if (fabs(delta_up[j]) < TOLERANCE) continue;
 
-						print_verbose(100, "[zi_round][FRA]        : Round UP >>> Set x_%d = x_%d + delta_up_%d = %f + %f = %f\n", j + 1, j + 1, j + 1, inst->x[j], delta_up[j], inst->x[j] + delta_up[j]);
+						print_verbose(20, "[ziround]: >>> Round x_%d = %f + %f = %f\n", j + 1, inst->x[j], delta_up[j], inst->x[j] + delta_up[j]);
 
 						// Check whether all affected constraints have enough slack for a ROUND UP of xj
 						check_slacks(inst, j, delta_up[j], delta_down[j], 'U');
@@ -160,7 +156,7 @@ void zi_round(instance* inst) {
 						// Skip variable if delta_down = 0
 						if (fabs(delta_down[j]) < TOLERANCE) continue;
 						
-						print_verbose(100, "[zi_round][FRA]        : Round DOWN >>> Set x_%d = x_%d - delta_down_%d = %f - %f = %f\n", j + 1, j + 1, j + 1, inst->x[j], delta_down[j], inst->x[j] - delta_down[j]);
+						print_verbose(20, "[ziround]: >>> Round x_%d = %f - %f = %f\n", j + 1, inst->x[j], delta_down[j], inst->x[j] - delta_down[j]);
 
 						// Check whether all affected constraints have enough slack for a ROUND DOWN of xj
 						check_slacks(inst, j, delta_up[j], delta_down[j], 'D');
@@ -193,15 +189,15 @@ void zi_round(instance* inst) {
 
 		} // end inner loop
 
-		if (updated) { print_verbose(10, "[zi_round]: ... Update found, scan variables again ...\n"); }
-		else { print_verbose(10, "[zi_round]: ... No updates found, exit outer loop ...\n"); }
+		if (updated) { print_verbose(10, "[zi_round]: ... Some roundings occured, scan variables again ...\n"); }
+		else { print_verbose(10, "[zi_round]: ... No roundings, exit outer loop ...\n"); }
 
 		// [DEBUG ONLY] Pause after each inner loop execution
 		if (VERBOSE >= 100) system("pause");
 		
 		// [DEBUG ONLY] (BRUTE FORCE)  Check variable bounds and constraints
-		if (VERBOSE >= 100) {
-			check_bounds(inst, inst->x);
+		if (VERBOSE >= 201) {
+			check_bounds(inst->x, inst->lb, inst->ub, inst->ncols);
 			check_constraints(inst->x, inst->ncols, inst->nrows, inst->nzcnt, inst->rmatbeg, inst->rmatind, inst->rmatval, inst->sense, inst->rhs);
 		}
 
@@ -376,8 +372,6 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 		obj_deltaminus = -(inst->obj[j] * delta_down[j]);
 	}
 
-	print_verbose(201, "[round_xj_bestobj]: %f <= x_%d = %f <= %f | delta_up = %f delta down = %f objcoef = %f | obj_deltaplus = %f obj_deltaminus = %f\n", inst->lb[j], j + 1, inst->x[j], inst->ub[j], delta_up[j], delta_down[j], inst->obj[j], obj_deltaplus, obj_deltaminus);
-
 	// Check obj sense, then update xj, update slacks and update objective value
 	switch (inst->objsen) {
 
@@ -387,13 +381,12 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 			if ((obj_deltaplus < -(TOLERANCE)) && (obj_deltaplus < obj_deltaminus - TOLERANCE)) {
 
 				// Skip variable if delta_up = 0
-				if (fabs(delta_up[j]) < TOLERANCE) return 0;
+				if (zero_double(delta_up[j])) return 0;
 
-				// print_verbose(100, "[round_xj_bestobj][frac?%d]: >>> Set x_%d = x_%d + delta_up_%d = %f + %f = %f\n", xj_fractional, j + 1, j + 1, j + 1, inst->x[j], delta_up[j], inst->x[j] + delta_up[j]);
-				print_verbose(10, "[round_xj_bestobj]: >>> Round x_%d = %f + %f = %f\n", j + 1, inst->x[j], delta_up[j], inst->x[j] + delta_up[j]);
-				if ((!(xj_fractional)) && (VERBOSE >= 150) && (fabs(delta_up[j] - 1.0) > TOLERANCE)) {
-					print_error("[round_xj_bestobj]: delta_up_%d = %f (should be 1.0).\n", j + 1, delta_up[j]);
-				}
+				print_verbose(20, "[round_xj_bestobj]: >>> Round x_%d = %f + %f = %f\n", j + 1, inst->x[j], delta_up[j], inst->x[j] + delta_up[j]);
+
+				// If xj is integer (not fractional) then delta_up[j] should be 1.0
+				assert(xj_fractional || equals_double(delta_up[j], 1.0));
 
 				// Check whether all affected constraints have enough slack for a ROUND UP of xj
 				check_slacks(inst, j, delta_up[j], delta_down[j], 'U');
@@ -409,13 +402,12 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 			else if ((obj_deltaminus < -(TOLERANCE)) && (obj_deltaminus < obj_deltaplus - TOLERANCE)) {
 
 				// Skip variable if delta_down = 0
-				if (fabs(delta_down[j]) < TOLERANCE) return 0;
+				if (zero_double(delta_down[j])) return 0;
 
-				// print_verbose(100, "[round_xj_bestobj][frac?%d]: >>> Set x_%d = x_%d - delta_down_%d = %f - %f = %f\n", xj_fractional, j + 1, j + 1, j + 1, inst->x[j], delta_down[j], inst->x[j] - delta_down[j]);
-				print_verbose(10, "[round_xj_bestobj]: >>> Round x_%d = %f - %f = %f\n", j + 1, inst->x[j], delta_down[j], inst->x[j] - delta_down[j]);
-				if ((!(xj_fractional)) && (VERBOSE >= 150) && (fabs(delta_down[j] - 1.0) > TOLERANCE)) {
-					print_error("[round_xj_bestobj]: delta_down_%d = %f (should be 1.0).\n", j + 1, delta_down[j]);
-				}
+				print_verbose(20, "[round_xj_bestobj]: >>> Round x_%d = %f - %f = %f\n", j + 1, inst->x[j], delta_down[j], inst->x[j] - delta_down[j]);
+				
+				// If xj is integer (not fractional) then delta_down[j] should be 1.0
+				assert(xj_fractional || equals_double(delta_down[j], 1.0));
 
 				// Check whether all affected constraints have enough slack for a ROUND DOWN of xj
 				check_slacks(inst, j, delta_up[j], delta_down[j], 'D');
@@ -431,10 +423,9 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 			else if ((obj_deltaminus < -(TOLERANCE)) && (obj_deltaplus < -(TOLERANCE)) && (fabs(obj_deltaminus - obj_deltaplus) < TOLERANCE)) {
 
 				// Skip variable if delta_down = 0
-				if (fabs(delta_down[j]) < TOLERANCE) return 0;
+				if (zero_double(delta_down[j])) return 0;
 
-				// print_verbose(120, "[round_xj_bestobj][frac?%d]: obj_deltaplus = %f = %f = obj_deltaminus. >>> Round x_%d arbitrarily.\n", xj_fractional, obj_deltaplus, obj_deltaminus, j + 1);
-				print_verbose(10, "[round_xj_bestobj]: >>> Round x_%d = %f - %f = %f\n", j + 1, inst->x[j], delta_down[j], inst->x[j] - delta_down[j]);
+				print_verbose(20, "[round_xj_bestobj]: >>> Round x_%d = %f - %f = %f\n", j + 1, inst->x[j], delta_down[j], inst->x[j] - delta_down[j]);
 
 				// Check whether all affected constraints have enough slack for a ROUND DOWN of xj
 				check_slacks(inst, j, delta_up[j], delta_down[j], 'D');
@@ -450,10 +441,9 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 			else if ((fabs(obj_deltaplus) < TOLERANCE) && (fabs(obj_deltaplus - obj_deltaminus) < TOLERANCE)) {
 
 				// Skip variable if delta_up = 0
-				if (fabs(delta_up[j]) < TOLERANCE) return 0;
+				if (zero_double(delta_up[j])) return 0;
 
-				// print_verbose(120, "[round_xj_bestobj][frac?%d]: obj_deltaplus = %f = %f = obj_deltaminus. >>> Round x_%d arbitrarily.\n", xj_fractional, obj_deltaplus, obj_deltaminus, j + 1);
-				print_verbose(10, "[round_xj_bestobj]: >>> Round x_%d = %f + %f = %f\n", j + 1, inst->x[j], delta_up[j], inst->x[j] + delta_up[j]);
+				print_verbose(20, "[round_xj_bestobj]: >>> Round x_%d = %f + %f = %f\n", j + 1, inst->x[j], delta_up[j], inst->x[j] + delta_up[j]);
 				
 				// Check whether all affected constraints have enough slack for a ROUND UP of xj
 				check_slacks(inst, j, delta_up[j], delta_down[j], 'U');
@@ -472,12 +462,14 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 
 			// [] Adding delta_up to x_j improves objval
 			if ((obj_deltaplus > TOLERANCE) && (obj_deltaplus > obj_deltaminus + TOLERANCE)) {
+
+				// Skip variable if delta_up = 0
+				if (zero_double(delta_up[j])) return 0;
 				
-				// print_verbose(100, "[round_xj_bestobj][frac?%d]: >>> Set x_%d = x_%d + delta_up_%d = %f + %f = %f\n", xj_fractional, j + 1, j + 1, j + 1, inst->x[j], delta_up[j], inst->x[j] + delta_up[j]);
-				print_verbose(10, "[round_xj_bestobj]: >>> Round x_%d = %f + %f = %f\n", j + 1, inst->x[j], delta_up[j], inst->x[j] + delta_up[j]);
-				if ((!(xj_fractional)) && (VERBOSE >= 150) && (fabs(delta_up[j] - 1.0) > TOLERANCE)) {
-					print_error("[round_xj_bestobj]: delta_up_%d = %f (should be 1.0).\n", j + 1, delta_up[j]);
-				}
+				print_verbose(20, "[round_xj_bestobj]: >>> Round x_%d = %f + %f = %f\n", j + 1, inst->x[j], delta_up[j], inst->x[j] + delta_up[j]);
+				
+				// If xj is integer (not fractional) then delta_up[j] should be 1.0
+				assert(xj_fractional || equals_double(delta_up[j], 1.0));
 
 				// Check whether all affected constraints have enough slack for a ROUND UP of xj
 				check_slacks(inst, j, delta_up[j], delta_down[j], 'U');
@@ -491,12 +483,14 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 			}
 			// [] Adding delta_down to x_j improves objval
 			else if ((obj_deltaminus > TOLERANCE) && (obj_deltaminus > obj_deltaplus + TOLERANCE)) {
+
+				// Skip variable if delta_down = 0
+				if (zero_double(delta_down[j])) return 0;
 				
-				// print_verbose(100, "[round_xj_bestobj][frac?%d]: >>> Set x_%d = x_%d - LB_%d = %f - %f = %f\n", xj_fractional, j + 1, j + 1, j + 1, inst->x[j], delta_down[j], inst->x[j] - delta_down[j]);
-				print_verbose(10, "[round_xj_bestobj]: >>> Round x_%d = %f - %f = %f\n", j + 1, inst->x[j], delta_down[j], inst->x[j] - delta_down[j]);
-				if (!xj_fractional && VERBOSE >= 150 && fabs(delta_down[j] - 1.0) > TOLERANCE) {
-					print_error("[round_xj_bestobj]: delta_down_%d = %f (should be 1.0).\n", j + 1, delta_down[j]);
-				}
+				print_verbose(20, "[round_xj_bestobj]: >>> Round x_%d = %f - %f = %f\n", j + 1, inst->x[j], delta_down[j], inst->x[j] - delta_down[j]);
+				
+				// If xj is integer (not fractional) then delta_down[j] should be 1.0
+				assert(xj_fractional || equals_double(delta_down[j], 1.0));
 
 				// Check whether all affected constraints have enough slack for a ROUND DOWN of xj
 				check_slacks(inst, j, delta_up[j], delta_down[j], 'D');
@@ -510,9 +504,11 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 			}
 			// [] Both deltas improve objval of the same amount > 0 --> Round arbitrarily (DOWN)
 			else if ((obj_deltaminus > TOLERANCE) && (obj_deltaplus > TOLERANCE) && (fabs(obj_deltaminus - obj_deltaplus) < TOLERANCE)) {
+
+				// Skip variable if delta_down = 0
+				if (zero_double(delta_down[j])) return 0;
 				
-				print_verbose(120, "[round_xj_bestobj]: obj_deltaplus = %f = %f = obj_deltaminus. >>> Round x_%d arbitrarily.\n", obj_deltaplus, obj_deltaminus, j + 1);
-				print_verbose(10, "[round_xj_bestobj]: >>> Round x_%d = %f - %f = %f\n", j + 1, inst->x[j], delta_down[j], inst->x[j] - delta_down[j]);
+				print_verbose(20, "[round_xj_bestobj]: >>> Round x_%d = %f - %f = %f\n", j + 1, inst->x[j], delta_down[j], inst->x[j] - delta_down[j]);
 
 				// Check whether all affected constraints have enough slack for a ROUND DOWN of xj
 				check_slacks(inst, j, delta_up[j], delta_down[j], 'D');
@@ -528,10 +524,9 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 			else if ((fabs(obj_deltaplus) < TOLERANCE) && (fabs(obj_deltaplus - obj_deltaminus) < TOLERANCE)) {
 
 				// Skip variable if delta_up = 0
-				if (fabs(delta_up[j]) < TOLERANCE) return 0;
+				if (zero_double(delta_up[j])) return 0;
 
-				print_verbose(120, "[round_xj_bestobj][frac?%d]: obj_deltaplus = %f = %f = obj_deltaminus. >>> Round x_%d arbitrarily.\n", xj_fractional, obj_deltaplus, obj_deltaminus, j + 1);
-				print_verbose(10, "[round_xj_bestobj]: >>> Round x_%d = %f + %f = %f\n", j + 1, inst->x[j], delta_up[j], inst->x[j] + delta_up[j]);
+				print_verbose(20, "[round_xj_bestobj]: >>> Round x_%d = %f + %f = %f\n", j + 1, inst->x[j], delta_up[j], inst->x[j] + delta_up[j]);
 				
 				// Check whether all affected constraints have enough slack for a ROUND UP of xj
 				check_slacks(inst, j, delta_up[j], delta_down[j], 'U');
