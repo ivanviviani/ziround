@@ -72,7 +72,7 @@
 /**
  * @brief Verbosity level.
  */
-#define VERBOSE 20
+#define VERBOSE 10
 
 /**
  * @brief Tolerance for non-integer numbers as considered by CPLEX.

@@ -257,22 +257,23 @@ void check_slacks(instance* inst, int j, double* delta_up, double* delta_down, c
 		switch (inst->sense[rowind]) {
 
 			case 'L': // (slack non-negative)
+			case 'G': // (slack non-positive)
 
 				curr_slack = inst->slack[rowind];
-				assert(non_negative_double(curr_slack));
+				(inst->sense[rowind] == 'L') ? assert(non_negative_double(curr_slack)) : assert(non_positive_double(curr_slack));
 				delta_slack = (round_updown == 'U') ? (aij * delta_up[j]) : (aij * (-delta_down[j]));
 
-				// Row slack after rounding (negative iff also singletons slack should be used)
+				// Row slack after rounding (negative for 'L', positive for 'G' constraints iff also singletons slack should be used)
 				new_slack = curr_slack - delta_slack;
 				print_verbose(200, "[check_slacks][x_%d aij %f][row %d '%c']: new_slack = %f ", j + 1, aij, rowind + 1, inst->sense[rowind], new_slack);
-				if (new_slack < -(TOLERANCE)) print_verbose(200, "(need singletons slack!)\n");
-				else print_verbose(200, "\n");
+				if ((new_slack < -(TOLERANCE)) || (new_slack > TOLERANCE)) print_verbose(200, "(need singletons slack!)");
+				print_verbose(200, "\n");
 
 				// [EXTENSION] Distinguish inequality constraints with singletons (if extension enabled)
 				if ((inst->extension) && (inst->num_singletons[rowind] > 0)) {
 
 					// If the new row slack is negative then the remaining amount must be covered by the singletons slack
-					if (new_slack < -(TOLERANCE)) {
+					if ((new_slack < -(TOLERANCE)) || (new_slack > TOLERANCE)) {
 
 						// Compute singletons slack of constraint rowind and get bounds
 						ss_lb = inst->ss_lb[rowind];
@@ -294,58 +295,13 @@ void check_slacks(instance* inst, int j, double* delta_up, double* delta_down, c
 				}
 				else {
 					// Extension disabled OR enabled but no singletons
-					enough_slack = (new_slack > -(TOLERANCE));					
+					enough_slack = (inst->sense[rowind] == 'L') ? (new_slack > -(TOLERANCE)) : (new_slack < TOLERANCE);
 				}
 
 				if (!enough_slack) print_error("[check_slacks][x_%d][row %d '%c']: After rounding, invalid slack.\n", j + 1, rowind + 1, inst->sense[rowind]);
 
 				break;
-
-			case 'G': // (slack non-positive)
-				
-				curr_slack = inst->slack[rowind];
-				assert(non_positive_double(curr_slack));
-				delta_slack = (round_updown == 'U') ? (aij * delta_up[j]) : (aij * (-delta_down[j]));
-
-				// Row slack after rounding (positive iff also singletons slack should be used)
-				new_slack = curr_slack - delta_slack;
-				print_verbose(200, "[check_slacks][x_%d aij %f][row %d '%c']: new_slack = %f ", j + 1, aij, rowind + 1, inst->sense[rowind], new_slack);
-				if (new_slack > TOLERANCE) print_verbose(200, "(need singletons slack!)\n");
-				else print_verbose(200, "\n");
-
-				// [EXTENSION] Distinguish inequality constraints with singletons (if extension enabled)
-				if ((inst->extension) && (inst->num_singletons[rowind] > 0)) {
-
-					// If the new row slack is positive then the remaining amount must be covered by the singletons slack
-					if (new_slack > TOLERANCE) {
-
-						// Compute singletons slack of constraint rowind and get bounds
-						ss_lb = inst->ss_lb[rowind];
-						ss_ub = inst->ss_ub[rowind];
-						singletons_slack = compute_singletons_slack(inst, rowind);
-						assert(var_in_bounds(singletons_slack, ss_lb, ss_ub));
-
-						// Singletons slack after rounding
-						delta_ss = new_slack;
-						new_ss = singletons_slack + delta_ss; // + because signed delta
-
-						// New singletons slack must stay within its bounds
-						enough_slack = !((new_ss < ss_lb - TOLERANCE) || (new_ss > ss_ub + TOLERANCE));
-					}
-					else {
-						// Extension enabled, row has singletons, but new_slack is non-positive --> no need to use singletons
-						enough_slack = 1;
-					}
-				}
-				else {
-					// Extension disabled OR enabled but no singletons
-					enough_slack = (new_slack < TOLERANCE);
-				}
-
-				if (!enough_slack) print_error("[check_slacks][x_%d][row %d '%c']: After rounding, invalid slack.\n", j + 1, rowind + 1, inst->sense[rowind]);
-
-				break;
-
+			
 			case 'E': // (slack zero if extension disabled)
 
 				// [EXTENSION] Distinguish equality constraints with singletons (if extension enabled)
@@ -603,8 +559,7 @@ void update_slacks(instance* inst, int j, double signed_delta) {
 					inst->slack[rowind] = (inst->sense[rowind] == 'L') ? max(0.0, temp_slack) : min(0.0, temp_slack);
 
 					// If not enough row slack (temp_slack negative for 'L', positive for 'G' constraints), resort to singletons slack
-					if ((inst->sense[rowind] == 'L' && temp_slack < -(TOLERANCE)) || 
-						(inst->sense[rowind] == 'R' && temp_slack > TOLERANCE)) {
+					if ((temp_slack < -(TOLERANCE)) || (temp_slack > TOLERANCE)) {
 
 						// Delta singletons slack to distribute among the singletons [new_ss = ss + delta_ss (+ because signed delta)]
 						delta_ss = temp_slack; // negative for 'L', positive for 'G' constraints
@@ -614,10 +569,7 @@ void update_slacks(instance* inst, int j, double signed_delta) {
 					}
 					else {
 						// Enough row slack, update it
-						assert(
-							(inst->sense[rowind] == 'L' && non_negative_double(inst->slack[rowind] - delta_slack)) ||
-							(inst->sense[rowind] == 'G' && non_positive_double(inst->slack[rowind] - delta_slack))
-						);
+						(inst->sense[rowind] == 'L') ? (assert(non_negative_double(inst->slack[rowind] - delta_slack))) : (assert(non_positive_double(inst->slack[rowind] - delta_slack)));
 						inst->slack[rowind] -= delta_slack;
 					}
 				}
@@ -625,10 +577,7 @@ void update_slacks(instance* inst, int j, double signed_delta) {
 					// Extension disabled OR enabled but zero singletons
 					// Just update row slack
 					print_verbose(201, "[update_slacks][x_%d][row %d '%c']: slack = %f - (%f * %f) = %f\n", j + 1, rowind + 1, inst->sense[rowind], inst->slack[rowind], aij, signed_delta, inst->slack[rowind] - delta_slack);
-					assert( 
-						(inst->sense[rowind] == 'L' && non_negative_double(inst->slack[rowind] - delta_slack)) || 
-						(inst->sense[rowind] == 'G' && non_positive_double(inst->slack[rowind] - delta_slack))
-					);
+					(inst->sense[rowind] == 'L') ? (assert(non_negative_double(inst->slack[rowind] - delta_slack))) : (assert(non_positive_double(inst->slack[rowind] - delta_slack)));
 					inst->slack[rowind] -= delta_slack;
 				}
 
@@ -679,16 +628,12 @@ void update_singletons(instance* inst, int rowind, double delta_ss) {
 	// Distribute delta among the singletons, stop when done (delta_ss positive(negative) --> singletons slack must increase(decrease))
 	for (int k = 0; k < inst->num_singletons[rowind]; k++) {
 
-		// Stop updating the singletons when delta singletons slack has been covered
-		if ((s_slack_increase && delta_ss < TOLERANCE) || 
-			(!s_slack_increase && delta_ss > -(TOLERANCE))) {
+		// Stop updating the singletons when delta singletons slack has been covered (s_slack_increase in the two conditions is necessary...)
+		if ((s_slack_increase && delta_ss < TOLERANCE) || (!s_slack_increase &&  delta_ss > -(TOLERANCE))) {
 			print_verbose(200, "[update_singletons][extension][row %d '%c']: delta_ss covered, found %f\n", rowind + 1, inst->sense[rowind], delta_ss);
 			break;
 		}
-		assert(
-			(s_slack_increase && non_negative_double(delta_ss)) || 
-			(!s_slack_increase && non_positive_double(delta_ss))
-		);
+		(s_slack_increase) ? (assert(non_negative_double(delta_ss))) : (assert(non_positive_double(delta_ss)));
 		print_verbose(120, "[update_slacks][extension][row %d '%c']: Remaining delta singletons slack to distribute: %f.\n", rowind + 1, inst->sense[rowind], delta_ss);
 
 		// Singleton info
