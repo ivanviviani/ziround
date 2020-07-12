@@ -146,12 +146,24 @@ typedef struct {
 
 } instance;
 
+// INSTANCE ------------------------------------------------------------------------------------------
+
 /**
  * @brief Initialize the appropriate fields of the instance.
  *
  * @param inst Pointer to the instance.
  */
 void init_inst(instance* inst);
+
+/**
+ * @brief Deallocate all the fields of the instance.
+ *
+ * @param inst Pointer to the already populated instance.
+ */
+void free_inst(instance* inst);
+// ---------------------------------------------------------------------------------------------------
+
+// CMD_INTERFACE -------------------------------------------------------------------------------------
 
 /**
  * @brief Parse the arguments from the command line and populate the
@@ -162,6 +174,9 @@ void init_inst(instance* inst);
  * @param inst Pointer to the instance.
  */
 void parse_cmd(int argc, char** argv, instance* inst);
+// ---------------------------------------------------------------------------------------------------
+
+// COMPUTE_ZIROUND_INPUT -----------------------------------------------------------------------------
 
 /**
  * @brief Setup the CPLEX environment for the problem represented by the instance.
@@ -194,6 +209,17 @@ void save_integer_variables(instance* inst);
  * @param inst Pointer to the already populated instance.
  */
 void solve_continuous_relaxation(instance* inst);
+// ---------------------------------------------------------------------------------------------------
+
+// READ_ZIROUND_INPUT --------------------------------------------------------------------------------
+
+/**
+ * @brief Read the problem data from the CPLEX lp using all the read functions,
+ * 		  and populate the corresponding fields of the instance.
+ *
+ * @param inst Pointer to the already populated instance.
+ */
+void populate_inst(instance* inst);
 
 /**
  * @brief Read the continuous relaxation solution from the CPLEX lp
@@ -277,14 +303,9 @@ void find_singletons(instance* inst);
  * @param inst Pointer to the instance.
  */
 void compute_singletons_slacks_bounds(instance* inst);
+// ---------------------------------------------------------------------------------------------------
 
-/**
- * @brief Read the problem data from the CPLEX lp using all the read functions,
- * 		  and populate the corresponding fields of the instance.
- *
- * @param inst Pointer to the already populated instance.
- */
-void populate_inst(instance* inst);
+// ZIROUND -------------------------------------------------------------------------------------------
 
 /**
  * @brief Use the ZI-Round heuristic to round the continuous relaxation solution
@@ -409,22 +430,6 @@ void check_rounding(double* x, int ncols, int* int_var, char* vartype);
  * @return Number of variables rounded so far.
  */
 int count_rounded(double* x, int ncols, int* int_var, char* vartype);
-
-/**
- * @brief Deallocate all the fields of the instance.
- *
- * @param inst Pointer to the already populated instance.
- */
-void free_inst(instance* inst);
-
-/**
- * @brief [DEBUG] Print problem information to standard output or file.
- *
- * @param inst Pointer to the already populated instance.
- * @param sol_available Flag set to 1 if the instance contains a solution, 0 otherwise.
- * @param to_file Flag set to 1 if the problem info is to be printed to file, 0 otherwise.
- */
-void print_problem_info(instance* inst, int sol_available, int to_file);
 
 /**
  * @brief Calculate the fractionality of the given value.
@@ -584,6 +589,15 @@ void print_error(const char* err, ...);
  *	@param ... The multiple parameters.
  */
 void print_verbose(int msg_verb, const char* format, ...);
+
+/**
+ * @brief [DEBUG] Print problem information to standard output or file.
+ *
+ * @param inst Pointer to the already populated instance.
+ * @param sol_available Flag set to 1 if the instance contains a solution, 0 otherwise.
+ * @param to_file Flag set to 1 if the problem info is to be printed to file, 0 otherwise.
+ */
+void print_problem_info(instance* inst, int sol_available, int to_file);
 // ---------------------------------------------------------------------------------------------------
 
 // ASSERTS -------------------------------------------------------------------------------------------

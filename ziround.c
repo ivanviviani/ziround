@@ -19,8 +19,8 @@ void zi_round(instance* inst) {
 	double obj_plusUBj;  /**< Objective value for a shifted up variable (used in function zi_round). */
 	double obj_minusLBj; /**< Objective value for a shifted down variable (used in function zi_round). */
 	int updated;	     /**< Flag set to 1 when at least one variable shift has been made. */
-	double curr_frac;	 /**< Current solution fractionality. */
 	double frac[2];      /**< Circular buffer for current solution fractionality. */
+	double objval[2];    /**< Circular buffer for current objective value. */
 	int bufind = 0;      /**< Current index in the circular buffer. */
 
 	// Allocate / Initialize
@@ -60,12 +60,12 @@ void zi_round(instance* inst) {
 
 	// [DEBUG ONLY]: Print solution fractionality and cost ------------------------------------------------------------------
 	print_verbose(10, "* Sol.fract. | Objval *\n");
-	curr_frac = sol_fractionality(inst->x, inst->int_var, inst->ncols);
-	frac[bufind] = curr_frac;
-	if (not_equals(frac[bufind], frac[!bufind])) print_verbose(10, "* %f | %f *\n", frac[bufind], inst->objval);
+	frac[bufind] = sol_fractionality(inst->x, inst->int_var, inst->ncols);
+	objval[bufind] = inst->objval;
+	if (not_equals(frac[bufind], frac[!bufind]) || not_equals(objval[bufind], objval[!bufind])) print_verbose(10, "* %f | %f *\n", frac[bufind], objval[bufind]);
 	if (VERBOSE >= 10) {
-		if (PLOT_SOL_FRAC) add_point_single_tracker(curr_frac, &tracker_sol_frac, &len_frac, &size_frac);
-		if (PLOT_SOL_COST) add_point_single_tracker(inst->objval, &tracker_sol_cost, &len_cost, &size_cost);
+		if (PLOT_SOL_FRAC) add_point_single_tracker(frac[bufind], &tracker_sol_frac, &len_frac, &size_frac);
+		if (PLOT_SOL_COST) add_point_single_tracker(objval[bufind], &tracker_sol_cost, &len_cost, &size_cost);
 		if (PLOT_NUM_ROUNDED_VARS) add_point_single_tracker(count_rounded(inst->x, inst->ncols, inst->int_var, inst->vartype), &tracker_rounded, &len_rounded, &size_rounded);
 	}
 	bufind = !bufind;
@@ -176,12 +176,12 @@ void zi_round(instance* inst) {
 			}
 
 			// [DEBUG ONLY]: Print solution fractionality and cost ---------------------------------------------------------------
-			curr_frac = sol_fractionality(inst->x, inst->int_var, inst->ncols);
-			frac[bufind] = curr_frac;
-			if (fabs(frac[bufind] - frac[!bufind]) > TOLERANCE) print_verbose(10, "* %f | %f *\n", frac[bufind], inst->objval);
+			frac[bufind] = sol_fractionality(inst->x, inst->int_var, inst->ncols);
+			objval[bufind] = inst->objval;
+			if (not_equals(frac[bufind], frac[!bufind]) || not_equals(objval[bufind], objval[!bufind])) print_verbose(10, "* %f | %f *\n", frac[bufind], objval[bufind]);
 			if (VERBOSE >= 10) {
-				if (PLOT_SOL_FRAC) add_point_single_tracker(curr_frac, &tracker_sol_frac, &len_frac, &size_frac);
-				if (PLOT_SOL_COST) add_point_single_tracker(inst->objval, &tracker_sol_cost, &len_cost, &size_cost);
+				if (PLOT_SOL_FRAC) add_point_single_tracker(frac[bufind], &tracker_sol_frac, &len_frac, &size_frac);
+				if (PLOT_SOL_COST) add_point_single_tracker(objval[bufind], &tracker_sol_cost, &len_cost, &size_cost);
 				if (PLOT_NUM_ROUNDED_VARS) add_point_single_tracker(count_rounded(inst->x, inst->ncols, inst->int_var, inst->vartype), &tracker_rounded, &len_rounded, &size_rounded);
 			}
 			bufind = !bufind;
