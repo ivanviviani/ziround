@@ -16,34 +16,49 @@ int non_negative_integer(int num) {
 	return (num >= 0);
 }
 
-int non_negative_double(double num) {
+int non_negative(double num) {
 
 	return (num >= 0.0 - TOLERANCE);
 }
 
-int non_positive_double(double num) {
+int non_positive(double num) {
 
 	return (num <= 0.0 + TOLERANCE);
 }
 
-int negative_double(double num) {
+int negative(double num) {
 
-	return (num < 0.0 - TOLERANCE);
+	return !non_negative(num);
 }
 
-int positive_double(double num) {
+int positive(double num) {
 
-	return (num > 0.0 + TOLERANCE);
+	return !non_positive(num);
 }
 
-int zero_double(double num) {
+int zero(double num) {
 
 	return (fabs(num) < TOLERANCE);
 }
 
-int equals_double(double x, double y) {
+int equals(double x, double y) {
 
-	return zero_double(x - y);
+	return zero(x - y);
+}
+
+int not_equals(double x, double y) {
+
+	return !zero(x - y);
+}
+
+int less_than(double x, double y) {
+
+	return negative(x - y);
+}
+
+int greater_than(double x, double y) {
+
+	return positive(x - y);
 }
 
 int index_in_bounds(int ind, int len) {

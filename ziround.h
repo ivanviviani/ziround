@@ -610,7 +610,7 @@ int non_negative_integer(int num);
  * @param num Number.
  * @return 1 If the assert succeeds, 0 otherwise.
  */
-int non_negative_double(double num);
+int non_negative(double num);
 
 /**
  * @brief Check whether a floating point number is non-positive.
@@ -618,7 +618,7 @@ int non_negative_double(double num);
  * @param num Number.
  * @return 1 If the assert succeeds, 0 otherwise.
  */
-int non_positive_double(double num);
+int non_positive(double num);
 
 /**
  * @brief Check whether a floating point number is negative.
@@ -626,7 +626,7 @@ int non_positive_double(double num);
  * @param num Number.
  * @return 1 If the assert succeeds, 0 otherwise.
  */
-int negative_double(double num);
+int negative(double num);
 
 /**
  * @brief Check whether a floating point number is positive.
@@ -634,7 +634,7 @@ int negative_double(double num);
  * @param num Number.
  * @return 1 If the assert succeeds, 0 otherwise.
  */
-int positive_double(double num);
+int positive(double num);
 
 /**
  * @brief Check whether a floating point number is equal to zero.
@@ -642,7 +642,7 @@ int positive_double(double num);
  * @param num Number.
  * @return 1 If the assert succeeds, 0 otherwise.
  */
-int zero_double(double num);
+int zero(double num);
 
 /**
  * @brief Check whether two floating point numbers are equal.
@@ -651,7 +651,36 @@ int zero_double(double num);
  * @param y Second number.
  * @return 1 If the assert succeeds, 0 otherwise.
  */
-int equals_double(double x, double y);
+int equals(double x, double y);
+
+/**
+ * @brief Check whether two floating point numbers are not equal.
+ *
+ * @param x First number.
+ * @param y Second number.
+ * @return 1 If the assert succeeds, 0 otherwise.
+ */
+int not_equals(double x, double y);
+
+/**
+ * @brief Check whether for two floating point numbers it holds that the
+ * first is less than the second.
+ *
+ * @param x First number.
+ * @param y Second number.
+ * @return 1 If the assert succeeds, 0 otherwise.
+ */
+int less_than(double x, double y);
+
+/**
+ * @brief Check whether for two floating point numbers it holds that the
+ * first is greater than the second.
+ *
+ * @param x First number.
+ * @param y Second number.
+ * @return 1 If the assert succeeds, 0 otherwise.
+ */
+int greater_than(double x, double y);
 
 /**
  * @brief Check whether the numeric code for the objective sense is valid
