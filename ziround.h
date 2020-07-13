@@ -329,18 +329,19 @@ void zi_round(instance* inst);
 void check_slacks(instance* inst, int j, double delta_up, double delta_down, const char round_updown);
 
 /**
- * @brief Update variable xj to improve objective, according to the values
+ * @brief Update variable \p j to improve objective, according to the values
  * of \p delta_up and \p delta_down calculated before. Also update the row slacks.
  *
  * @param inst Pointer to the already populated instance.
  * @param j Column (variable xj) index.
- * @param delta_up Array of possible up-shifts.
- * @param delta_down Array of possible down-shifts.
- * @param is_fractional Flag that indicates whether xj is fractional or integer.
+ * @param objcoef Objective coefficient of variable \p j.
+ * @param delta_up Candidate up-shift of variable \p j.
+ * @param delta_down Candidate down-shift of variable \p j.
+ * @param is_fractional Flag that indicates whether variable \p j is fractional or integer.
  * @param num_rounded Pointer to the number of rounded variables.
- * @return 1 if the variable xj has been updated, 0 otherwise.
+ * @return 1 if variable \p j has been updated, 0 otherwise.
  */
-int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down, int is_fractional, int* num_rounded);
+int round_xj_bestobj(instance* inst, int j, double objcoef, double delta_up, double delta_down, int is_fractional, int* num_rounded);
 
 /**
  * @brief Update the slack array field of the instance (incrementally)

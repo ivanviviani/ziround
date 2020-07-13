@@ -114,7 +114,7 @@ void zi_round(instance* inst) {
 						(inst->obj[j] <= 0 && equals(delta_up[j], 1.0))) {
 
 						// Round xj to improve objective and update slacks
-						updated = updated | round_xj_bestobj(inst, j, delta_up, delta_down, 0, &num_rounded); // flag xj non-fractional (0)
+						updated = updated | round_xj_bestobj(inst, j, inst->obj[j], delta_up[j], delta_down[j], 0, &num_rounded); // flag xj non-fractional (0)
 					}
 
 					break;
@@ -140,7 +140,7 @@ void zi_round(instance* inst) {
 					if (equals(ZIplus, ZIminus) && less_than(ZIplus, ZI)) {
 
 						// Round xj to improve objective and update slacks
-						updated = updated | round_xj_bestobj(inst, j, delta_up, delta_down, 1, &num_rounded); // flag xj fractional (1)
+						updated = updated | round_xj_bestobj(inst, j, inst->obj[j], delta_up[j], delta_down[j], 1, &num_rounded); // flag xj fractional (1)
 					}
 
 					// Second case: ZIplus < ZIminus && ZIplus < ZI --> Round UP
@@ -380,15 +380,15 @@ void check_slacks(instance* inst, int j, double delta_up, double delta_down, con
 	} // end for
 }
 
-int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down, int xj_fractional, int* num_rounded) {
+int round_xj_bestobj(instance* inst, int j, double objcoef, double delta_up, double delta_down, int xj_fractional, int* num_rounded) {
 
 	double obj_deltaplus = 0.0;  /**< Delta obj if xj is shifted up. */
 	double obj_deltaminus = 0.0; /**< Delta obj if xj is shifted down. */
 	int updated = 0;             /**< Flag set to 1 when at least one variable shift has been made. */
 
-	if (!zero(inst->obj[j])) {
-		obj_deltaplus = (inst->obj[j] * delta_up[j]);
-		obj_deltaminus = -(inst->obj[j] * delta_down[j]);
+	if (!zero(objcoef)) {
+		obj_deltaplus = (objcoef * delta_up);
+		obj_deltaminus = -(objcoef * delta_down);
 	}
 
 	// Check obj sense, then update xj, update slacks and update objective value
@@ -400,94 +400,94 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 			if (negative(obj_deltaplus) && less_than(obj_deltaplus, obj_deltaminus)) {
 
 				// Skip variable if delta_up = 0
-				if (zero(delta_up[j])) return 0;
+				if (zero(delta_up)) return 0;
 
-				print_verbose(20, "[round_xj_bestobj]: >>> Round x_%d = %f + %f = %f\n", j + 1, inst->x[j], delta_up[j], inst->x[j] + delta_up[j]);
+				print_verbose(20, "[round_xj_bestobj]: >>> Round x_%d = %f + %f = %f\n", j + 1, inst->x[j], delta_up, inst->x[j] + delta_up);
 
 				// If xj is integer (not fractional) then delta_up[j] should be 1.0
-				assert(xj_fractional || equals(delta_up[j], 1.0));
+				assert(xj_fractional || equals(delta_up, 1.0));
 
 				// Check whether all affected constraints have enough slack for a ROUND UP of xj
-				check_slacks(inst, j, delta_up[j], delta_down[j], 'U');
+				check_slacks(inst, j, delta_up, delta_down, 'U');
 
 				if (xj_fractional) (*num_rounded)++; // (1) Assume xj fractional will be rounded to an integer
 
 				// Round UP (if xj is not fractional then delta_up[j] must be 1.0)
-				inst->x[j] += delta_up[j];
+				inst->x[j] += delta_up;
 
 				if (is_fractional(inst->x[j])) (*num_rounded)--; // (2) If xj was not rounded to an integer
 
 				updated = 1;
-				update_slacks(inst, j, delta_up[j]);
+				update_slacks(inst, j, delta_up);
 				inst->objval += obj_deltaplus;
 			}
 			// [] Adding -delta_down to x_j improves objval
 			else if (negative(obj_deltaminus) && less_than(obj_deltaminus, obj_deltaplus)) {
 
 				// Skip variable if delta_down = 0
-				if (zero(delta_down[j])) return 0;
+				if (zero(delta_down)) return 0;
 
-				print_verbose(20, "[round_xj_bestobj]: >>> Round x_%d = %f - %f = %f\n", j + 1, inst->x[j], delta_down[j], inst->x[j] - delta_down[j]);
+				print_verbose(20, "[round_xj_bestobj]: >>> Round x_%d = %f - %f = %f\n", j + 1, inst->x[j], delta_down, inst->x[j] - delta_down);
 				
 				// If xj is integer (not fractional) then delta_down[j] should be 1.0
-				assert(xj_fractional || equals(delta_down[j], 1.0));
+				assert(xj_fractional || equals(delta_down, 1.0));
 
 				// Check whether all affected constraints have enough slack for a ROUND DOWN of xj
-				check_slacks(inst, j, delta_up[j], delta_down[j], 'D');
+				check_slacks(inst, j, delta_up, delta_down, 'D');
 
 				if (xj_fractional) (*num_rounded)++; // (1) Assume xj fractional will be rounded to an integer
 
 				// Round DOWN (if xj is not fractional then delta_down[j] must be 1.0)
-				inst->x[j] -= delta_down[j];
+				inst->x[j] -= delta_down;
 
 				if (is_fractional(inst->x[j])) (*num_rounded)--; // (2) If xj was not rounded to an integer
 
 				updated = 1;
-				update_slacks(inst, j, -(delta_down[j]));
+				update_slacks(inst, j, -(delta_down));
 				inst->objval += obj_deltaminus;
 			}
 			// [] Both deltas improve objval of the same amount < 0 --> Round arbitrarily (DOWN)
 			else if (equals(obj_deltaminus, obj_deltaplus) && negative(obj_deltaminus)) {
 
 				// Skip variable if delta_down = 0
-				if (zero(delta_down[j])) return 0;
+				if (zero(delta_down)) return 0;
 
-				print_verbose(20, "[round_xj_bestobj]: >>> Round x_%d = %f - %f = %f\n", j + 1, inst->x[j], delta_down[j], inst->x[j] - delta_down[j]);
+				print_verbose(20, "[round_xj_bestobj]: >>> Round x_%d = %f - %f = %f\n", j + 1, inst->x[j], delta_down, inst->x[j] - delta_down);
 
 				// Check whether all affected constraints have enough slack for a ROUND DOWN of xj
-				check_slacks(inst, j, delta_up[j], delta_down[j], 'D');
+				check_slacks(inst, j, delta_up, delta_down, 'D');
 
 				if (xj_fractional) (*num_rounded)++; // (1) Assume xj fractional will be rounded to an integer
 
 				// Round arbitrarily (DOWN)
-				inst->x[j] -= delta_down[j];
+				inst->x[j] -= delta_down;
 
 				if (is_fractional(inst->x[j])) (*num_rounded)--; // (2) If xj was not rounded to an integer
 
 				updated = 1;
-				update_slacks(inst, j, -(delta_down[j]));
+				update_slacks(inst, j, -(delta_down));
 				inst->objval += obj_deltaminus;
 			}
 			// [] Both deltas do not change objval (both = 0) --> Round arbitrarily (UP)
 			else if (zero(obj_deltaplus) && zero(obj_deltaminus)) {
 
 				// Skip variable if delta_up = 0
-				if (zero(delta_up[j])) return 0;
+				if (zero(delta_up)) return 0;
 
-				print_verbose(20, "[round_xj_bestobj]: >>> Round x_%d = %f + %f = %f\n", j + 1, inst->x[j], delta_up[j], inst->x[j] + delta_up[j]);
+				print_verbose(20, "[round_xj_bestobj]: >>> Round x_%d = %f + %f = %f\n", j + 1, inst->x[j], delta_up, inst->x[j] + delta_up);
 				
 				// Check whether all affected constraints have enough slack for a ROUND UP of xj
-				check_slacks(inst, j, delta_up[j], delta_down[j], 'U');
+				check_slacks(inst, j, delta_up, delta_down, 'U');
 
 				if (xj_fractional) (*num_rounded)++; // (1) Assume xj fractional will be rounded to an integer
 
 				// Round arbitrarily (UP)
-				inst->x[j] += delta_up[j];
+				inst->x[j] += delta_up;
 
 				if (is_fractional(inst->x[j])) (*num_rounded)--; // (2) If xj was not rounded to an integer
 
 				updated = 1;
-				update_slacks(inst, j, delta_up[j]);
+				update_slacks(inst, j, delta_up);
 				// no objval update
 			}
 
@@ -500,94 +500,94 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 			if (positive(obj_deltaplus) && greater_than(obj_deltaplus, obj_deltaminus)) {
 
 				// Skip variable if delta_up = 0
-				if (zero(delta_up[j])) return 0;
+				if (zero(delta_up)) return 0;
 				
-				print_verbose(20, "[round_xj_bestobj]: >>> Round x_%d = %f + %f = %f\n", j + 1, inst->x[j], delta_up[j], inst->x[j] + delta_up[j]);
+				print_verbose(20, "[round_xj_bestobj]: >>> Round x_%d = %f + %f = %f\n", j + 1, inst->x[j], delta_up, inst->x[j] + delta_up);
 				
 				// If xj is integer (not fractional) then delta_up[j] should be 1.0
-				assert(xj_fractional || equals(delta_up[j], 1.0));
+				assert(xj_fractional || equals(delta_up, 1.0));
 
 				// Check whether all affected constraints have enough slack for a ROUND UP of xj
-				check_slacks(inst, j, delta_up[j], delta_down[j], 'U');
+				check_slacks(inst, j, delta_up, delta_down, 'U');
 
 				if (xj_fractional) (*num_rounded)++; // (1) Assume xj fractional will be rounded to an integer
 
 				// Round UP (if xj is not fractional then delta_up[j] must be 1.0)
-				inst->x[j] += delta_up[j];
+				inst->x[j] += delta_up;
 
 				if (is_fractional(inst->x[j])) (*num_rounded)--; // (2) If xj was not rounded to an integer
 
 				updated = 1;
-				update_slacks(inst, j, delta_up[j]);
+				update_slacks(inst, j, delta_up);
 				inst->objval += obj_deltaplus;
 			}
 			// [] Adding delta_down to x_j improves objval
 			else if (positive(obj_deltaminus) && greater_than(obj_deltaminus, obj_deltaplus)) {
 
 				// Skip variable if delta_down = 0
-				if (zero(delta_down[j])) return 0;
+				if (zero(delta_down)) return 0;
 				
-				print_verbose(20, "[round_xj_bestobj]: >>> Round x_%d = %f - %f = %f\n", j + 1, inst->x[j], delta_down[j], inst->x[j] - delta_down[j]);
+				print_verbose(20, "[round_xj_bestobj]: >>> Round x_%d = %f - %f = %f\n", j + 1, inst->x[j], delta_down, inst->x[j] - delta_down);
 				
 				// If xj is integer (not fractional) then delta_down[j] should be 1.0
-				assert(xj_fractional || equals(delta_down[j], 1.0));
+				assert(xj_fractional || equals(delta_down, 1.0));
 
 				// Check whether all affected constraints have enough slack for a ROUND DOWN of xj
-				check_slacks(inst, j, delta_up[j], delta_down[j], 'D');
+				check_slacks(inst, j, delta_up, delta_down, 'D');
 
 				if (xj_fractional) (*num_rounded)++; // (1) Assume xj fractional will be rounded to an integer
 
 				// Round DOWN (if xj is not fractional then delta_down[j] must be 1.0)
-				inst->x[j] -= delta_down[j];
+				inst->x[j] -= delta_down;
 
 				if (is_fractional(inst->x[j])) (*num_rounded)--; // (2) If xj was not rounded to an integer
 
 				updated = 1;
-				update_slacks(inst, j, -(delta_down[j]));
+				update_slacks(inst, j, -(delta_down));
 				inst->objval += obj_deltaminus;
 			}
 			// [] Both deltas improve objval of the same amount > 0 --> Round arbitrarily (DOWN)
 			else if (equals(obj_deltaminus, obj_deltaplus) && positive(obj_deltaminus)) {
 
 				// Skip variable if delta_down = 0
-				if (zero(delta_down[j])) return 0;
+				if (zero(delta_down)) return 0;
 				
-				print_verbose(20, "[round_xj_bestobj]: >>> Round x_%d = %f - %f = %f\n", j + 1, inst->x[j], delta_down[j], inst->x[j] - delta_down[j]);
+				print_verbose(20, "[round_xj_bestobj]: >>> Round x_%d = %f - %f = %f\n", j + 1, inst->x[j], delta_down, inst->x[j] - delta_down);
 
 				// Check whether all affected constraints have enough slack for a ROUND DOWN of xj
-				check_slacks(inst, j, delta_up[j], delta_down[j], 'D');
+				check_slacks(inst, j, delta_up, delta_down, 'D');
 
 				if (xj_fractional) (*num_rounded)++; // (1) Assume xj fractional will be rounded to an integer
 
 				// Round arbitrarily (DOWN)
-				inst->x[j] -= delta_down[j];
+				inst->x[j] -= delta_down;
 
 				if (is_fractional(inst->x[j])) (*num_rounded)--; // (2) If xj was not rounded to an integer
 
 				updated = 1;
-				update_slacks(inst, j, -(delta_down[j]));
+				update_slacks(inst, j, -(delta_down));
 				inst->objval += obj_deltaminus;
 			}
 			// [] Both deltas do not change objval (both = 0) --> Round arbitrarily (UP)
 			else if (zero(obj_deltaplus) && zero(obj_deltaminus)) {
 
 				// Skip variable if delta_up = 0
-				if (zero(delta_up[j])) return 0;
+				if (zero(delta_up)) return 0;
 
-				print_verbose(20, "[round_xj_bestobj]: >>> Round x_%d = %f + %f = %f\n", j + 1, inst->x[j], delta_up[j], inst->x[j] + delta_up[j]);
+				print_verbose(20, "[round_xj_bestobj]: >>> Round x_%d = %f + %f = %f\n", j + 1, inst->x[j], delta_up, inst->x[j] + delta_up);
 				
 				// Check whether all affected constraints have enough slack for a ROUND UP of xj
-				check_slacks(inst, j, delta_up[j], delta_down[j], 'U');
+				check_slacks(inst, j, delta_up, delta_down, 'U');
 
 				if (xj_fractional) (*num_rounded)++; // (1) Assume xj fractional will be rounded to an integer
 
 				// Round arbitrarily (UP)
-				inst->x[j] += delta_up[j];
+				inst->x[j] += delta_up;
 
 				if (is_fractional(inst->x[j])) (*num_rounded)--; // (2) If xj was not rounded to an integer
 
 				updated = 1;
-				update_slacks(inst, j, delta_up[j]);
+				update_slacks(inst, j, delta_up);
 				// no objval update
 			}
 
