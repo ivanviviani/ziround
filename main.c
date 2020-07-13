@@ -25,24 +25,24 @@ int main(int argc, char** argv) {
 	parse_cmd(argc, argv, &inst);
 
 	// Set up CPLEX environment
-	setup_CPLEX_env(&inst);                   print_verbose(100, "[INFO][OK]: CPLEX env setup.\n");
+	setup_CPLEX_env(&inst);
 
 	// Read MIP problem from input file (.mps)
-	read_MIP_problem(&inst, inst.input_file); print_verbose(100, "[INFO][OK]: MIP problem read.\n");
+	read_MIP_problem(&inst, inst.input_file);
 
 	// Remember integer/binary variables of the original MIP
-	save_integer_variables(&inst);            print_verbose(100, "[INFO][OK]: Integer variables saved.\n");
+	save_integer_variables(&inst);
 
 	if (VERBOSE >= 201) print_problem_info(&inst, 0, 1);
 	
 	// Solve continuous relaxation of the MIP problem
-	solve_continuous_relaxation(&inst);       print_verbose(100, "[INFO][OK]: Continuous relaxation solved.\n");
+	solve_continuous_relaxation(&inst);
 
 	// Print objective value of continuous relaxation
 	print_verbose(100, "[INFO]: Continuous relaxation objective value: %.10g.\n", inst.objval);
 
 	// Populate the instance with problem data retrieved from the CPLEX lp
-	populate_inst(&inst);                     print_verbose(100, "[INFO][OK]: Problem data read.\n");
+	populate_inst(&inst);
 
 	// Print problem info to file
 	if (VERBOSE >= 201) print_problem_info(&inst, 1, 1);
@@ -54,17 +54,12 @@ int main(int argc, char** argv) {
 		fclose(output);
 	}
 
-	print_verbose(10, "\n**************************************************************************\n");
 	print_verbose(10, "[INFO]: ... Starting ZI-Round ...\n");
-	print_verbose(10, "**************************************************************************\n");
 //******************************************* ZI-ROUND *******************************************
 	zi_round(&inst);
 //************************************************************************************************
-	print_verbose(10, "**************************************************************************\n");
-	print_verbose(10, "[INFO][OK]: ZI-Round terminated. Solution fractionality: %f.\n", sol_fractionality(inst.x, inst.int_var, inst.ncols));
-	print_verbose(10, "**************************************************************************\n");
-
-	// Print objective value of candidate rounded solution
+	print_verbose(10, "[INFO]: ZI-Round terminated.\n");
+	print_verbose(10, "[INFO]: Solution fractionality: %f.\n", sol_fractionality(inst.x, inst.int_var, inst.ncols));
 	print_verbose(100, "[INFO]: Candidate objective value: %f\n", inst.objval);
 
 	// Print candidate rounded solution and its objective value to file
@@ -78,18 +73,18 @@ int main(int argc, char** argv) {
 	}
 
 	// Check variable bounds and constraints for the candidate rounded solution
-	print_verbose(100, "[INFO]: ... verifying variable bounds and constraints ...\n");
 	check_bounds(inst.x, inst.lb, inst.ub, inst.ncols);
-	check_constraints(inst.x, inst.ncols, inst.nrows, inst.nzcnt, inst.rmatbeg, inst.rmatind, inst.rmatval, inst.sense, inst.rhs);
-	print_verbose(100, "[INFO][OK]: Variable bounds and constraints satisfied.\n");
+	check_constraints(inst.x, inst.ncols, inst.nrows, inst.nzcnt, inst.rmatbeg, 
+					  inst.rmatind, inst.rmatval, inst.sense, inst.rhs);
 
 	// Check whether all integer/binary variables of the original MIP have been rounded
-	print_verbose(100, "[INFO]: ... verifying whether all integer variables of the original MIP have been rounded ...\n");
-	check_rounding(inst.x, inst.ncols, inst.int_var, inst.vartype);
-	print_verbose(100, "[INFO][OK]: All integer/binary variables of the MIP have been rounded.\n");
-	
-	// Print objective value of rounded solution
-	fprintf(stdout, "[FINAL RESULT]: Objective value of rounded solution: %f\n\n", inst.objval);
+	if (check_rounding(inst.x, inst.ncols, inst.int_var, inst.vartype)) {
+		print_verbose(10, "[INFO]: All integer/binary variables of the MIP have been rounded.\n");
+		fprintf(stdout, "[INFO]: Objective value of rounded solution: %f\n\n", inst.objval);
+	}
+	else {
+		print_verbose(10, "[INFO]: Failed to round all integer/binary variables of the MIP ...\n");
+	}
 
 	// Print rounded solution to file
 	if (VERBOSE >= 201) {
@@ -99,7 +94,7 @@ int main(int argc, char** argv) {
 		fclose(output);
 	}
 
-	// Free
+	// Free instance
 	free_inst(&inst);
 
 	return EXIT_SUCCESS;

@@ -420,8 +420,9 @@ void check_constraints(double* x, int ncols, int nrows, int nzcnt, int* rmatbeg,
  * @param ncols Number of variables.
  * @param int_var Array of flags for binary/integer variables in the original MIP.
  * @param vartype Array of variable types.
+ * @return 1 iff all integer/binary variables have been rounded, 0 otherwise.
  */
-void check_rounding(double* x, int ncols, int* int_var, char* vartype);
+int check_rounding(double* x, int ncols, int* int_var, char* vartype);
 
 /**
  * @brief Count number of variables rounded so far.

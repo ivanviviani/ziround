@@ -60,23 +60,17 @@ void check_constraints(double* x, int ncols, int nrows, int nzcnt, int* rmatbeg,
 	print_verbose(100, "[check_constraints][OK]: Constraints satisfied.\n");
 }
 
-void check_rounding(double* x, int ncols, int* int_var, char* vartype) {
-
-	int rounded = 1;
+int check_rounding(double* x, int ncols, int* int_var, char* vartype) {
 
 	// Scan integer/binary variables
 	for (int j = 0; j < ncols; j++) {
 		if (!(int_var[j])) continue;
 		assert(var_type_integer_or_binary(vartype[j]));
 
-		if (is_fractional(x[j])) {
-			// print_warning("[check_rounding]: Variable (type '%c') x_%d = %f has not been rounded!\n", vartype[j], j + 1, x[j]);
-			rounded = 0;
-			break;
-		}
+		if (is_fractional(x[j])) return 0;
 	}
 
-	if (!rounded) print_error("[check_rounding]: ... Failed to round all integer/binary variables of the MIP ...\n");
+	return 1;
 }
 
 int count_rounded(double* x, int ncols, int* int_var, char* vartype) {

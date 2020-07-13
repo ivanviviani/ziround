@@ -64,7 +64,6 @@ void zi_round(instance* inst) {
 	// ----------------------------------------------------------------------------------------------------------------------
 
 	print_verbose(10, "Number of variables to round: %d\n", inst->vars_to_round);
-	system("pause");
 
 	// [DEBUG ONLY]: Print solution fractionality and cost ------------------------------------------------------------------
 	print_verbose(10, "*******************************\n* Solfrac | Objval | #Rounded *\n");
