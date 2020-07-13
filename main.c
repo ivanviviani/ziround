@@ -219,7 +219,8 @@ void plot(instance* inst) {
 		char* name = (char*)calloc(20, sizeof(char));
 		sprintf(labels[0], "Round");
 		sprintf(labels[1], "Fractionality");
-		sprintf(name, "Solution");
+		strtok(inst->input_file, "/.");
+		sprintf(name, strtok(NULL, "/."));
 		plot_tracker(inst->tracker_sol_frac, name, labels, inst->size_frac, NULL);
 		free_all(4, labels[0], labels[1], labels, name);
 	}
@@ -230,7 +231,8 @@ void plot(instance* inst) {
 		char* name = (char*)calloc(20, sizeof(char));
 		sprintf(labels[0], "Round");
 		sprintf(labels[1], "Cost");
-		sprintf(name, "Solution");
+		strtok(inst->input_file, "/.");
+		sprintf(name, strtok(NULL, "/."));
 		plot_tracker(inst->tracker_sol_cost, name, labels, inst->size_cost, NULL);
 		free_all(4, labels[0], labels[1], labels, name);
 	}
@@ -241,7 +243,8 @@ void plot(instance* inst) {
 		char* name = (char*)calloc(20, sizeof(char));
 		sprintf(labels[0], "Round");
 		sprintf(labels[1], "Rounded Variables");
-		sprintf(name, "Solution");
+		strtok(inst->input_file, "/.");
+		sprintf(name, strtok(NULL, "/."));
 		plot_tracker(inst->tracker_rounded, name, labels, inst->size_rounded, NULL);
 		free_all(4, labels[0], labels[1], labels, name);
 	}
