@@ -181,9 +181,6 @@ void test_folder(instance* inst) {
 		check_constraints(test_inst.x, test_inst.ncols, test_inst.nrows, test_inst.nzcnt, test_inst.rmatbeg,
 						  test_inst.rmatind, test_inst.rmatval, test_inst.sense, test_inst.rhs);
 
-		// Plot trackers
-		if (VERBOSE >= 10) plot(&test_inst);
-
 		// Compute final solution fractionality
 		solfrac = sol_fractionality(test_inst.x, test_inst.int_var, test_inst.ncols);
 
