@@ -257,7 +257,7 @@ void check_slacks(instance* inst, int j, double delta_up, double delta_down, con
 				if ((inst->extension) && (inst->num_singletons[rowind] > 0)) {
 
 					// If the new row slack is negative for 'L', positive for 'G' constraints, then the remaining amount must be covered by the singletons slack
-					if (negative(new_slack) || positive(new_slack)) {
+					if ((inst->sense[rowind] == 'L' && negative(new_slack)) || (inst->sense[rowind] == 'G' && positive(new_slack))) {
 
 						(inst->sense[rowind] == 'L') ? assert(negative(new_slack)) : assert(positive(new_slack));
 
@@ -644,7 +644,7 @@ void update_slacks(instance* inst, int j, double signed_delta) {
 					inst->slack[rowind] = (inst->sense[rowind] == 'L') ? max(0.0, temp_slack) : min(0.0, temp_slack);
 
 					// If not enough row slack (temp_slack negative for 'L', positive for 'G' constraints), resort to singletons slack
-					if (negative(temp_slack) || positive(temp_slack)) {
+					if ((inst->sense[rowind] == 'L' && negative(temp_slack)) || (inst->sense[rowind] == 'G' && positive(temp_slack))) {
 
 						(inst->sense[rowind] == 'L') ? assert(negative(temp_slack)) : assert(positive(temp_slack));
 
@@ -867,7 +867,7 @@ void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, c
 				if (negative(inst->slack[rowind])) print_error("[delta_updown][row %d 'L']: Found negative row slack = %f\n", rowind + 1, inst->slack[rowind]);
 
 				// Clip slack to zero if slightly negative
-				if ((inst->slack[rowind] < 0.0) && (inst->slack[rowind] > -(TOLERANCE))) { 
+				if ((inst->slack[rowind] < 0.0) && (inst->slack[rowind] >= -(TOLERANCE))) { 
 					inst->slack[rowind] = 0.0; 
 					slack = inst->slack[rowind]; 
 				}
@@ -900,7 +900,7 @@ void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, c
 				if (positive(inst->slack[rowind])) print_error("[delta_updown][row %d 'G']: Found positive row slack = %f\n", rowind + 1, inst->slack[rowind]);
 
 				// Clip slack to zero if slightly positive
-				if ((inst->slack[rowind] > 0.0) && (inst->slack[rowind] < TOLERANCE)) { 
+				if ((inst->slack[rowind] > 0.0) && (inst->slack[rowind] <= TOLERANCE)) { 
 					inst->slack[rowind] = 0.0;
 					slack = inst->slack[rowind];
 				}
