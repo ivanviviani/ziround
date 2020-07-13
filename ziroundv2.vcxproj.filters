@@ -50,5 +50,8 @@
     <ClInclude Include="ziround.h">
       <Filter>File di intestazione</Filter>
     </ClInclude>
+    <ClInclude Include="dirent.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

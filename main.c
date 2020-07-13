@@ -5,6 +5,7 @@
  */
 
 #include "ziround.h"
+#include "dirent.h"
 
 /**
  * @brief Main.

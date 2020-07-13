@@ -62,7 +62,7 @@ void save_integer_variables(instance* inst) {
 				inst->int_var[j] = 0;
 				break;
 			default:
-				print_error(100, "[save_integer_variables][x_%d]: Type '%c' not supported.\n", j + 1, inst->vartype[j]);
+				print_error("[save_integer_variables][x_%d]: Type '%c' not supported.\n", j + 1, inst->vartype[j]);
 		}
 	}
 }
