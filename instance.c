@@ -19,6 +19,7 @@ void init_inst(instance* inst) {
 	inst->num_singletons   = NULL;
 	inst->rs_beg           = NULL;
 	inst->rs_coef          = NULL;
+	inst->ss_val           = NULL;
 	inst->ss_ub            = NULL;
 	inst->ss_lb            = NULL;
 	inst->rmatbeg          = NULL; 
@@ -47,9 +48,9 @@ void free_inst(instance* inst) {
 	char* errmsg = (char*)malloc(CPXMESSAGEBUFSIZE * sizeof(char)); if (errmsg == NULL) print_error("[setup_CPLEX_env]: Failed to allocate errmsg.\n");
 	int status = 0;
 	
-	free_all(24, inst->x, inst->obj, inst->lb, inst->ub, inst->slack, inst->vartype, 
+	free_all(25, inst->x, inst->obj, inst->lb, inst->ub, inst->slack, inst->vartype, 
 		inst->int_var, inst->row_singletons, inst->num_singletons, inst->rs_beg, 
-		inst->rs_coef, inst->ss_ub, inst->ss_lb, inst->rmatbeg, inst->rmatind,
+		inst->rs_coef, inst->ss_val, inst->ss_ub, inst->ss_lb, inst->rmatbeg, inst->rmatind,
 		inst->rmatval, inst->cmatbeg, inst->cmatind, inst->cmatval, inst->sense,
 		inst->rhs, inst->tracker_sol_frac, inst->tracker_sol_cost, inst->tracker_rounded);
 	

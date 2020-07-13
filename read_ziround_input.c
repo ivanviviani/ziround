@@ -35,7 +35,7 @@ void populate_inst(instance* inst) {
 	// Extension (if enabled)
 	if (inst->extension) {
 		find_singletons(inst);
-		compute_singletons_slacks_bounds(inst);
+		compute_singletons_slacks(inst);
 	}
 }
 
@@ -287,15 +287,16 @@ void find_singletons(instance* inst) {
 }
 
 // [EXTENSION]
-void compute_singletons_slacks_bounds(instance* inst) {
+void compute_singletons_slacks(instance* inst) {
 
 	int beg;             /**< Index of the first singleton of a given row. */
 	int singleton_index; /**< Absolute index of the current singleton. */
 	double coef;         /**< Coefficient of the current singleton (in its row). */
 
 	// Allocate
+	inst->ss_val = (double*)calloc((size_t)inst->nrows, sizeof(double));
 	inst->ss_ub = (double*)calloc((size_t)inst->nrows, sizeof(double));
-	inst->ss_lb = (double*)calloc((size_t)inst->nrows, sizeof(double)); if (inst->ss_ub == NULL || inst->ss_lb == NULL) print_error("[compute_singletons_slacks_bounds][extension]: Failed to allocate ss_ub or ss_lb.");
+	inst->ss_lb = (double*)calloc((size_t)inst->nrows, sizeof(double)); if (inst->ss_val == NULL || inst->ss_ub == NULL || inst->ss_lb == NULL) print_error("[compute_singletons_slacks][extension]: Failed to allocate singletons slacks structures.\n");
 
 	// Scan constraints that have singletons
 	for (int i = 0; i < inst->nrows; i++) {
@@ -307,13 +308,15 @@ void compute_singletons_slacks_bounds(instance* inst) {
 		beg = inst->rs_beg[i]; 
 		assert(index_in_bounds(beg, inst->rs_size));
 
-		// Compute singletons slack upper and lower bound (row i)
+		// Compute singletons slack value and upper/lower bounds (row i)
 		for (int k = 0; k < inst->num_singletons[i]; k++) {
 
 			assert(index_in_bounds(beg + k, inst->rs_size));
 			singleton_index = inst->row_singletons[beg + k]; 
 			assert(index_in_bounds(singleton_index, inst->ncols));
 			coef = inst->rs_coef[beg + k];
+
+			inst->ss_val[i] += (coef * inst->x[singleton_index]);
 
 			if (coef > 0.0) {
 				inst->ss_ub[i] += (coef * inst->ub[singleton_index]);
@@ -324,9 +327,10 @@ void compute_singletons_slacks_bounds(instance* inst) {
 				inst->ss_lb[i] += (coef * inst->ub[singleton_index]);
 			}
 		}
+		assert(var_in_bounds(inst->ss_val[i], inst->ss_lb[i], inst->ss_ub[i]));
 
 		// [DEBUG ONLY] Print singletons slacks bounds
-		print_verbose(200, "[DEBUG][compute_singletons_slacks_bounds][extension][row %d]: ss_lb = %f | ss_ub = %f\n", i + 1, inst->ss_lb[i], inst->ss_ub[i]);
+		print_verbose(200, "[DEBUG][compute_singletons_slacks][extension][row %d]: ss_lb = %f | ss_val = %f | ss_ub = %f\n", i + 1, inst->ss_lb[i], inst->ss_val[i], inst->ss_ub[i]);
 	}
 	assert(valid_bounds(inst->ss_lb, inst->ss_ub, inst->nrows));
 }

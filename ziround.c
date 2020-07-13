@@ -264,7 +264,7 @@ void check_slacks(instance* inst, int j, double delta_up, double delta_down, con
 						// Compute singletons slack of constraint rowind and get bounds
 						ss_lb = inst->ss_lb[rowind];
 						ss_ub = inst->ss_ub[rowind];
-						singletons_slack = compute_singletons_slack(inst, rowind);
+						singletons_slack = inst->ss_val[rowind]; // compute_ss_val(inst, rowind);
 						assert(var_in_bounds(singletons_slack, ss_lb, ss_ub));
 
 						// Singletons slack after rounding
@@ -297,7 +297,7 @@ void check_slacks(instance* inst, int j, double delta_up, double delta_down, con
 					// Compute singletons slack of constraint rowind (with bounds)
 					ss_lb = inst->ss_lb[rowind];
 					ss_ub = inst->ss_ub[rowind];
-					curr_slack = compute_singletons_slack(inst, rowind);
+					curr_slack = inst->ss_val[rowind]; // compute_ss_val(inst, rowind);
 					assert(var_in_bounds(curr_slack, ss_lb, ss_ub));
 					delta_slack = (round_updown == 'U') ? (aij * delta_up) : (aij * (-delta_down));
 
@@ -712,6 +712,10 @@ void update_singletons(instance* inst, int rowind, double delta_ss) {
 
 	s_slack_increase = (delta_ss >= 0.0);
 
+	// Update singletons slack value (should be possible because of function check_slacks)
+	inst->ss_val[rowind] += delta_ss; // + because signed delta
+	assert(var_in_bounds(inst->ss_val[rowind], inst->ss_lb[rowind], inst->ss_ub[rowind]));
+
 	// Distribute delta among the singletons, stop when done (delta_ss positive(negative) --> singletons slack must increase(decrease))
 	for (int k = 0; k < inst->num_singletons[rowind]; k++) {
 
@@ -841,10 +845,10 @@ void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, c
 			// Compute singletons slack of constraint rowind and get bounds
 			ss_lb = inst->ss_lb[rowind];
 			ss_ub = inst->ss_ub[rowind];
-			singletons_slack = compute_singletons_slack(inst, rowind);
+			singletons_slack = inst->ss_val[rowind]; // compute_ss_val(inst, rowind);
 			assert(var_in_bounds(singletons_slack, ss_lb, ss_ub));
 
-			// Conpute singletons slack deltas (clip to zero if slightly non-positive)
+			// Compute singletons slack deltas (clip to zero if slightly non-positive)
 			ss_delta_up = ss_ub - singletons_slack;
 			ss_delta_down = singletons_slack - ss_lb;
 			if ((ss_delta_up < 0.0) && (ss_delta_up > -(TOLERANCE))) ss_delta_up = 0.0;
@@ -1014,10 +1018,10 @@ void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, c
 }
 
 // [EXTENSION]
-double compute_singletons_slack(instance* inst, int rowind) {
+double compute_ss_val(instance* inst, int rowind) {
 
 	assert(index_in_bounds(rowind, inst->nrows));
-	if (inst->num_singletons[rowind] <= 0) print_error("[compute_singletons_slack][extension]: Tried to compute singletons slack of row %d with no singletons.\n", rowind + 1);
+	if (inst->num_singletons[rowind] <= 0) print_error("[compute_ss_val][extension]: Tried to compute singletons slack of row %d with no singletons.\n", rowind + 1);
 
 	double singletons_slack; /**< Current singletons slack value. */
 	int beg;                 /**< Begin index of singleton indices for row \p rowind. */

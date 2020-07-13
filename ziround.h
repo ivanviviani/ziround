@@ -77,17 +77,17 @@
 /**
  * @brief Plot solution fractionality flag (0-1).
  */
-#define PLOT_SOL_FRAC 1
+#define PLOT_SOL_FRAC 0
 
  /**
   * @brief Plot solution cost flag (0-1).
   */
-#define PLOT_SOL_COST 1
+#define PLOT_SOL_COST 0
 
 /**
  * @brief Plot number of rounded variables flag (0-1).
  */
-#define PLOT_NUM_ROUNDED_VARS 1
+#define PLOT_NUM_ROUNDED_VARS 0
 
 /**
  * @brief Tolerance for non-integer numbers as considered by CPLEX.
@@ -125,6 +125,7 @@ typedef struct {
     int* rs_beg;              /**< Begin index of the singleton indices of each row that contains at least one. */
     double* rs_coef;          /**< Coefficients of the singletons. */
     int* num_singletons;      /**< Number of singletons for each row. */
+    double* ss_val;           /**< Singleton slack values for each row. */
     double* ss_ub;            /**< Upper bounds of the singletons slack for each row. */
     double* ss_lb;            /**< Lower bounds of the singletons slack for each row. */
 
@@ -336,12 +337,12 @@ void read_row_slacks(instance* inst);
 void find_singletons(instance* inst);
 
 /**
- * @brief Compute bounds of the singletons slacks, seen as a single variable 
+ * @brief Compute values and bounds of the singletons slacks, seen as a single variable 
  * (sum of each singleton contribution in the row).
  *
  * @param inst Pointer to the instance.
  */
-void compute_singletons_slacks_bounds(instance* inst);
+void compute_singletons_slacks(instance* inst);
 // ---------------------------------------------------------------------------------------------------
 
 // ZIROUND -------------------------------------------------------------------------------------------
@@ -422,7 +423,7 @@ void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, c
  * @param rowind Index of the constraint.
  * @return Singletons slack of the constraint.
  */
-double compute_singletons_slack(instance* inst, int rowind);
+double compute_ss_val(instance* inst, int rowind);
 // ---------------------------------------------------------------------------------------------------
 
 // UTIL ----------------------------------------------------------------------------------------------
