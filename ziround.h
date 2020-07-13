@@ -117,6 +117,7 @@ typedef struct {
     int objsen; 			/**< Objective function sense, CPX_MIN (default) or CPX_MAX (specified from command line). */
     char* vartype; 		    /**< Variable types (before converting MIP to LP), integer/binary or continuous. */
     int* int_var; 			/**< Flags array that keeps track of integer/binary (value 1) and continuous (value 0) variables. */
+    int vars_to_round;      /**< Number of integer/binary variables to round. */
 
     // Singletons
     int* row_singletons;    /**< Singleton indices. */
@@ -329,16 +330,17 @@ void check_slacks(instance* inst, int j, double delta_up, double delta_down, con
 
 /**
  * @brief Update variable xj to improve objective, according to the values
- * of UBj and LBj calculated before. Also update the row slacks.
+ * of \p delta_up and \p delta_down calculated before. Also update the row slacks.
  *
  * @param inst Pointer to the already populated instance.
  * @param j Column (variable xj) index.
  * @param delta_up Array of possible up-shifts.
  * @param delta_down Array of possible down-shifts.
  * @param is_fractional Flag that indicates whether xj is fractional or integer.
+ * @param num_rounded Pointer to the number of rounded variables.
  * @return 1 if the variable xj has been updated, 0 otherwise.
  */
-int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down, int is_fractional);
+int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down, int is_fractional, int* num_rounded);
 
 /**
  * @brief Update the slack array field of the instance (incrementally)

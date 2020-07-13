@@ -89,7 +89,7 @@ static void open_pipe(FILE** pointer_to_g_plot_pipe, char* filename) {
 	fprintf(*pointer_to_g_plot_pipe, "set grid ytics lc rgb '#bbbbbb' lw 1 lt 0 \n");
 	fprintf(*pointer_to_g_plot_pipe, "set grid xtics lc rgb '#bbbbbb' lw 1 lt 0 \n");
 
-	//fprintf(*pointer_to_g_plot_pipe, "set key left top \n");
+	fprintf(*pointer_to_g_plot_pipe, "set key left top \n");
 
 	// Save the image or display it on screen
 	if (filename != NULL) {

@@ -16,18 +16,23 @@ void zi_round(instance* inst) {
 	double ZI; 			 /**< Fractionality of a variable (used in function zi_round). */
 	double ZIplus; 		 /**< Fractionality of a shifted up variable (used in function zi_round). */
 	double ZIminus; 	 /**< Fractionality of a shifted down variable (used in fucntion zi_round). */
-	double obj_plusUBj;  /**< Objective value for a shifted up variable (used in function zi_round). */
-	double obj_minusLBj; /**< Objective value for a shifted down variable (used in function zi_round). */
 	int updated;	     /**< Flag set to 1 when at least one variable shift has been made. */
+	int num_rounded;     /**< Current number of rounded variables (binary/integer from the original MIP). */
 	double frac[2];      /**< Circular buffer for current solution fractionality. */
 	double objval[2];    /**< Circular buffer for current objective value. */
-	int bufind = 0;      /**< Current index in the circular buffer. */
+	int rounded[2];      /**< Circular buffer for current number of rounded variables. */
+	int bufind;          /**< Current index in the circular buffer. */
 
 	// Allocate / Initialize
 	delta_up   = (double*)malloc(inst->ncols * sizeof(double));
 	delta_down = (double*)malloc(inst->ncols * sizeof(double)); if (delta_up == NULL || delta_down == NULL) print_error("[zi_round]: Failed to allocate delta arrays.\n");
-	frac[0] = 0.0;
-	frac[1] = 0.0;
+	ZI = 0.0; ZIplus = 0.0; ZIminus = 0.0;
+	updated = 0; 
+	num_rounded = 0;
+	frac[0] = 0.0; frac[1] = 0.0;
+	objval[0] = 0.0; objval[1] = 0.0;
+	rounded[0] = 0; rounded[1] = 0;
+	bufind = 0;
 
 	// Plotting variables ---------------------------------------------------------------------------------------------------
 	int size_frac;            /**< Actual current size of the solution fractionality tracker array. */
@@ -58,15 +63,22 @@ void zi_round(instance* inst) {
 	}
 	// ----------------------------------------------------------------------------------------------------------------------
 
+	print_verbose(10, "Number of variables to round: %d\n", inst->vars_to_round);
+	system("pause");
+
 	// [DEBUG ONLY]: Print solution fractionality and cost ------------------------------------------------------------------
-	print_verbose(10, "* Sol.fract. | Objval *\n");
+	print_verbose(10, "*******************************\n* Solfrac | Objval | #Rounded *\n");
 	frac[bufind] = sol_fractionality(inst->x, inst->int_var, inst->ncols);
 	objval[bufind] = inst->objval;
-	if (not_equals(frac[bufind], frac[!bufind]) || not_equals(objval[bufind], objval[!bufind])) print_verbose(10, "* %f | %f *\n", frac[bufind], objval[bufind]);
+	num_rounded = count_rounded(inst->x, inst->ncols, inst->int_var, inst->vartype); // Initialize (brute force) only once
+	rounded[bufind] = num_rounded;
+	if (not_equals(frac[bufind], frac[!bufind]) || 
+		not_equals(objval[bufind], objval[!bufind]) ||
+		not_equals(rounded[bufind], rounded[!bufind])) print_verbose(10, "* %.3f | %.3f | %d *\n", frac[bufind], objval[bufind], rounded[bufind]);
 	if (VERBOSE >= 10) {
 		if (PLOT_SOL_FRAC) add_point_single_tracker(frac[bufind], &tracker_sol_frac, &len_frac, &size_frac);
 		if (PLOT_SOL_COST) add_point_single_tracker(objval[bufind], &tracker_sol_cost, &len_cost, &size_cost);
-		if (PLOT_NUM_ROUNDED_VARS) add_point_single_tracker(count_rounded(inst->x, inst->ncols, inst->int_var, inst->vartype), &tracker_rounded, &len_rounded, &size_rounded);
+		if (PLOT_NUM_ROUNDED_VARS) add_point_single_tracker(rounded[bufind], &tracker_rounded, &len_rounded, &size_rounded);
 	}
 	bufind = !bufind;
 	// ----------------------------------------------------------------------------------------------------------------------
@@ -102,7 +114,7 @@ void zi_round(instance* inst) {
 						(inst->obj[j] <= 0 && equals(delta_up[j], 1.0))) {
 
 						// Round xj to improve objective and update slacks
-						updated = updated | round_xj_bestobj(inst, j, delta_up, delta_down, 0); // flag xj non-fractional (0)
+						updated = updated | round_xj_bestobj(inst, j, delta_up, delta_down, 0, &num_rounded); // flag xj non-fractional (0)
 					}
 
 					break;
@@ -128,7 +140,7 @@ void zi_round(instance* inst) {
 					if (equals(ZIplus, ZIminus) && less_than(ZIplus, ZI)) {
 
 						// Round xj to improve objective and update slacks
-						updated = updated | round_xj_bestobj(inst, j, delta_up, delta_down, 1); // flag xj fractional (1)
+						updated = updated | round_xj_bestobj(inst, j, delta_up, delta_down, 1, &num_rounded); // flag xj fractional (1)
 					}
 
 					// Second case: ZIplus < ZIminus && ZIplus < ZI --> Round UP
@@ -146,6 +158,7 @@ void zi_round(instance* inst) {
 						inst->x[j] += delta_up[j];
 
 						updated = 1;
+						if (!is_fractional(inst->x[j])) num_rounded++;
 						update_slacks(inst, j, delta_up[j]);
 						inst->objval += (inst->obj[j] * delta_up[j]);
 					}
@@ -165,6 +178,7 @@ void zi_round(instance* inst) {
 						inst->x[j] -= delta_down[j];
 
 						updated = 1;
+						if (!is_fractional(inst->x[j])) num_rounded++;
 						update_slacks(inst, j, -(delta_down[j]));
 						inst->objval -= (inst->obj[j] * delta_down[j]);
 					}
@@ -178,11 +192,14 @@ void zi_round(instance* inst) {
 			// [DEBUG ONLY]: Print solution fractionality and cost ---------------------------------------------------------------
 			frac[bufind] = sol_fractionality(inst->x, inst->int_var, inst->ncols);
 			objval[bufind] = inst->objval;
-			if (not_equals(frac[bufind], frac[!bufind]) || not_equals(objval[bufind], objval[!bufind])) print_verbose(10, "* %f | %f *\n", frac[bufind], objval[bufind]);
+			rounded[bufind] = num_rounded;
+			if (not_equals(frac[bufind], frac[!bufind]) || 
+				not_equals(objval[bufind], objval[!bufind]) ||
+				not_equals(rounded[bufind], rounded[!bufind])) print_verbose(10, "* %.3f | %.3f | %d *\n", frac[bufind], objval[bufind], rounded[bufind]);
 			if (VERBOSE >= 10) {
 				if (PLOT_SOL_FRAC) add_point_single_tracker(frac[bufind], &tracker_sol_frac, &len_frac, &size_frac);
 				if (PLOT_SOL_COST) add_point_single_tracker(objval[bufind], &tracker_sol_cost, &len_cost, &size_cost);
-				if (PLOT_NUM_ROUNDED_VARS) add_point_single_tracker(count_rounded(inst->x, inst->ncols, inst->int_var, inst->vartype), &tracker_rounded, &len_rounded, &size_rounded);
+				if (PLOT_NUM_ROUNDED_VARS) add_point_single_tracker(rounded[bufind], &tracker_rounded, &len_rounded, &size_rounded);
 			}
 			bufind = !bufind;
 			// -------------------------------------------------------------------------------------------------------------------
@@ -363,7 +380,7 @@ void check_slacks(instance* inst, int j, double delta_up, double delta_down, con
 	} // end for
 }
 
-int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down, int xj_fractional) {
+int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down, int xj_fractional, int* num_rounded) {
 
 	double obj_deltaplus = 0.0;  /**< Delta obj if xj is shifted up. */
 	double obj_deltaminus = 0.0; /**< Delta obj if xj is shifted down. */
@@ -393,8 +410,12 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 				// Check whether all affected constraints have enough slack for a ROUND UP of xj
 				check_slacks(inst, j, delta_up[j], delta_down[j], 'U');
 
+				if (xj_fractional) (*num_rounded)++; // (1) Assume xj fractional will be rounded to an integer
+
 				// Round UP (if xj is not fractional then delta_up[j] must be 1.0)
 				inst->x[j] += delta_up[j];
+
+				if (is_fractional(inst->x[j])) (*num_rounded)--; // (2) If xj was not rounded to an integer
 
 				updated = 1;
 				update_slacks(inst, j, delta_up[j]);
@@ -414,8 +435,12 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 				// Check whether all affected constraints have enough slack for a ROUND DOWN of xj
 				check_slacks(inst, j, delta_up[j], delta_down[j], 'D');
 
+				if (xj_fractional) (*num_rounded)++; // (1) Assume xj fractional will be rounded to an integer
+
 				// Round DOWN (if xj is not fractional then delta_down[j] must be 1.0)
 				inst->x[j] -= delta_down[j];
+
+				if (is_fractional(inst->x[j])) (*num_rounded)--; // (2) If xj was not rounded to an integer
 
 				updated = 1;
 				update_slacks(inst, j, -(delta_down[j]));
@@ -432,8 +457,12 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 				// Check whether all affected constraints have enough slack for a ROUND DOWN of xj
 				check_slacks(inst, j, delta_up[j], delta_down[j], 'D');
 
+				if (xj_fractional) (*num_rounded)++; // (1) Assume xj fractional will be rounded to an integer
+
 				// Round arbitrarily (DOWN)
 				inst->x[j] -= delta_down[j];
+
+				if (is_fractional(inst->x[j])) (*num_rounded)--; // (2) If xj was not rounded to an integer
 
 				updated = 1;
 				update_slacks(inst, j, -(delta_down[j]));
@@ -450,8 +479,13 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 				// Check whether all affected constraints have enough slack for a ROUND UP of xj
 				check_slacks(inst, j, delta_up[j], delta_down[j], 'U');
 
+				if (xj_fractional) (*num_rounded)++; // (1) Assume xj fractional will be rounded to an integer
+
 				// Round arbitrarily (UP)
 				inst->x[j] += delta_up[j];
+
+				if (is_fractional(inst->x[j])) (*num_rounded)--; // (2) If xj was not rounded to an integer
+
 				updated = 1;
 				update_slacks(inst, j, delta_up[j]);
 				// no objval update
@@ -476,8 +510,12 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 				// Check whether all affected constraints have enough slack for a ROUND UP of xj
 				check_slacks(inst, j, delta_up[j], delta_down[j], 'U');
 
+				if (xj_fractional) (*num_rounded)++; // (1) Assume xj fractional will be rounded to an integer
+
 				// Round UP (if xj is not fractional then delta_up[j] must be 1.0)
 				inst->x[j] += delta_up[j];
+
+				if (is_fractional(inst->x[j])) (*num_rounded)--; // (2) If xj was not rounded to an integer
 
 				updated = 1;
 				update_slacks(inst, j, delta_up[j]);
@@ -497,8 +535,12 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 				// Check whether all affected constraints have enough slack for a ROUND DOWN of xj
 				check_slacks(inst, j, delta_up[j], delta_down[j], 'D');
 
+				if (xj_fractional) (*num_rounded)++; // (1) Assume xj fractional will be rounded to an integer
+
 				// Round DOWN (if xj is not fractional then delta_down[j] must be 1.0)
 				inst->x[j] -= delta_down[j];
+
+				if (is_fractional(inst->x[j])) (*num_rounded)--; // (2) If xj was not rounded to an integer
 
 				updated = 1;
 				update_slacks(inst, j, -(delta_down[j]));
@@ -515,8 +557,12 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 				// Check whether all affected constraints have enough slack for a ROUND DOWN of xj
 				check_slacks(inst, j, delta_up[j], delta_down[j], 'D');
 
+				if (xj_fractional) (*num_rounded)++; // (1) Assume xj fractional will be rounded to an integer
+
 				// Round arbitrarily (DOWN)
 				inst->x[j] -= delta_down[j];
+
+				if (is_fractional(inst->x[j])) (*num_rounded)--; // (2) If xj was not rounded to an integer
 
 				updated = 1;
 				update_slacks(inst, j, -(delta_down[j]));
@@ -533,8 +579,13 @@ int round_xj_bestobj(instance* inst, int j, double* delta_up, double* delta_down
 				// Check whether all affected constraints have enough slack for a ROUND UP of xj
 				check_slacks(inst, j, delta_up[j], delta_down[j], 'U');
 
+				if (xj_fractional) (*num_rounded)++; // (1) Assume xj fractional will be rounded to an integer
+
 				// Round arbitrarily (UP)
 				inst->x[j] += delta_up[j];
+
+				if (is_fractional(inst->x[j])) (*num_rounded)--; // (2) If xj was not rounded to an integer
+
 				updated = 1;
 				update_slacks(inst, j, delta_up[j]);
 				// no objval update
