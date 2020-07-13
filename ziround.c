@@ -33,39 +33,17 @@ void zi_round(instance* inst) {
 	objval[0] = 0.0; objval[1] = 0.0;
 	rounded[0] = 0; rounded[1] = 0;
 	bufind = 0;
+	
+	// Allocate / Initialize plotting variables
+	inst->size_frac = 0; inst->size_cost = 0; inst->size_rounded = 0;
+	inst->len_frac = 10; inst->len_cost = 10; inst->len_rounded = 10;
+	inst->tracker_sol_frac = (double*)calloc(inst->len_frac, sizeof(double));
+	inst->tracker_sol_cost = (double*)calloc(inst->len_cost, sizeof(double));
+	inst->tracker_rounded = (double*)calloc(inst->len_rounded, sizeof(double)); if (inst->tracker_sol_frac == NULL || inst->tracker_sol_cost == NULL || inst->tracker_rounded == NULL) print_error("[ziround]: Failed to allocate trackers.\n");
 
-	// Plotting variables ---------------------------------------------------------------------------------------------------
-	int size_frac;            /**< Actual current size of the solution fractionality tracker array. */
-	int size_cost;            /**< Actual current size of the solution cost tracker array. */
-	int size_rounded;         /**< Actual current size of the number of rounded variables array. */
-	int len_frac;             /**< Maximum length of the solution fractionality tracker array (resizable). */
-	int len_cost;             /**< Maximum length of the solution cost tracker array (resizable). */
-	int len_rounded;          /**< Maximum length of the number of rounded variables array (resizable). */
-	double* tracker_sol_frac; /**< Tracker of solution fractionality. */
-	double* tracker_sol_cost; /**< Tracker of solution cost. */
-	double* tracker_rounded;  /**< Tracker of number of rounded variables. */
-	if (VERBOSE >= 10) {
-		if (PLOT_SOL_FRAC) {
-			size_frac = 0;
-			len_frac = 10;
-			tracker_sol_frac = (double*)calloc(len_frac, sizeof(double)); if (tracker_sol_frac == NULL) print_error("[ziround]: Failed to allocate solution fractionality tracker.\n");
-		}
-		if (PLOT_SOL_COST) {
-			size_cost = 0;
-			len_cost = 10;
-			tracker_sol_cost = (double*)calloc(len_cost, sizeof(double)); if (tracker_sol_cost == NULL) print_error("[ziround]: Failed to allocate solution cost tracker.\n");
-		}
-		if (PLOT_NUM_ROUNDED_VARS) {
-			size_rounded = 0;
-			len_rounded = 10;
-			tracker_rounded = (double*)calloc(len_rounded, sizeof(double)); if (tracker_rounded == NULL) print_error("[ziround]: Failed to allocate number of rounded variables tracker.\n");
-		}
-	}
-	// ----------------------------------------------------------------------------------------------------------------------
+	print_verbose(10, "[ziround]: Number of variables to round: %d\n", inst->vars_to_round);
 
-	print_verbose(10, "Number of variables to round: %d\n", inst->vars_to_round);
-
-	// [DEBUG ONLY]: Print solution fractionality and cost ------------------------------------------------------------------
+	// Print solution fractionality, cost, number of rounded solutions and update trackers
 	print_verbose(10, "*******************************\n* Solfrac | Objval | #Rounded *\n");
 	frac[bufind] = sol_fractionality(inst->x, inst->int_var, inst->ncols);
 	objval[bufind] = inst->objval;
@@ -75,12 +53,11 @@ void zi_round(instance* inst) {
 		not_equals(objval[bufind], objval[!bufind]) ||
 		not_equals(rounded[bufind], rounded[!bufind])) print_verbose(10, "* %.3f | %.3f | %d *\n", frac[bufind], objval[bufind], rounded[bufind]);
 	if (VERBOSE >= 10) {
-		if (PLOT_SOL_FRAC) add_point_single_tracker(frac[bufind], &tracker_sol_frac, &len_frac, &size_frac);
-		if (PLOT_SOL_COST) add_point_single_tracker(objval[bufind], &tracker_sol_cost, &len_cost, &size_cost);
-		if (PLOT_NUM_ROUNDED_VARS) add_point_single_tracker(rounded[bufind], &tracker_rounded, &len_rounded, &size_rounded);
+		if (PLOT_SOL_FRAC) add_point_single_tracker(frac[bufind], &(inst->tracker_sol_frac), &(inst->len_frac), &(inst->size_frac));
+		if (PLOT_SOL_COST) add_point_single_tracker(objval[bufind], &(inst->tracker_sol_cost), &(inst->len_cost), &(inst->size_cost));
+		if (PLOT_NUM_ROUNDED_VARS) add_point_single_tracker(rounded[bufind], &(inst->tracker_rounded), &(inst->len_rounded), &(inst->size_rounded));
 	}
 	bufind = !bufind;
-	// ----------------------------------------------------------------------------------------------------------------------
 
 	// Outer loop (repeat until no more updates found)
 	do {
@@ -188,7 +165,7 @@ void zi_round(instance* inst) {
 					print_error(" in function is_fractional.\n");
 			}
 
-			// [DEBUG ONLY]: Print solution fractionality and cost ---------------------------------------------------------------
+			// Print solution fractionality, cost, number of rounded variables and update trackers
 			frac[bufind] = sol_fractionality(inst->x, inst->int_var, inst->ncols);
 			objval[bufind] = inst->objval;
 			rounded[bufind] = num_rounded;
@@ -196,20 +173,15 @@ void zi_round(instance* inst) {
 				not_equals(objval[bufind], objval[!bufind]) ||
 				not_equals(rounded[bufind], rounded[!bufind])) print_verbose(10, "* %.3f | %.3f | %d *\n", frac[bufind], objval[bufind], rounded[bufind]);
 			if (VERBOSE >= 10) {
-				if (PLOT_SOL_FRAC) add_point_single_tracker(frac[bufind], &tracker_sol_frac, &len_frac, &size_frac);
-				if (PLOT_SOL_COST) add_point_single_tracker(objval[bufind], &tracker_sol_cost, &len_cost, &size_cost);
-				if (PLOT_NUM_ROUNDED_VARS) add_point_single_tracker(rounded[bufind], &tracker_rounded, &len_rounded, &size_rounded);
+				if (PLOT_SOL_FRAC) add_point_single_tracker(frac[bufind], &(inst->tracker_sol_frac), &(inst->len_frac), &(inst->size_frac));
+				if (PLOT_SOL_COST) add_point_single_tracker(objval[bufind], &(inst->tracker_sol_cost), &(inst->len_cost), &(inst->size_cost));
+				if (PLOT_NUM_ROUNDED_VARS) add_point_single_tracker(rounded[bufind], &(inst->tracker_rounded), &(inst->len_rounded), &(inst->size_rounded));
 			}
 			bufind = !bufind;
-			// -------------------------------------------------------------------------------------------------------------------
-
 		} // end inner loop
 
-		if (updated) { print_verbose(10, "[zi_round]: ... Some roundings occured, scan variables again ...\n"); }
-		else { print_verbose(10, "[zi_round]: ... No roundings, exit outer loop ...\n"); }
-
-		// [DEBUG ONLY] Pause after each inner loop execution
-		if (VERBOSE >= 100) system("pause");
+		if (updated) print_verbose(10, "[zi_round]: ... Some roundings occured, scan variables again ...\n");
+		else print_verbose(10, "[zi_round]: ... No roundings, exit outer loop ...\n");
 		
 		// [DEBUG ONLY] (BRUTE FORCE)  Check variable bounds and constraints
 		if (VERBOSE >= 201) {
@@ -218,44 +190,6 @@ void zi_round(instance* inst) {
 		}
 
 	} while (updated); // end outer loop
-
-	// [DEBUG ONLY]: Plot solution fractionality and cost trackers -------------------------------------------------
-	if (VERBOSE >= 10) {
-		if (PLOT_SOL_FRAC) {
-			char** labels = (char**)calloc(2, sizeof(char*));
-			labels[0] = (char*)calloc(20, sizeof(char));
-			labels[1] = (char*)calloc(20, sizeof(char));
-			char* name = (char*)calloc(20, sizeof(char));
-			sprintf(labels[0], "Round");
-			sprintf(labels[1], "Fractionality");
-			sprintf(name, "Solution");
-			plot_tracker(tracker_sol_frac, name, labels, size_frac, NULL);
-			free_all(5, tracker_sol_frac, labels[0], labels[1], labels, name);
-		}
-		if (PLOT_SOL_COST) {
-			char** labels = (char**)calloc(2, sizeof(char*));
-			labels[0] = (char*)calloc(20, sizeof(char));
-			labels[1] = (char*)calloc(20, sizeof(char));
-			char* name = (char*)calloc(20, sizeof(char));
-			sprintf(labels[0], "Round");
-			sprintf(labels[1], "Cost");
-			sprintf(name, "Solution");
-			plot_tracker(tracker_sol_cost, name, labels, size_cost, NULL);
-			free_all(5, tracker_sol_cost, labels[0], labels[1], labels, name);
-		}
-		if (PLOT_NUM_ROUNDED_VARS) {
-			char** labels = (char**)calloc(2, sizeof(char*));
-			labels[0] = (char*)calloc(20, sizeof(char));
-			labels[1] = (char*)calloc(20, sizeof(char));
-			char* name = (char*)calloc(20, sizeof(char));
-			sprintf(labels[0], "Round");
-			sprintf(labels[1], "Rounded Variables");
-			sprintf(name, "Solution");
-			plot_tracker(tracker_rounded, name, labels, size_rounded, NULL);
-			free_all(5, tracker_rounded, labels[0], labels[1], labels, name);
-		}
-	}
-	// -------------------------------------------------------------------------------------------------------------
 
 	// Free
 	free(delta_up);

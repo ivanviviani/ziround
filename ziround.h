@@ -106,46 +106,84 @@
 typedef struct {
 
     // Variables
-    int nrows; 		        /**< Number of rows of the coefficients matrix. */
-    int ncols; 		        /**< Number of variables, also columns of the coefficients matrix. */
-    double* x; 				/**< Current problem solution. Will be rounded. */
-    double* obj; 			/**< Objective function coefficients. */
-    double* lb; 			/**< Variable lower bounds. */
-    double* ub; 			/**< Variable upper bounds. */
-    double* slack; 			/**< Row (constraint) slacks, defined as right hand side minus row activity. */
-    double objval; 			/**< Current objective value (for current problem solution). */
-    int objsen; 			/**< Objective function sense, CPX_MIN (default) or CPX_MAX (specified from command line). */
-    char* vartype; 		    /**< Variable types (before converting MIP to LP), integer/binary or continuous. */
-    int* int_var; 			/**< Flags array that keeps track of integer/binary (value 1) and continuous (value 0) variables. */
-    int vars_to_round;      /**< Number of integer/binary variables to round. */
+    int nrows; 		          /**< Number of rows of the coefficients matrix. */
+    int ncols; 		          /**< Number of variables, also columns of the coefficients matrix. */
+    double* x; 				  /**< Current problem solution. Will be rounded. */
+    double* obj; 			  /**< Objective function coefficients. */
+    double* lb; 			  /**< Variable lower bounds. */
+    double* ub; 			  /**< Variable upper bounds. */
+    double* slack; 			  /**< Row (constraint) slacks, defined as right hand side minus row activity. */
+    double objval; 			  /**< Current objective value (for current problem solution). */
+    int objsen; 			  /**< Objective function sense, CPX_MIN (default) or CPX_MAX (specified from command line). */
+    char* vartype; 		      /**< Variable types (before converting MIP to LP), integer/binary or continuous. */
+    int* int_var; 			  /**< Flags array that keeps track of integer/binary (value 1) and continuous (value 0) variables. */
+    int vars_to_round;        /**< Number of integer/binary variables to round. */
 
     // Singletons
-    int* row_singletons;    /**< Singleton indices. */
-    int rs_size;            /**< Total number of singletons. */
-    int* rs_beg;            /**< Begin index of the singleton indices of each row that contains at least one. */
-    double* rs_coef;        /**< Coefficients of the singletons. */
-    int* num_singletons;    /**< Number of singletons for each row. */
-    double* ss_ub;          /**< Upper bounds of the singletons slack for each row. */
-    double* ss_lb;          /**< Lower bounds of the singletons slack for each row. */
+    int* row_singletons;      /**< Singleton indices. */
+    int rs_size;              /**< Total number of singletons. */
+    int* rs_beg;              /**< Begin index of the singleton indices of each row that contains at least one. */
+    double* rs_coef;          /**< Coefficients of the singletons. */
+    int* num_singletons;      /**< Number of singletons for each row. */
+    double* ss_ub;            /**< Upper bounds of the singletons slack for each row. */
+    double* ss_lb;            /**< Lower bounds of the singletons slack for each row. */
 
     // Constraints
-    int nzcnt; 				/**< Number of non-zero coefficients. */
-    int* rmatbeg; 			/**< Begin row indices of non-zero coefficients for rmatind and rmatval. */
-    int* rmatind; 			/**< Column indices of non-zero coefficients. */
-    double* rmatval; 		/**< Non-zero coefficients (row major). */
-    int* cmatbeg; 			/**< Begin column indices of non-zero coefficients for cmatind and cmatval. */
-    int* cmatind; 			/**< Row indices of non-zero coefficients. */
-    double* cmatval; 		/**< Non-zero coefficients (column major). */
-    char* sense; 			/**< Constraint (row) senses, 'L' (<=) or 'G' (>=) or 'E' (=). */
-    double* rhs; 			/**< Constraint right hand sides (rhs). */
+    int nzcnt; 				  /**< Number of non-zero coefficients. */
+    int* rmatbeg; 			  /**< Begin row indices of non-zero coefficients for rmatind and rmatval. */
+    int* rmatind; 			  /**< Column indices of non-zero coefficients. */
+    double* rmatval; 		  /**< Non-zero coefficients (row major). */
+    int* cmatbeg; 			  /**< Begin column indices of non-zero coefficients for cmatind and cmatval. */
+    int* cmatind; 			  /**< Row indices of non-zero coefficients. */
+    double* cmatval; 		  /**< Non-zero coefficients (column major). */
+    char* sense; 			  /**< Constraint (row) senses, 'L' (<=) or 'G' (>=) or 'E' (=). */
+    double* rhs; 			  /**< Constraint right hand sides (rhs). */
+
+    // Plotting variables
+    int size_frac;            /**< Actual current size of the solution fractionality tracker array. */
+    int size_cost;            /**< Actual current size of the solution cost tracker array. */
+    int size_rounded;         /**< Actual current size of the number of rounded variables array. */
+    int len_frac;             /**< Maximum length of the solution fractionality tracker array (resizable). */
+    int len_cost;             /**< Maximum length of the solution cost tracker array (resizable). */
+    int len_rounded;          /**< Maximum length of the number of rounded variables array (resizable). */
+    double* tracker_sol_frac; /**< Tracker of solution fractionality. */
+    double* tracker_sol_cost; /**< Tracker of solution cost. */
+    double* tracker_rounded;  /**< Tracker of number of rounded variables. */
 
     // Parameters
-    CPXENVptr env; 			/**< CPLEX environment pointer. */
-    CPXLPptr lp; 			/**< CPLEX lp pointer. */
-    char* input_file; 		/**< Input filename (mps format, specified from command line). */
-    int extension;          /**< Flag for ZI-Round extension. */
+    CPXENVptr env; 			  /**< CPLEX environment pointer. */
+    CPXLPptr lp; 			  /**< CPLEX lp pointer. */
+    char input_file[30];      /**< Input filename (mps format, specified from command line). */
+    char input_folder[30];    /**< Input folder. */
+    int extension;            /**< Flag for ZI-Round extension. */
+    int timelimit;            /**< Time limit in seconds. */
+    int rseed;                /**< Random seed. */
 
 } instance;
+
+// MAIN ----------------------------------------------------------------------------------------------
+
+/**
+ * @brief Test ZI-Round on a single instance.
+ *
+ * @param inst Pointer to the instance.
+ */
+void test_instance(instance* inst);
+
+/**
+ * @brief Test ZI-Round on a folder of instances.
+ *
+ * @param inst Pointer to the instance.
+ */
+void test_folder(instance* inst);
+
+/**
+ * @brief Plot the trackers implemented according to the PLOT_* macros.
+ *
+ * @param inst Pointer to the instance.
+ */
+void plot(instance* inst);
+// ---------------------------------------------------------------------------------------------------
 
 // INSTANCE ------------------------------------------------------------------------------------------
 

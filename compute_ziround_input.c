@@ -31,7 +31,7 @@ void read_MIP_problem(instance* inst, char* filename) {
 	int status = 0;
 
 	// Create MIP from input file (.mps)
-	inst->lp = CPXcreateprob(inst->env, &status, filename);   if (inst->lp == NULL) print_error("[read_MIP_problem]: Failed to create MIP.\n");
+	inst->lp = CPXcreateprob(inst->env, &status, filename); if (inst->lp == NULL) print_error("[read_MIP_problem]: Failed to create MIP.\n");
 	if (CPXreadcopyprob(inst->env, inst->lp, filename, NULL)) print_error("[read_MIP_problem]: Failed to read and copy the problem data.\n");
 }
 
