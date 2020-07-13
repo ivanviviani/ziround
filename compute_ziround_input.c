@@ -19,8 +19,11 @@ void setup_CPLEX_env(instance* inst) {
 	}
 
 	// Set CPLEX parameters
-	if (CPXsetintparam(inst->env, CPXPARAM_ScreenOutput, CPX_ON)) print_error("[setup_CPLEX_env]: Failed to turn on screen indicator.\n");     
-	if (CPXsetdblparam(inst->env, CPXPARAM_TimeLimit,    3600))   print_error("[setup_CPLEX_env]: Failed to set time limit.\n");
+	if (CPXsetintparam(inst->env, CPXPARAM_ScreenOutput, CPX_ON))       print_error("[setup_CPLEX_env]: Failed to turn on screen indicator.\n");     
+	if (CPXsetdblparam(inst->env, CPXPARAM_TimeLimit, inst->timelimit)) print_error("[setup_CPLEX_env]: Failed to set time limit.\n");
+	if (inst->rseed != -1) {
+		if (CPXsetintparam(inst->env, CPXPARAM_RandomSeed, inst->rseed)) print_warning("[setup_CPLEX_env]: Failed to set random seed to %d.\n", inst->rseed);
+	}
 
 	// Free
 	free(errmsg);
