@@ -143,7 +143,7 @@ void test_folder(instance* inst) {
 
 	// Print file header
 	FILE* output = fopen(output_path, "w");
-	fprintf(output, "Instance;Solution Cost;Solution Fractionality;Execution time (s)\n");
+	fprintf(output, "Instance;Cost;Fractionality;Time\n");
 	fclose(output);
 
 	// Scan files

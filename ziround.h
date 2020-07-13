@@ -77,17 +77,17 @@
 /**
  * @brief Plot solution fractionality flag (0-1).
  */
-#define PLOT_SOL_FRAC 0
+#define PLOT_SOL_FRAC 1
 
  /**
   * @brief Plot solution cost flag (0-1).
   */
-#define PLOT_SOL_COST 0
+#define PLOT_SOL_COST 1
 
 /**
  * @brief Plot number of rounded variables flag (0-1).
  */
-#define PLOT_NUM_ROUNDED_VARS 0
+#define PLOT_NUM_ROUNDED_VARS 1
 
 /**
  * @brief Tolerance for non-integer numbers as considered by CPLEX.
@@ -376,10 +376,11 @@ void check_slacks(instance* inst, int j, double delta_up, double delta_down, con
  * @param delta_up Candidate up-shift of variable \p j.
  * @param delta_down Candidate down-shift of variable \p j.
  * @param is_fractional Flag that indicates whether variable \p j is fractional or integer.
+ * @param solfrac Pointer to the solution fractionality.
  * @param num_rounded Pointer to the number of rounded variables.
  * @return 1 if variable \p j has been updated, 0 otherwise.
  */
-int round_xj_bestobj(instance* inst, int j, double objcoef, double delta_up, double delta_down, int is_fractional, int* num_rounded);
+int round_xj_bestobj(instance* inst, int j, double objcoef, double delta_up, double delta_down, int is_fractional, double* solfrac, int* num_rounded);
 
 /**
  * @brief Update the slack array field of the instance (incrementally)
