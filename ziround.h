@@ -79,9 +79,9 @@
  */
 #define PLOT_SOL_FRAC 0
 
- /**
-  * @brief Plot solution cost flag (0-1).
-  */
+/**
+* @brief Plot solution cost flag (0-1).
+*/
 #define PLOT_SOL_COST 0
 
 /**
@@ -106,18 +106,19 @@
 typedef struct {
 
     // Variables
-    int nrows; 		          /**< Number of rows of the coefficients matrix. */
-    int ncols; 		          /**< Number of variables, also columns of the coefficients matrix. */
-    double* x; 				  /**< Current problem solution. Will be rounded. */
-    double* obj; 			  /**< Objective function coefficients. */
-    double* lb; 			  /**< Variable lower bounds. */
-    double* ub; 			  /**< Variable upper bounds. */
-    double* slack; 			  /**< Row (constraint) slacks, defined as right hand side minus row activity. */
-    double objval; 			  /**< Current objective value (for current problem solution). */
-    int objsen; 			  /**< Objective function sense, CPX_MIN (default) or CPX_MAX (specified from command line). */
-    char* vartype; 		      /**< Variable types (before converting MIP to LP), integer/binary or continuous. */
-    int* int_var; 			  /**< Flags array that keeps track of integer/binary (value 1) and continuous (value 0) variables. */
+    int nrows;                /**< Number of rows of the coefficients matrix. */
+    int ncols;                /**< Number of variables, also columns of the coefficients matrix. */
+    double* x;                /**< Current problem solution. Will be rounded. */
+    double* obj;              /**< Objective function coefficients. */
+    double* lb;               /**< Variable lower bounds. */
+    double* ub;               /**< Variable upper bounds. */
+    double* slack;            /**< Row (constraint) slacks, defined as right hand side minus row activity. */
+    double objval;            /**< Current objective value (for current problem solution). */
+    int objsen;               /**< Objective function sense, CPX_MIN (default) or CPX_MAX (specified from command line). */
+    char* vartype;            /**< Variable types (before converting MIP to LP), integer/binary or continuous. */
+    int* int_var;             /**< Flags array that keeps track of integer/binary (value 1) and continuous (value 0) variables. */
     int vars_to_round;        /**< Number of integer/binary variables to round. */
+    double solfrac;           /**< Solution fractionality. */
 
     // Singletons
     int* row_singletons;      /**< Singleton indices. */
@@ -130,15 +131,15 @@ typedef struct {
     double* ss_lb;            /**< Lower bounds of the singletons slack for each row. */
 
     // Constraints
-    int nzcnt; 				  /**< Number of non-zero coefficients. */
-    int* rmatbeg; 			  /**< Begin row indices of non-zero coefficients for rmatind and rmatval. */
-    int* rmatind; 			  /**< Column indices of non-zero coefficients. */
-    double* rmatval; 		  /**< Non-zero coefficients (row major). */
-    int* cmatbeg; 			  /**< Begin column indices of non-zero coefficients for cmatind and cmatval. */
-    int* cmatind; 			  /**< Row indices of non-zero coefficients. */
-    double* cmatval; 		  /**< Non-zero coefficients (column major). */
-    char* sense; 			  /**< Constraint (row) senses, 'L' (<=) or 'G' (>=) or 'E' (=). */
-    double* rhs; 			  /**< Constraint right hand sides (rhs). */
+    int nzcnt;                /**< Number of non-zero coefficients. */
+    int* rmatbeg;             /**< Begin row indices of non-zero coefficients for rmatind and rmatval. */
+    int* rmatind;             /**< Column indices of non-zero coefficients. */
+    double* rmatval;          /**< Non-zero coefficients (row major). */
+    int* cmatbeg;             /**< Begin column indices of non-zero coefficients for cmatind and cmatval. */
+    int* cmatind;             /**< Row indices of non-zero coefficients. */
+    double* cmatval;          /**< Non-zero coefficients (column major). */
+    char* sense;              /**< Constraint (row) senses, 'L' (<=) or 'G' (>=) or 'E' (=). */
+    double* rhs;              /**< Constraint right hand sides (rhs). */
 
     // Plotting variables
     int size_frac;            /**< Actual current size of the solution fractionality tracker array. */
@@ -152,8 +153,8 @@ typedef struct {
     double* tracker_rounded;  /**< Tracker of number of rounded variables. */
 
     // Parameters
-    CPXENVptr env; 			  /**< CPLEX environment pointer. */
-    CPXLPptr lp; 			  /**< CPLEX lp pointer. */
+    CPXENVptr env;            /**< CPLEX environment pointer. */
+    CPXLPptr lp;              /**< CPLEX lp pointer. */
     char input_file[30];      /**< Input filename (mps format, specified from command line). */
     char input_folder[30];    /**< Input folder. */
     int extension;            /**< Flag for ZI-Round extension. */
@@ -353,8 +354,9 @@ void compute_singletons_slacks(instance* inst);
  * 		  unsuccessfully.
  *
  * @param inst Pointer to the already populated instance.
+ * @param numrounds Number of rounds (outer loops) of ZI-Round.
  */
-void zi_round(instance* inst);
+void zi_round(instance* inst, int* numrounds);
 
 /**
  * @brief Check whether all constraints affected by a round up/down of xj have enough slack for it.

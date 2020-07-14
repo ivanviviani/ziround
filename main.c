@@ -48,6 +48,7 @@ int main(int argc, char** argv) {
 void test_instance(instance* inst) {
 
 	FILE* output = NULL; /**< Output file pointer. */
+	int numrounds = 0;   /**< Number of rounds (outer loops) of ZI-Round. */
 
 	// Set up CPLEX environment
 	setup_CPLEX_env(inst);
@@ -82,9 +83,9 @@ void test_instance(instance* inst) {
 
 	print_verbose(10, "[INFO]: ... Starting ZI-Round ...\n");
 	//******************************************* ZI-ROUND *******************************************
-	zi_round(inst);
+	zi_round(inst, &numrounds);
 	//************************************************************************************************
-	print_verbose(10, "[INFO]: ZI-Round terminated.\n");
+	print_verbose(10, "[INFO]: ZI-Round terminated. #Rounds: %d\n", numrounds);
 	print_verbose(10, "[INFO]: Solution fractionality: %f.\n", sol_fractionality(inst->x, inst->int_var, inst->ncols));
 	print_verbose(100, "[INFO]: Candidate objective value: %f\n", inst->objval);
 
@@ -126,8 +127,9 @@ void test_instance(instance* inst) {
 
 void test_folder(instance* inst) {
 
-	time_t start, exec_time; /**< Execution time variables. */
-	double solfrac;          /**< Solution fractionality. */
+	time_t start, exec_time;   /**< Execution time variables. */
+	double solfrac = LONG_MIN; /**< Solution fractionality. */
+	int numrounds = 0;         /**< Number of rounds (outer loops) of ZI-Round. */
 
 	// Allocate input folder and output path
 	char* input_folder_name = (char*)calloc(30, sizeof(char));
@@ -143,7 +145,7 @@ void test_folder(instance* inst) {
 
 	// Print file header
 	FILE* output = fopen(output_path, "w");
-	fprintf(output, "Instance;Cost;Fractionality;Time\n");
+	fprintf(output, "Instance;Cost;Fractionality;#Rounds;Time\n");
 	fclose(output);
 
 	// Scan files
@@ -174,7 +176,7 @@ void test_folder(instance* inst) {
 		populate_inst(&test_inst);
 		//******************************************* ZI-ROUND *******************************************
 		start = time(NULL);
-		zi_round(&test_inst);
+		zi_round(&test_inst, &numrounds);
 		exec_time = time(NULL) - start;
 		//************************************************************************************************
 		check_bounds(test_inst.x, test_inst.lb, test_inst.ub, test_inst.ncols);
@@ -189,7 +191,7 @@ void test_folder(instance* inst) {
 
 		// Print results to file
 		output = fopen(output_path, "a");
-		fprintf(output, "%s;%f;%f;%d\n", strtok(direlem->d_name, "."), test_inst.objval, solfrac, (long)exec_time);
+		fprintf(output, "%s;%f;%f;%d;%d\n", strtok(direlem->d_name, "."), test_inst.objval, solfrac, numrounds, (long)exec_time);
 		fclose(output);
 
 		// Print CPLEX solution cost and execution time
@@ -217,35 +219,41 @@ void plot(instance* inst) {
 		labels[0] = (char*)calloc(20, sizeof(char));
 		labels[1] = (char*)calloc(20, sizeof(char));
 		char* name = (char*)calloc(20, sizeof(char));
+		char* temp = (char*)calloc(20, sizeof(char));
 		sprintf(labels[0], "Round");
 		sprintf(labels[1], "Fractionality");
-		strtok(inst->input_file, "/.");
+		sprintf(temp, inst->input_file);
+		strtok(temp, "/.");
 		sprintf(name, strtok(NULL, "/."));
 		plot_tracker(inst->tracker_sol_frac, name, labels, inst->size_frac, NULL);
-		free_all(4, labels[0], labels[1], labels, name);
+		free_all(5, labels[0], labels[1], labels, name, temp);
 	}
 	if (PLOT_SOL_COST) {
 		char** labels = (char**)calloc(2, sizeof(char*));
 		labels[0] = (char*)calloc(20, sizeof(char));
 		labels[1] = (char*)calloc(20, sizeof(char));
 		char* name = (char*)calloc(20, sizeof(char));
+		char* temp = (char*)calloc(20, sizeof(char));
 		sprintf(labels[0], "Round");
 		sprintf(labels[1], "Cost");
-		strtok(inst->input_file, "/.");
+		sprintf(temp, inst->input_file);
+		strtok(temp, "/.");
 		sprintf(name, strtok(NULL, "/."));
 		plot_tracker(inst->tracker_sol_cost, name, labels, inst->size_cost, NULL);
-		free_all(4, labels[0], labels[1], labels, name);
+		free_all(5, labels[0], labels[1], labels, name, temp);
 	}
 	if (PLOT_NUM_ROUNDED_VARS) {
 		char** labels = (char**)calloc(2, sizeof(char*));
 		labels[0] = (char*)calloc(20, sizeof(char));
 		labels[1] = (char*)calloc(20, sizeof(char));
 		char* name = (char*)calloc(20, sizeof(char));
+		char* temp = (char*)calloc(20, sizeof(char));
 		sprintf(labels[0], "Round");
 		sprintf(labels[1], "Rounded Variables");
-		strtok(inst->input_file, "/.");
+		sprintf(temp, inst->input_file);
+		strtok(temp, "/.");
 		sprintf(name, strtok(NULL, "/."));
 		plot_tracker(inst->tracker_rounded, name, labels, inst->size_rounded, NULL);
-		free_all(4, labels[0], labels[1], labels, name);
+		free_all(5, labels[0], labels[1], labels, name, temp);
 	}
 }
