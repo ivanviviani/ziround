@@ -184,6 +184,9 @@ void test_folder(instance* inst) {
 		// Compute final solution fractionality
 		solfrac = sol_fractionality(test_inst.x, test_inst.int_var, test_inst.ncols);
 
+		// Plot trackers
+		// if (VERBOSE >= 10) plot(&test_inst);
+
 		// Print results to file
 		output = fopen(output_path, "a");
 		fprintf(output, "%s;%f;%f;%d\n", strtok(direlem->d_name, "."), test_inst.objval, solfrac, (long)exec_time);
