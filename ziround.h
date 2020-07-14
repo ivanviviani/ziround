@@ -344,6 +344,19 @@ void find_singletons(instance* inst);
  * @param inst Pointer to the instance.
  */
 void compute_singletons_slacks(instance* inst);
+
+/**
+ * @brief Sort singleton indices and coefficients of a single row by lowest objective function coefficient.
+ *
+ * @details The row is represented by a \p start and \p end index of the arrays \p rs_ind and \p rs_coef.
+ *
+ * @param start Start index of the singleton indices and coefficients of the row.
+ * @param end End index of the singleton indices and coefficients of the row.
+ * @param rs_ind Singleton indices.
+ * @param rs_coef Singleton coefficients.
+ * @param obj Objective function coefficients.
+ */
+void sort_singletons(int start, int end, int* rs_ind, double* rs_coef, double* obj);
 // ---------------------------------------------------------------------------------------------------
 
 // ZIROUND -------------------------------------------------------------------------------------------

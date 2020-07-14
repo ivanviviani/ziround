@@ -270,6 +270,17 @@ void find_singletons(instance* inst) {
 	assert(array_of_zeros(count, inst->nrows));
 	free(count);
 
+	// Sort singletons of each row by lowest objective function coefficient
+	for (int i = 0; i < inst->nrows; i++) {
+
+		// Skip rows that have no singletons
+		if (inst->num_singletons[i] == 0) continue;
+		assert(positive_integer(inst->num_singletons[i]));
+
+		// Singletons of a row range from index inst->rs_beg[rowind] to inst->rs_beg[rowind] + inst->num_singletons[rowind]
+		sort_singletons(inst->rs_beg[i], inst->rs_beg[i] + inst->num_singletons[i], inst->row_singletons, inst->rs_coef, inst->obj);
+	}
+
 	// [DEBUG ONLY] Print row singletons (indices)
 	if (VERBOSE >= 201) {
 		fprintf(stdout, "\n[DEBUG][find_singletons][extension]: Row singletons (index | coef):\n");
@@ -333,4 +344,28 @@ void compute_singletons_slacks(instance* inst) {
 		print_verbose(200, "[DEBUG][compute_singletons_slacks][extension][row %d]: ss_lb = %f | ss_val = %f | ss_ub = %f\n", i + 1, inst->ss_lb[i], inst->ss_val[i], inst->ss_ub[i]);
 	}
 	assert(valid_bounds(inst->ss_lb, inst->ss_ub, inst->nrows));
+}
+
+// [EXTENSION]
+void sort_singletons(int start, int end, int* rs_ind, double* rs_coef, double* obj) {
+
+	int min_idx;      /**< Index of the current minimum element. */
+	int temp_ind;     /**< Support variable. */
+	double temp_coef; /**< Support variable. */
+
+	// Sort subarrays of rs_ind and rs_coef between indices start/end
+	for (int i = start; i < end - 1; i++) {
+
+		min_idx = i;
+
+		// Find the index minimum element in the sub-subarray
+		for (int j = i + 1; j < end; j++) {
+			if (obj[rs_ind[j]] < obj[rs_ind[min_idx]]) min_idx = j;
+		}
+
+		// Swap min_idx <--> i (both arrays)
+		temp_ind = rs_ind[min_idx];   temp_coef = rs_coef[min_idx];
+		rs_ind[min_idx] = rs_ind[i];  rs_coef[min_idx] = rs_coef[i];
+		rs_ind[i] = temp_ind;         rs_coef[i] = temp_coef;
+	}
 }
