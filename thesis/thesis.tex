@@ -1,0 +1,173 @@
+\documentclass{book}
+
+% packages
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{bm}
+\usepackage[a4paper]{geometry}
+\geometry{margin=1in}
+\usepackage{graphicx}
+\graphicspath{{./images/}}
+\usepackage[font=small,labelfont=bf]{caption}
+\usepackage{subcaption}
+\usepackage{fullpage}
+\usepackage{setspace}
+\usepackage{amsthm}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{enumitem}
+\usepackage{mathtools}
+\usepackage{commath}
+\usepackage{multirow}
+%\usepackage[newfloat]{minted}
+\usepackage{csquotes}
+\usepackage{hyperref}
+\usepackage[ruled,vlined]{algorithm2e}
+\SetKwProg{Function}{Function}{:}{end}
+\SetKwBlock{Main}{main()}{end}
+\SetKwInOut{KwParam}{Parameters}
+\usepackage{etoolbox}
+\AtBeginEnvironment{algorithm}{\SetArgSty{textrm} \SetAlgoLined \DontPrintSemicolon \SetNoFillComment}
+\usepackage[table,xcdraw]{xcolor}
+
+\begin{document}
+	
+\begin{titlepage}
+	
+\frontmatter
+
+\begin{center}
+	% Upper part of the page
+	\includegraphics[scale=.10]{unipd.png}
+	\\
+	\vspace{1cm}
+	\textsc{\LARGE University of Padova} \\
+	\vspace{1cm}
+	\textsc{\Large Information Engineering Department (DEI)} \\
+	\vspace{1cm} 
+	\textsc{\Large Master's Degree in Computer Engineering} \\ %\hspace{0.8cm}
+	% Title
+	\vspace{0.8cm}
+	\Huge \doublespacing \bfseries \begin{spacing}{1}{Implementation of the ZI-Round heuristic for Mixed Integer Programming}\end{spacing}
+	\hfill
+	\Large \bfseries \begin{spacing}{1}{Master Thesis}\end{spacing}
+	\hfill
+	\vspace{0.5cm}
+	% Author and supervisor
+	\begin{flushleft} \large
+		\emph{Supervisor:} \\
+		Prof. Domenico Salvagnin
+	\end{flushleft}
+	\vfill
+	\begin{flushright} \large
+		\emph{Student:}\\
+		Ivan Viviani (1206151)
+	\end{flushright}
+	\hfill
+	\vfill
+	% Bottom of the page
+	{\small Academic Year 2019/2020} 
+\end{center}
+\end{titlepage}
+	
+\tableofcontents
+
+\mainmatter
+
+\chapter{ZI-Round}
+
+\SetKwRepeat{Do}{do}{while}
+\begin{algorithm}
+	\KwIn{$x$: primal feasible solution of continuous relaxation.}
+	\KwOut{rounded solution $x$ on success, none otherwise.}
+	
+	\Function{\upshape \texttt{ziround}}{
+		\BlankLine
+		$\Delta^{up}$ $\gets$ $\star$ maximum variable up-shifts $\star$ \;
+		$\Delta^{down}$ $\gets$ $\star$ maximum variable down-shifts $\star$ \;
+		$\mathcal{S}$ $\gets$ $\star$ constraint slacks $\star$ \;
+		$\mathcal{SS}$ $\gets$ $\star$ singleton slacks $\star$ \;
+		$\phi$ $\gets$ $\star$ objective function $\star$ \;
+		$\phi(x)$ $\gets$ $\star$ objective value $\star$ \; 
+		$ZI$ $\gets$ $\star$ fractionality function $\star$ \;
+		$ZI(x)$ $\gets$ $\star$ solution fractionality $\star$ \;
+		\BlankLine
+		\Do{$\star$ variable roundings found $\star$}{
+			\BlankLine
+			\ForEach{$\star$ integer/binary variable $x_j$ $\star$}{
+				\BlankLine
+				\uIf{$\star$ $x_j$ non-fractional $\star$} {
+					\BlankLine
+					$\star$ compute new maximum up/down-shift of $x_j$ (threshold $\varepsilon = 1$) $\star$ \;
+					\BlankLine
+					\If{$(c_j \geq 0 \wedge \Delta_{j}^{down} = 1) \vee (c_j \leq 0 \wedge \Delta_{j}^{up} = 1)$}{
+						\BlankLine
+						$\star$ round $x_j$ to improve objective value $\phi(x)$ $\star$ \;
+						$\star$ update slacks $\mathcal{S}$ and $\mathcal{SS}$ $\star$ \;
+						$\star$ update objective value $\phi(x)$ $\star$ \;
+					}
+				}
+				\ElseIf{$\star$ $x_j$ fractional $\star$}{
+					\BlankLine
+					$\star$ compute new maximum up/down-shift of $x_j$ (threshold $\varepsilon = 0.00001$) $\star$ \;
+					\BlankLine
+					\uIf{$\star$ both shifts improve fractionality $ZI(x)$ of the same amount $\star$}{
+						\BlankLine
+						$\star$ round $x_j$ to improve objective value $\phi(x)$ $\star$ \;
+						$\star$ update slacks $\mathcal{S}$ and $\mathcal{SS}$ $\star$ \;
+						$\star$ update objective value $\phi(x)$ $\star$ \;
+						\BlankLine
+					}
+					\uElseIf{$\star$ rounding $x_j$ up improves fractionality $ZI(x)$ more $\star$}{
+						\BlankLine
+						$x_j$ $\gets$ $x_j + \Delta_{j}^{up}$ \;
+						$\star$ update slacks $\mathcal{S}$ and $\mathcal{SS}$ $\star$ \;
+						$\star$ update objective value $\phi(x)$ $\star$ \;
+						\BlankLine
+					}
+					\ElseIf{$\star$ rounding $x_j$ down improves fractionality $ZI(x)$ more $\star$}{
+						\BlankLine
+						$x_j$ $\gets$ $x_j - \Delta_{j}^{down}$ \;
+						$\star$ update slacks $\mathcal{S}$ and $\mathcal{SS}$ $\star$ \;
+						$\star$ update objective value $\phi(x)$ $\star$ \;
+						\BlankLine
+					}
+				}
+				\BlankLine
+			}
+			\BlankLine
+		}
+		\BlankLine
+	}
+	\caption{ZI-Round.}
+	\label{alg:ziround}
+\end{algorithm}
+
+\begin{algorithm}
+	\KwIn{$x$: primal feasible solution of continuous relaxation.}
+	\KwOut{rounded solution $x$ on success, none otherwise.}
+	
+	\Function{\upshape \texttt{update\_slacks}}{
+		\BlankLine
+	}
+	\caption{Update slacks.}
+	\label{alg:updateslacks}
+\end{algorithm}
+
+\nocite{*}
+\renewcommand{\bibname}{References}
+\begin{thebibliography}{9}
+	
+	\bibitem{wallace2010} C. Wallace, \textit{ZI round, a MIP rounding heuristic}. Journal of Heuristics, vol. 16, pp. 715–722 (2010). \\ DOI: \url{https://doi.org/10.1007/s10732-009-9114-6}
+	
+	% \newpage
+	\vspace{0.5cm}
+	%* SITOGRAPHY %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	\textsc{\Large \textbf{Sitography}}
+	%*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	
+	
+\end{thebibliography}
+
+\end{document}

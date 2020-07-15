@@ -8,6 +8,15 @@ miplib2003/*
 *.mps
 *.txt
 
+#Ignore latex auxiliary files
+*.aux
+*.fdb_latexmk
+*.fls
+*.out
+*.toc
+*.synctex.gz
+*.pdf
+
 # User-specific files
 *.rsuser
 *.suo
