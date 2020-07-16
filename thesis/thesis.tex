@@ -1,4 +1,4 @@
-\documentclass{book}
+\documentclass[a4paper,12pt]{book}
 
 % packages
 \usepackage[utf8]{inputenc}
@@ -75,23 +75,82 @@
 
 \mainmatter
 
-\chapter{ZI-Round}
+%* \chapter{Definitions}
+
+\chapter{ZI-Round MIP rounding heuristic}
+
+ZI-round is a MIP rounding heuristic introduced by C. Wallace \cite{wallace2010} as an extension of the Simple Rounding heuristic, which was introduced in the non-commercial solver SCIP \cite{scip}.
+From a primal feasible solution of the MIP continuous relaxation, both heuristics aim at rounding all the fractional integer variables, in order to obtain a feasible solution of the MIP. Simple Rounding is a pure integer rounding heuristic because it only rounds fractional integer variables, while ZI-Round also takes other factors into account, such as the singletons of the constraints, where a singleton is defined as a continuous variable that appears in only one constraint. \par
+
+\section{Simple Rounding}
+As its name suggests, Simple Rounding is the most straightforward approach: it scans the integer variables once and only rounds those that can be trivially rounded, keeping all the constraints satisfied without affecting other factors such as the constraint slacks and singletons.
+Recall that a variable can be trivially rounded up or down only if any up-shift or down-shift within its bounds keeps all the constraints satisfied. \par
+
+For example, consider a "less than" constraint in which the fractional integer variable $x_j$ appears with a positive coefficient $a_{ij} > 0$. Since this constraint is satisfied as long as its row activity is less than its right hand side, $x_j$ could only be rounded down, causing the row activity to decrease without affecting the constraint satisfiability. For the same constraint, if the variable $x_j$ appears with a negative coefficient $a_{ij} < 0$ instead, $x_j$ could only be rounded up, with the same outcome.
+Now consider a "greater than" constraint in which the fractional integer variable $x_j$ appears with a negative coefficient $a_{ij} < 0$. Since this constraint is satisfied as long as its row activity is greater than its right hand side, $x_j$ could only be rounded down, causing the row activity to increase without affecting the constraint satisfiability. For the same constraint, if the variable $x_j$ appears with a positive coefficient $a_{ij} > 0$, $x_j$ could onyl be rounded up, with the same outcome.
+Finally, consider an equality constraint in which the fractional integer variable $x_j$ appears. Since this constraint is satisfied as long as its row activity is equal to its right hand side, $x_j$ cannot be rounded in either direction without affecting other factors. \par
+
+The previous examples describe the concept of trivial roundability for a fractional integer variable $x_j$ in a single constraint. But in order for a variable to be trivially roundable in a given direction, it must be roundable in all the constraints that comprise it, without affecting factors other than the variable itself. 
+Note that it suffices that a variable appears in an equality constraint for it not to be trivially roundable in either direction, i.e. Simple Rounding cannot round variables that appear in at least one equality constraint.
+A formal characterization of trivial roundability for a variable $x_j$ in the case of rounding up follows.
+A variable $x_j$ can be trivially rounded up if and only if all the following conditions apply:
+\begin{itemize}
+	\item In all the "less than" constraints containing $x_j$, the variable appears with a negative coefficient $a_{ij} < 0$;
+	\item In all the "greater than" constraints containing $x_j$, the variable appears with a positive coefficient $a_{ij} > 0$;
+	\item All the equality constraints do not contain $x_j$.
+\end{itemize}
+A variable $x_j$ can be trivially rounded down if and only if all the following conditions apply:
+\begin{itemize}
+	\item In all the "less than" constraints containing $x_j$, the variable appears with a positive coefficient $a_{ij} > 0$;
+	\item In all the "greater than" constraints containing $x_j$, the variable appears with a negative coefficient $a_{ij} < 0$;
+	\item All the equality constraints do not contain $x_j$.
+\end{itemize}
+\par
+
+The simplicity of Simple Rounding comes from its adherence to trivial roundability, which allows it to round variables without worrying about any other factors. As noted previously, this simplicity comes at the cost of effectiveness, since equality constraints make all the contained variables un-roundable. This major weakness of Simple Rounding can be overcome by taking other factors into account, as done by C. Wallace \cite{wallace2010} in the case of the ZI-Round heuristic. Also note that since a variable is or is not trivially roundable independently of other variables, and each trivial rounding causes the row activity of the constraints to decrease in the case of "less than" constraints and to increase in the case of "greater than" constraints, Simple Rounding only needs to scan the variables once.
+
+\section{ZI-Round}
+The ZI-Round heuristic greatly extends Simple Rounding by allowing non-trivial roundings to be made and cleverly using the singletons of each constraint (if any) as an additional slack. The use of singletons is essential for equality constraints, since it gives them a slack to rely on for rounding their contained variables. \par
+
+An optional extension that can be easily implemented in ZI-Round is to allow the unit shifting of non-fractional integer variables to improve the objective value, while still maintaining non-fractionality. This extension can be seen as a sort of local search heuristic \cite{linker1973} or intensification strategy, analogous to $k$-OPT improvement for TSPs when $k = 1$, but different since imrovements are made before an integral solution is found \cite{wallace2010}. \par
+
+In the context of ZI-Round, the attempt to round all the fractional integer variables of the solution is carried out as an optimization problem where the objective function to minimize to zero is the solution fractionality, only relative to the integer variables of the original MIP (binary variables included). The fractionality of a single variable $x_j$ can be expressed as:
+\begin{equation}
+	f(x_j) = \text{min}\{x_j - \lfloor x_j \rfloor, \lceil x_j \rceil - x_j\}
+\end{equation}
+The fractionality of the solution, only relative to integer variables, is then given by:
+\begin{equation}
+	f(x) = \sum_{j \in I \cup B}f(x_j)
+\end{equation}
+In accordance with the original work by C. Wallace \cite{wallace2010} and the name of the heuristic, in the rest of this thesis the solution fractionality is referred to as $ZI(x)$. \par 
+
+While Simple Rounding scans the variables only once, since each variable can be trivially roundable independently of the others, ZI-Round needs to scan them multiple times: non-trivial roundings, and unit shiftings if the improvement extension is implemented, can change the row activities in both directions, causing the constraint (and singleton) slacks to possibly influence the roundability of other variables. Programmatically, this translates to having an outer loop that allows to perform multiple rounds, each round being represented by an inner loop that scans the integer variables. \par
+
+The pseudocode of the ZI-Round heuristic is presented in Algorithm~\ref{alg:ziround}.
+%! Description of the pseudocode
+
+%? Entrambe partono da una soluzione del rilassamento continuo frazionaria
+%? SR scansiona le xj una volta sola e arrotonda xj solo a parte alta o parte bassa, quando può essere trivially rounded (...) --> non c'è bisogno di controllare gli slack (sempre soddisfatti, anzi possono solo migliorare)
+%? ZR invece cerca di azzerare la solution fractionality arrotondando le variabili (intere/binarie) con valore frazionario, shiftando anche variabili che sono già intere (solo se questo permette di migliorare objval)
+%? SR arrotonda solo le variabili frazionarie, invece ZR shifta anche variabili che hanno già valore intero e anche variabili continue (singletons)
+%? ZR ha due loop perchè dopo aver arrotondato alcune variabili gli slack cambiano e potrebbe essere possibile arrotondare atre variabili saltate in precedenza
+%? ZR può avere una strategia di intensificazione (local search k=1?): shifta le variabili intere di 1 (mantenendo ZI invariata) per migliorare objval
+%? ZR ha una estensione che oltre agli usuali constraint slack considera come slack aggiuntivi anche quelli dovuti ai singletons dei vincoli, dove i singleton sono variabili continue che compaiono in un unico vincolo --> questa estensione è particolarmente utile nel caso dei vincoli = che non avendo alcuno slack di riga, possono usufruire solo del singletons slack per arrotondare le variabili contenute in essi. 
 
 \SetKwRepeat{Do}{do}{while}
-\begin{algorithm}
+\begin{algorithm}[ht]
 	\KwIn{$x$: primal feasible solution of continuous relaxation.}
-	\KwOut{rounded solution $x$ on success, none otherwise.}
 	
 	\Function{\upshape \texttt{ziround}}{
 		\BlankLine
 		$\Delta^{up}$ $\gets$ $\star$ maximum variable up-shifts $\star$ \;
 		$\Delta^{down}$ $\gets$ $\star$ maximum variable down-shifts $\star$ \;
-		$\mathcal{S}$ $\gets$ $\star$ constraint slacks $\star$ \;
-		$\mathcal{SS}$ $\gets$ $\star$ singleton slacks $\star$ \;
-		$\phi$ $\gets$ $\star$ objective function $\star$ \;
-		$\phi(x)$ $\gets$ $\star$ objective value $\star$ \; 
-		$ZI$ $\gets$ $\star$ fractionality function $\star$ \;
-		$ZI(x)$ $\gets$ $\star$ solution fractionality $\star$ \;
+		$CS$ $\gets$ $\star$ constraint slacks $\star$ \;
+		$SS$ $\gets$ $\star$ singleton slacks $\star$ \;
+		$c$ $\gets$ $\star$ objective function coefficients $\star$ \;
+		$c^Tx$ $\gets$ $\star$ objective value $\star$ \;
+		$f(x_j)$ $\gets$ $\star$ fractionality of variable $x_j$ $\forall j$ $\star$ \;
+		$ZI(x)$ $\gets$ $\star$ solution fractionality ($= \sum_{j \in I \cup B}f(x_j)$) $\star$ \;
 		\BlankLine
 		\Do{$\star$ variable roundings found $\star$}{
 			\BlankLine
@@ -99,38 +158,40 @@
 				\BlankLine
 				\uIf{$\star$ $x_j$ non-fractional $\star$} {
 					\BlankLine
-					$\star$ compute new maximum up/down-shift of $x_j$ (threshold $\varepsilon = 1$) $\star$ \;
+					$\star$ compute maximum shifts of $x_j$ (threshold $\varepsilon = 1$) $\star$ \;
 					\BlankLine
 					\If{$(c_j \geq 0 \wedge \Delta_{j}^{down} = 1) \vee (c_j \leq 0 \wedge \Delta_{j}^{up} = 1)$}{
 						\BlankLine
-						$\star$ round $x_j$ to improve objective value $\phi(x)$ $\star$ \;
-						$\star$ update slacks $\mathcal{S}$ and $\mathcal{SS}$ $\star$ \;
-						$\star$ update objective value $\phi(x)$ $\star$ \;
+						$\star$ round (shift) $x_j$ to improve $c^Tx$ $\star$ \;
+						$\star$ update slacks $CS$ and $SS$ $\star$ \;
+						$\star$ update $c^Tx$ $\star$ \;
+						\BlankLine
 					}
+					\BlankLine
 				}
 				\ElseIf{$\star$ $x_j$ fractional $\star$}{
 					\BlankLine
-					$\star$ compute new maximum up/down-shift of $x_j$ (threshold $\varepsilon = 0.00001$) $\star$ \;
+					$\star$ compute maximum shifts of $x_j$ (threshold $\varepsilon = 10^{-5}$) $\star$ \;
 					\BlankLine
-					\uIf{$\star$ both shifts improve fractionality $ZI(x)$ of the same amount $\star$}{
+					\uIf{$\star$ both shifts improve $ZI(x)$ of the same amount $\star$}{
 						\BlankLine
-						$\star$ round $x_j$ to improve objective value $\phi(x)$ $\star$ \;
-						$\star$ update slacks $\mathcal{S}$ and $\mathcal{SS}$ $\star$ \;
-						$\star$ update objective value $\phi(x)$ $\star$ \;
+						$\star$ round $x_j$ to improve $c^Tx$ $\star$ \;
+						$\star$ update slacks $CS$ and $SS$ $\star$ \;
+						$\star$ update $c^Tx$ $\star$ \;
 						\BlankLine
 					}
-					\uElseIf{$\star$ rounding $x_j$ up improves fractionality $ZI(x)$ more $\star$}{
+					\uElseIf{$\star$ rounding $x_j$ up improves $ZI(x)$ more $\star$}{
 						\BlankLine
 						$x_j$ $\gets$ $x_j + \Delta_{j}^{up}$ \;
-						$\star$ update slacks $\mathcal{S}$ and $\mathcal{SS}$ $\star$ \;
-						$\star$ update objective value $\phi(x)$ $\star$ \;
+						$\star$ update slacks $CS$ and $SS$ $\star$ \;
+						$\star$ update $c^Tx$ $\star$ \;
 						\BlankLine
 					}
-					\ElseIf{$\star$ rounding $x_j$ down improves fractionality $ZI(x)$ more $\star$}{
+					\ElseIf{$\star$ rounding $x_j$ down improves $ZI(x)$ more $\star$}{
 						\BlankLine
 						$x_j$ $\gets$ $x_j - \Delta_{j}^{down}$ \;
-						$\star$ update slacks $\mathcal{S}$ and $\mathcal{SS}$ $\star$ \;
-						$\star$ update objective value $\phi(x)$ $\star$ \;
+						$\star$ update slacks $CS$ and $SS$ $\star$ \;
+						$\star$ update $c^Tx$ $\star$ \;
 						\BlankLine
 					}
 				}
@@ -144,11 +205,85 @@
 	\label{alg:ziround}
 \end{algorithm}
 
-\begin{algorithm}
-	\KwIn{$x$: primal feasible solution of continuous relaxation.}
-	\KwOut{rounded solution $x$ on success, none otherwise.}
+\begin{algorithm}[ht]
+	\KwIn{$j$: variable index; $\Delta_{j}^{up}$: maximum variable up-shift; $\Delta_{j}^{down}$: maximum variable down-shift.}
+
+	\Function{\upshape \texttt{round\_xj\_bestobj}}{
+		\BlankLine
+		$CS$ $\gets$ $\star$ constraint slacks $\star$ \;
+		$SS$ $\gets$ $\star$ singleton slacks $\star$ \;
+		$c$ $\gets$ $\star$ objective function coefficients $\star$ \;
+		$c^Tx$ $\gets$ $\star$ objective value $\star$ \; 
+		\BlankLine
+		\uIf{$\star$ rounding $x_j$ up improves $c^Tx$ more $\star$}{
+			\BlankLine
+			$x_j$ $\gets$ $x_j + \Delta_{j}^{up}$ \;
+			$\star$ update slacks $CS$ and $SS$ $\star$ \;
+			$\star$ update $c^Tx$ $\star$ \;
+			\BlankLine
+		}
+		\uElseIf{$\star$ rounding $x_j$ down improves $c^Tx$ more $\star$}{
+			\BlankLine
+			$x_j$ $\gets$ $x_j - \Delta_{j}^{down}$ \;
+			$\star$ update slacks $CS$ and $SS$ $\star$ \;
+			$\star$ update $c^Tx$ $\star$ \;
+			\BlankLine
+		}
+		\ElseIf{$\star$ both shifts improve $c^Tx$ of the same amount ($0$ included) $\star$}{
+			\BlankLine
+			$\star$ round $x_j$ arbitrarily $\star$ \;
+			$\star$ update slacks $CS$ and $SS$ $\star$ \;
+			$\star$ update $c^Tx$ $\star$ \;
+			\BlankLine
+		}
+		\BlankLine
+	}
+	\caption{Round $x_j$ to improve objective.}
+	\label{alg:roundxjbestobj}
+\end{algorithm}
+
+\begin{algorithm}[ht]
+	\KwIn{$j$: index of the rounded variable; $\Delta_{j}$: signed variable shift.}
 	
 	\Function{\upshape \texttt{update\_slacks}}{
+		\BlankLine
+		$CS$ $\gets$ $\star$ constraint slacks $\star$ \;
+		$SS$ $\gets$ $\star$ singleton slacks $\star$ \;
+		\BlankLine
+		\ForEach{$\star$ constraint containing $x_j$ $\star$}{
+			\BlankLine
+			$a_{ij}$ $\gets$ $\star$ coefficient of $x_j$ in $i^{th}$ constraint $\star$ \;
+			$\Delta_{i}^{slack}$ $\gets$ $\star$ slack shift of the constraint ($= a_{ij} \, \Delta_{j}$) to be distributed $\star$ \;
+			\BlankLine
+			\uIf{$\star$ constraint sense $\leq$ or $\geq$ $\star$}{
+				\BlankLine
+				\uIf{$\star$ constraint has singletons $\star$} {
+					\BlankLine
+					$\star$ update constraint slack $CS_i$ to cover $\Delta_{i}^{slack}$ as much as possible $\star$ \;
+					$\Delta_{i}^{SS}$ $\gets$ $\star$ remaining slack shift (covered by the singletons) $\star$ \;
+					$SS_i$ $\gets$ $SS_i + \Delta_{i}^{SS}$ \;
+					$\star$ update constraint singletons by distributing $\Delta_{i}^{SS}$ (if any) $\star$ \;
+					\BlankLine
+				}
+				\Else{
+					\BlankLine
+					$\star$ update constraint slack $CS_i$ $\star$ \;
+					\BlankLine
+				}
+				\BlankLine
+			}
+			\ElseIf{$\star$ constraint sense $=$ $\star$}{
+				\BlankLine
+				\If{$\star$ constraint has singletons $\star$}{
+					\BlankLine
+					$\Delta_{i}^{SS}$ $\gets$ $\Delta_{i}^{slack}$ \;
+					$\star$ update constraint singletons by distributing $\Delta_{i}^{SS}$ $\star$ \;
+					\BlankLine
+				}
+				\BlankLine
+			}
+			\BlankLine
+		}
 		\BlankLine
 	}
 	\caption{Update slacks.}
@@ -160,6 +295,8 @@
 \begin{thebibliography}{9}
 	
 	\bibitem{wallace2010} C. Wallace, \textit{ZI round, a MIP rounding heuristic}. Journal of Heuristics, vol. 16, pp. 715–722 (2010). \\ DOI: \url{https://doi.org/10.1007/s10732-009-9114-6}
+
+	\bibitem{linker1973} S. Lin, B. W. Kernighan, \textit{An Effective Heuristic Algorithm for the Traveling-Salesman Problem}. Operations Research, vol. 21, no. 2, pp. 498-516, INFORMS (1973). \\ DOI: \url{https://doi.org/10.1287/opre.21.2.498}
 	
 	% \newpage
 	\vspace{0.5cm}
@@ -167,6 +304,7 @@
 	\textsc{\Large \textbf{Sitography}}
 	%*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	
+	\bibitem{scip} SCIP MIP solver (non-commercial). \\ URL: \url{https://www.scipopt.org/}
 	
 \end{thebibliography}
 
