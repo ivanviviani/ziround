@@ -291,7 +291,7 @@ After any rounding has been made, we need to update the constraint slacks $CS$ a
 \end{equation}
 where $a_{ij}$ is the coefficient of $x_j$ in the constraint. Then as much of the overall slack shift as possible is distributed on the constraint slack $CS_i$. If the constraint has any singletons, $CS_i$ could not be able to compensate for all of $\Delta_{i}^{slack}$, so in this case the remaining slack shift $\Delta_{i}^{SS}$ has to be distributed on the singletons slack $SS_i$, thus among the singletons of the constraint. \par
 
-Note that since the singletons of the constraint are actual variables of the MIP, an update of the singletons requires to update the current objective value $c^Tx$. Also, observe that the slacks are updated only after a successfull rounding or shifting, therefore $\Delta_{i}^{slack}$ can always be distributed correctly. \par
+Note that since the singletons of the constraint are actual variables of the MIP, an update of the singletons requires to update the current objective value $c^Tx$. Also, observe that the slacks are updated only after a successful rounding or shifting, therefore $\Delta_{i}^{slack}$ can always be distributed correctly. \par
 
 \begin{algorithm}[ht]
 	\KwIn{$j$: index of the rounded variable; $\Delta_{j}$: signed variable shift.}
