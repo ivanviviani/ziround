@@ -119,67 +119,15 @@ In the context of ZI-Round, the attempt to round all the fractional integer vari
 	f(x_j) = \text{min}\{x_j - \lfloor x_j \rfloor, \lceil x_j \rceil - x_j\}
 \end{equation}
 The fractionality of the solution, only relative to integer variables, is then given by:
-\begin{equation}
+\begin{equation}\label{eq:zi}
 	f(x) = \sum_{j \in I \cup B}f(x_j)
 \end{equation}
 In accordance with the original work by C. Wallace \cite{wallace2010} and the name of the heuristic, in the rest of this thesis the solution fractionality is referred to as $ZI(x)$. \par 
 
 While Simple Rounding scans the variables only once, since each variable can be trivially roundable independently of the others, ZI-Round needs to scan them multiple times: non-trivial roundings, and unit shiftings if the improvement extension is implemented, can change the row activities in both directions, causing the constraint (and singleton) slacks to possibly influence the roundability of other variables. Programmatically, this translates to having an outer loop that allows to perform multiple rounds and an inner loop that scans the integer variables, representing a single round. The pseudocode of the ZI-Round heuristic is presented in Algorithm~\ref{alg:ziround}. \par 
 
-Non-trivial roundings could violate some constraints, therefore we need to determine how much each variable can be shifted in either direction towards its nearest integers, without violating any constraint. This information is denoted by the two arrays $\Delta^{up}, \Delta^{down}$ with index $j$ over the variables of the MIP. So $x_j$ can be shifted to either $x_j + \Delta_{j}^{up}$ or $x_j - \Delta_{j}^{down}$. \par
-
-Whenever a variable is non-trivially rounded, the slacks of the constraints in which it is involved change and affect the possible shifts of other variables. So we need to keep track of the current values of the constraint slacks, denoted by the array $CS$ with index $i$ over the constraints of the MIP.
-ZI-Round also accounts for the singletons of each constraint, which generate a further constribution to the overall slack, referred to as singletons slack and denoted by the array $SS$ with index $i$ over the constraints of the MIP. \par 
-
-The singleton slack of a constraint is defined as the contribution to the row activity given by the singletons. It can be seen as a single variable comprising the contributions of the singletons. 
-Since the singletons are continuous variables that appear in only one constraint, they can be shifted freely without affecting other constraints, thus their contribution to the row activity can be manipulated in order to keep the constraint satisfied while rounding fractional integer variables. For example, consider the constraint $x_1 + x_2 + x_3 = 10$ where $x_1 = 3$, $x_2 = 4.5$, $x_3 = 2.5$, $x_2$ is the fractional integer variable that has to be rounded and $x_3$ is a singleton of the constraint. The only way to round $x_2$ is to use the available row activity contribution of $2.5$ given by $x_3$ to compensate for the shift: e.g. if $x_2$ is rounded up to $5$ then $x_3$ needs to be shifted down to $2$, and the constraint remains satisfied. \par 
-
-Before any rounding can be performed, we need to determine the maximum up-shifts and down-shifts of the integer variables. To maintain primal feasibility, a variable shift must keep all the slacks of "less than" constraints non-negative, all the slacks of "greater than" constraints non-positive, and all the slacks of equality constraints equal to zero, intended as constraint slacks. \par
-
-Consider an integer variable $x_j$ for which we want to determine $\Delta_{j}^{up}$ and $\Delta_{j}^{down}$.
-For a "less than" constraint of index $i$ where $x_j$ has a positive coefficient $a_{ij} > 0$, the maximum up-shift of $x_j$ that can be compensated by the overall slack is given by $(CS_i + \Delta_{max}^{down}(SS_i)) / a_{ij}$, where $\Delta_{max}^{down}(SS_i))$ is the maximum down-shift of the singletons slack $SS_i$. Note that for $a_{ij} < 0$ the variable $x_j$ is trivially up-roundable in the constraint.
-For a "less than" constraint of index $i$ where $x_j$ has a negative coefficient $a_{ij} < 0$, the maximum down-shift of $x_j$ that can be compensated by the overall slack is given by the same expression with a minus sign to keep the final value unsigned, i.e. $-(CS_i + \Delta_{max}^{down}(SS_i)) / a_{ij}$. Note that for $a_{ij} > 0$ the variable $x_j$ is trivially down-roundable in the constraint. In both the previous cases we consider the maximum down-shift of $SS_i$ because for "less than" constraints it is the one that increases the absolute value of the numerator, thus the final value. \\
-For a "greater than" constraint of index $i$ where $x_j$ has a negative coefficient $a_{ij} < 0$, the maximum up-shift of $x_j$ that can be compensated by the overall slack is given by $(CS_i - \Delta_{max}^{up}(SS_i)) / a_{ij}$, where $\Delta_{max}^{up}(SS_i))$ is the maximum up-shift of the singletons slack $SS_i$. Note that for $a_{ij} > 0$ the variable $x_j$ is trivially up-roundable in the constraint.
-For a "greater than" constraint  of index $i$ where $x_j$ has a positive coefficient $a_{ij} > 0$, the maximum down-shift of $x_j$ that can be compensated by the overall slack is given by the same expression with a minus sign to keep the final value unsigned, i.e. $-(CS_i - \Delta_{max}^{up}(SS_i)) / a_{ij}$. Note that for $a_{ij} < 0$ the variable $x_j$ is trivially down-roundable in the constraint. In both the previous cases we consider the maximum up-shift of $SS_i$ because for "greater than" constraints it is the one that increases the absolute value of the numerator, thus the final value. \\
-Equality constraints can exclusively rely on their singletons slack, which unlike the constraint slack can be positive or negative. So an equality constraint can be viewed as a "less than" constraint when its singletons slack is positive and as a "greater than" constraint when its singletons slack is negative. For an equality constraint of index $i$ where $x_j$ has a positive coefficient $a_{ij} > 0$, the maximum up-shift of $x_j$ that can be compensated by the singletons slack is given by $\Delta_{max}^{down}(SS_i) / a_{ij}$, while the maximum down-shift is given by $\Delta_{max}^{up}(SS_i) / a_{ij}$. For an equality constraint of index $i$ where $x_j$ has a negative coefficient $a_{ij} < 0$, the maximum up-shift of $x_j$ that can be compensated by the singletons slack is given by $-\Delta_{max}^{up}(SS_i) / a_{ij}$, while the maximum down-shift is given by $-\Delta_{max}^{down}(SS_i) / a_{ij}$. \par 
-
-All the considerations made so far hold for a single constraint, but in order to keep all the constraints satisfied we need to find the minimum over all the constraints of such maximum quantities. The idea is that each constraint gives two candidates for $\Delta_{j}^{up}$ and $\Delta_{j}^{down}$, respectively. Then the final maximum shifts of $x_j$ are determined as the minimum candidate for each rounding direction. 
-Note that the variables also have to stay within their lower and upper bounds, so two additional candidates are given by the quantities $x_j - lb_j$ for $\Delta_{j}^{down}$ and $ub_j - x_j$ for $\Delta_{j}^{up}$, where $lb_j$ and $ub_j$ denote the variable bounds. \par 
-
-A more formal characterization of the maximum up-shift and down-shift of a variable $x_j$ follows:
-\begin{itemize}
-	\item For "less than" constraints, a variable $x_j$ cannot be shifted up more than
-	\begin{equation}
-		\Delta_{j,\leq}^{up} = \text{min}_{i,\leq}\left\{\dfrac{(CS_i + \Delta_{max}^{down}(SS_i))}{a_{ij}} : a_{ij} > 0\right\}
-	\end{equation}
-	and it cannot be shifted down more than
-	\begin{equation}
-		\Delta_{j,\leq}^{down} = \text{min}_{i,\leq}\left\{\dfrac{-(CS_i + \Delta_{max}^{down}(SS_i))}{a_{ij}} : a_{ij} < 0\right\}
-	\end{equation}
-	\item For "greater than" constraints, a variable $x_j$ cannot be shifted up more than
-	\begin{equation}
-		\Delta_{j,\geq}^{up} = \text{min}_{i,\geq}\left\{\dfrac{(CS_i - \Delta_{max}^{up}(SS_i))}{a_{ij}} : a_{ij} < 0\right\}
-	\end{equation}
-	and it cannot shifted down more than
-	\begin{equation}
-		\Delta_{j,\geq}^{down} = \text{min}_{i,\geq}\left\{\dfrac{-(CS_i - \Delta_{max}^{up}(SS_i))}{a_{ij}} : a_{ij} > 0\right\}
-	\end{equation}
-	\item For equality constraints, a variable $x_j$ cannot be shifted up more than
-	
-\end{itemize}
-
-%! Description of the pseudocode
-
-%? Entrambe partono da una soluzione del rilassamento continuo frazionaria
-%? SR scansiona le xj una volta sola e arrotonda xj solo a parte alta o parte bassa, quando può essere trivially rounded (...) --> non c'è bisogno di controllare gli slack (sempre soddisfatti, anzi possono solo migliorare)
-%? ZR invece cerca di azzerare la solution fractionality arrotondando le variabili (intere/binarie) con valore frazionario, shiftando anche variabili che sono già intere (solo se questo permette di migliorare objval)
-%? SR arrotonda solo le variabili frazionarie, invece ZR shifta anche variabili che hanno già valore intero e anche variabili continue (singletons)
-%? ZR ha due loop perchè dopo aver arrotondato alcune variabili gli slack cambiano e potrebbe essere possibile arrotondare atre variabili saltate in precedenza
-%? ZR può avere una strategia di intensificazione (local search k=1?): shifta le variabili intere di 1 (mantenendo ZI invariata) per migliorare objval
-%? ZR ha una estensione che oltre agli usuali constraint slack considera come slack aggiuntivi anche quelli dovuti ai singletons dei vincoli, dove i singleton sono variabili continue che compaiono in un unico vincolo --> questa estensione è particolarmente utile nel caso dei vincoli = che non avendo alcuno slack di riga, possono usufruire solo del singletons slack per arrotondare le variabili contenute in essi. 
-
 \SetKwRepeat{Do}{do}{while}
-\begin{algorithm}[ht]
+\begin{algorithm}[htp]
 	\KwIn{$x$: primal feasible solution of continuous relaxation.}
 	
 	\Function{\upshape \texttt{ziround}}{
@@ -236,15 +184,70 @@ A more formal characterization of the maximum up-shift and down-shift of a varia
 						\BlankLine
 					}
 				}
-				\BlankLine
 			}
-			\BlankLine
 		}
-		\BlankLine
 	}
 	\caption{ZI-Round.}
 	\label{alg:ziround}
 \end{algorithm}
+
+Non-trivial roundings could violate some constraints, therefore we need to determine how much each variable can be shifted in either direction towards its nearest integers, without violating any constraint. This information is denoted by the two arrays $\Delta^{up}, \Delta^{down}$ with index $j$ over the variables of the MIP. So $x_j$ can be shifted to either $x_j + \Delta_{j}^{up}$ or $x_j - \Delta_{j}^{down}$. \par
+
+Whenever a variable is non-trivially rounded, the slacks of the constraints in which it is involved change and affect the possible shifts of other variables. So we need to keep track of the current values of the constraint slacks, denoted by the array $CS$ with index $i$ over the constraints of the MIP.
+ZI-Round also accounts for the singletons of each constraint, which generate a further constribution to the overall slack, referred to as singletons slack and denoted by the array $SS$ with index $i$ over the constraints of the MIP. \par 
+
+The singleton slack of a constraint is defined as the contribution to the row activity given by the singletons. It can be seen as a single variable comprising the contributions of the singletons. 
+Since the singletons are continuous variables that appear in only one constraint, they can be shifted freely without affecting other constraints, thus their contribution to the row activity can be manipulated in order to keep the constraint satisfied while rounding fractional integer variables. For example, consider the constraint $x_1 + x_2 + x_3 = 10$ where $x_1 = 3$, $x_2 = 4.5$, $x_3 = 2.5$, $x_2$ is the fractional integer variable that has to be rounded and $x_3$ is a singleton of the constraint. The only way to round $x_2$ is to use the available row activity contribution of $2.5$ given by $x_3$ to compensate for the shift: e.g. if $x_2$ is rounded up to $5$ then $x_3$ needs to be shifted down to $2$, and the constraint remains satisfied. \par 
+
+Before any rounding can be performed, we need to determine the maximum up-shifts and down-shifts of the integer variables. To maintain primal feasibility, a variable shift must keep all the slacks of "less than" constraints non-negative, all the slacks of "greater than" constraints non-positive, and all the slacks of equality constraints equal to zero, intended as constraint slacks. \par
+
+Consider an integer variable $x_j$ for which we want to determine $\Delta_{j}^{up}$ and $\Delta_{j}^{down}$.
+For a "less than" constraint of index $i$ where $x_j$ has a positive coefficient $a_{ij} > 0$, the maximum up-shift of $x_j$ that can be compensated by the overall slack is given by $(CS_i + \Delta_{max}^{down}(SS_i)) / a_{ij}$, where $\Delta_{max}^{down}(SS_i))$ is the maximum down-shift of the singletons slack $SS_i$. Note that for $a_{ij} < 0$ the variable $x_j$ is trivially up-roundable in the constraint.
+For a "less than" constraint of index $i$ where $x_j$ has a negative coefficient $a_{ij} < 0$, the maximum down-shift of $x_j$ that can be compensated by the overall slack is given by the same expression with a minus sign to keep the final value unsigned, i.e. $-(CS_i + \Delta_{max}^{down}(SS_i)) / a_{ij}$. Note that for $a_{ij} > 0$ the variable $x_j$ is trivially down-roundable in the constraint. In both the previous cases we consider the maximum down-shift of $SS_i$ because for "less than" constraints it is the one that increases the absolute value of the numerator, thus the final value, since $CS_i \geq 0$. \\
+For a "greater than" constraint of index $i$ where $x_j$ has a negative coefficient $a_{ij} < 0$, the maximum up-shift of $x_j$ that can be compensated by the overall slack is given by $(CS_i - \Delta_{max}^{up}(SS_i)) / a_{ij}$, where $\Delta_{max}^{up}(SS_i))$ is the maximum up-shift of the singletons slack $SS_i$. Note that for $a_{ij} > 0$ the variable $x_j$ is trivially up-roundable in the constraint.
+For a "greater than" constraint  of index $i$ where $x_j$ has a positive coefficient $a_{ij} > 0$, the maximum down-shift of $x_j$ that can be compensated by the overall slack is given by the same expression with a minus sign to keep the final value unsigned, i.e. $-(CS_i - \Delta_{max}^{up}(SS_i)) / a_{ij}$. Note that for $a_{ij} < 0$ the variable $x_j$ is trivially down-roundable in the constraint. In both the previous cases we consider the maximum up-shift of $SS_i$ because for "greater than" constraints it is the one that increases the absolute value of the numerator, thus the final value, since $CS_i \leq 0$. \\
+Equality constraints can exclusively rely on their singletons slack, which unlike the constraint slack can be positive or negative. So an equality constraint can be viewed as a "less than" constraint when its singletons slack is positive and as a "greater than" constraint when its singletons slack is negative. For an equality constraint of index $i$ where $x_j$ has a positive coefficient $a_{ij} > 0$, the maximum up-shift of $x_j$ that can be compensated by the singletons slack is given by $\Delta_{max}^{down}(SS_i) / a_{ij}$, while the maximum down-shift is given by $\Delta_{max}^{up}(SS_i) / a_{ij}$. For an equality constraint of index $i$ where $x_j$ has a negative coefficient $a_{ij} < 0$, the maximum up-shift of $x_j$ that can be compensated by the singletons slack is given by $-\Delta_{max}^{up}(SS_i) / a_{ij}$, while the maximum down-shift is given by $-\Delta_{max}^{down}(SS_i) / a_{ij}$. \par 
+
+All the considerations made so far hold for a single constraint, but in order to keep all the constraints satisfied we need to find the minimum over all the constraints of such maximum quantities. The idea is that each constraint gives two candidates for $\Delta_{j}^{up}$ and $\Delta_{j}^{down}$, respectively. Then the final maximum shifts of $x_j$ are determined as the minimum candidate for each rounding direction. 
+Note that the variables also have to stay within their lower and upper bounds, so two additional candidates are given by the quantities $x_j - lb_j$ for $\Delta_{j}^{down}$ and $ub_j - x_j$ for $\Delta_{j}^{up}$, where $lb_j$ and $ub_j$ denote the variable bounds.
+A more formal characterization of the maximum up-shift and down-shift of a variable $x_j$ follows. \par
+
+For "less than" constraints, a variable $x_j$ cannot be shifted up more than
+\begin{equation}
+	\Delta_{j,\leq}^{up} = \min_{i,\leq}\left\{\dfrac{(CS_i + \Delta_{max}^{down}(SS_i))}{a_{ij}} : a_{ij} > 0\right\}
+\end{equation}
+and it cannot be shifted down more than
+\begin{equation}
+	\Delta_{j,\leq}^{down} = \min_{i,\leq}\left\{\dfrac{-(CS_i + \Delta_{max}^{down}(SS_i))}{a_{ij}} : a_{ij} < 0\right\}
+\end{equation}
+For "greater than" constraints, a variable $x_j$ cannot be shifted up more than
+\begin{equation}
+	\Delta_{j,\geq}^{up} = \min_{i,\geq}\left\{\dfrac{(CS_i - \Delta_{max}^{up}(SS_i))}{a_{ij}} : a_{ij} < 0\right\}
+\end{equation}
+and it cannot shifted down more than
+\begin{equation}
+	\Delta_{j,\geq}^{down} = \min_{i,\geq}\left\{\dfrac{-(CS_i - \Delta_{max}^{up}(SS_i))}{a_{ij}} : a_{ij} > 0\right\}
+\end{equation}
+For equality constraints, a variable $x_j$ cannot be shifted up more than
+\begin{equation}
+	\Delta_{j,=}^{up} = \min \left\{ \min_{i,=}\left\{\dfrac{\Delta_{max}^{down}(SS_i)}{a_{ij}} : a_{ij} > 0\right\} , \min_{i,=}\left\{\dfrac{-\Delta_{max}^{up}(SS_i)}{a_{ij}} : a_{ij} < 0 \right\} \right\}
+\end{equation}
+and it cannot be shifted down more than
+\begin{equation}
+	\Delta_{j,=}^{down} = \min \left\{ \min_{i,=}\left\{\dfrac{\Delta_{max}^{up}(SS_i)}{a_{ij}} : a_{ij} > 0\right\} , \min_{i,=}\left\{\dfrac{-\Delta_{max}^{down}(SS_i)}{a_{ij}} : a_{ij} < 0 \right\} \right\}
+\end{equation}
+
+Grouping the three types of constraints together and considering also the additional candidates given by the variable bounds yields the final values of the maximum shifts of $x_j$ that maintain primal feasibility:
+\begin{equation}
+	\Delta_{j}^{up} = \text{min} \{\Delta_{j,\leq}^{up} \,,\, \Delta_{j,\geq}^{up} \,,\, \Delta_{j,=}^{up} \,,\, ub_j - x_j\}
+\end{equation}
+\begin{equation}
+	\Delta_{j}^{down} = \text{min} \{\Delta_{j,\leq}^{down} \,,\, \Delta_{j,\geq}^{down} \,,\, \Delta_{j,=}^{down} \,,\, x_j - lb_j\}
+\end{equation}
+
+One detail that speeds up the ZI-Round heuristic, as recommended by C. Wallace \cite{wallace2010}, is to stop calculating $\Delta_{j}^{up}$ and $\Delta_{j}^{down}$ once they both fall below a pre-defined small positive threshold, denoted by $\varepsilon$. In practice we use the same value chosen by C. Wallace, i.e. $\varepsilon = 10^{-5}$. If the ZI-Round extension that shifts non-fractional integer variables is implemented, as done in this thesis, for determining the possible shifts in that case it suffices to set the threshold $\varepsilon = 1$, because $x_j$ must be shifted by $1$ to maintain the current solution fractionality $ZI(x)$. \par 
+
+As presented in the inner loop of Algorithm~\ref{alg:ziround}, if the current variable $x_j$ is non-fractional then the improvement extension is applied, whereas if $x_j$ is fractional then it enters the core of the ZI-Round heuristic. As initially mentioned, ZI-Round aims at minimizing the solution fractionality $ZI(x)$ expressed by Equation~\ref{eq:zi}, therefore $x_j$ should be rounded in the direction that improves $ZI(x)$, with ties resolved in favor of the direction that improves the objective value $c^Tx$. The pseudocode of the function that, given both the maximum shifts of a variable $x_j$, shifts it in the direction that improves $c^Tx$ is presented in Algorithm~\ref{alg:roundxjbestobj}. Particular care must be taken when non-fractional integer variables have to be shifted by this function: it is important to ensure that $ZI(x)$ is maintained by checking that the shift applied has a value of $1$. \par
 
 \begin{algorithm}[ht]
 	\KwIn{$j$: variable index; $\Delta_{j}^{up}$: maximum variable up-shift; $\Delta_{j}^{down}$: maximum variable down-shift.}
@@ -277,11 +280,18 @@ A more formal characterization of the maximum up-shift and down-shift of a varia
 			$\star$ update $c^Tx$ $\star$ \;
 			\BlankLine
 		}
-		\BlankLine
 	}
 	\caption{Round $x_j$ to improve objective.}
 	\label{alg:roundxjbestobj}
 \end{algorithm}
+
+After any rounding has been made, we need to update the constraint slacks $CS$ and possibly the singletons slacks $SS$. The pseudocode of the function that, given the signed shift that was used to round a variable $x_j$, computes the corresponding slack shift for each constraint of index $i$ and distributes it on the constraint slack $CS_i$ and/or the singletons slack $SS_i$ (if any) is presented in Algorithm~\ref{alg:updateslacks}. The function scans the constraints containing the integer variable $x_j$ and updates the slacks. For each constraint of index $i$ it first computes the signed overall slack shift corresponding to the signed variable shift $\Delta_{j}$, given by:
+\begin{equation}
+	\Delta_{i}^{slack} = a_{ij} \Delta_{j}
+\end{equation}
+where $a_{ij}$ is the coefficient of $x_j$ in the constraint. Then as much of the overall slack shift as possible is distributed on the constraint slack $CS_i$. If the constraint has any singletons, $CS_i$ could not be able to compensate for all of $\Delta_{i}^{slack}$, so in this case the remaining slack shift $\Delta_{i}^{SS}$ has to be distributed on the singletons slack $SS_i$, thus among the singletons of the constraint. \par
+
+Note that since the singletons of the constraint are actual variables of the MIP, an update of the singletons requires to update also the current objective value $c^Tx$. Finally, observe that the slacks are updated only after a successfull rounding or shifting, therefore $\Delta_{i}^{slack}$ can always be distributed correctly.
 
 \begin{algorithm}[ht]
 	\KwIn{$j$: index of the rounded variable; $\Delta_{j}$: signed variable shift.}
@@ -304,6 +314,7 @@ A more formal characterization of the maximum up-shift and down-shift of a varia
 					$\Delta_{i}^{SS}$ $\gets$ $\star$ remaining slack shift (covered by the singletons) $\star$ \;
 					$SS_i$ $\gets$ $SS_i + \Delta_{i}^{SS}$ \;
 					$\star$ update constraint singletons by distributing $\Delta_{i}^{SS}$ (if any) $\star$ \;
+					$\star$ update $c^Tx$ if singletons were updated $\star$ \;
 					\BlankLine
 				}
 				\Else{
@@ -318,14 +329,13 @@ A more formal characterization of the maximum up-shift and down-shift of a varia
 				\If{$\star$ constraint has singletons $\star$}{
 					\BlankLine
 					$\Delta_{i}^{SS}$ $\gets$ $\Delta_{i}^{slack}$ \;
+					$SS_i$ $\gets$ $SS_i + \Delta_{i}^{SS}$ \;
 					$\star$ update constraint singletons by distributing $\Delta_{i}^{SS}$ $\star$ \;
+					$\star$ update $c^Tx$ $\star$ \;
 					\BlankLine
 				}
-				\BlankLine
 			}
-			\BlankLine
 		}
-		\BlankLine
 	}
 	\caption{Update slacks.}
 	\label{alg:updateslacks}
