@@ -47,10 +47,33 @@ void add_point_multiple_trackers(double* point, double** tracker, int num, int* 
 }
 
 void plot_tracker(double* tracker, char* name, char** label, int size, char* filename) {
-	plot_multiple_trackers(&tracker, &name, label, 1, size, filename);
+	
+	plot_multivariate_tracker(&tracker, &name, label, 1, size, filename);
 }
 
-void plot_multiple_trackers(double** tracker, char** name, char** label, int num, int size, char* filename) {
+void plot_tracker_pair(double* first_tracker, double* second_tracker, char** name, char** label, int size, char* filename) {
+	
+	FILE* g_plot_pipe;
+	open_pipe(&g_plot_pipe, filename);
+
+	fprintf(g_plot_pipe, "set xlabel \"%s\" \nset ylabel \"%s\" \nset y2label \"%s\" \nset ytics nomirror \nset y2tics nomirror \n", label[0], label[1], label[2]);
+	fprintf(g_plot_pipe, "plot ");
+	fprintf(g_plot_pipe, "'-' axis x1y1 with lines linestyle 1 title \"%s\"", name[0]);
+	fprintf(g_plot_pipe, ", ");
+	fprintf(g_plot_pipe, "'-' axis x1y2 with lines linestyle 2 title \"%s\" \n", name[1]);
+	
+	// Print first tracker
+	for (int i = 0; i < size; i++) fprintf(g_plot_pipe, "%f %f\n", (double)i, first_tracker[i]);
+	fprintf(g_plot_pipe, "e\n");
+
+	// Print second tracker
+	for (int i = 0; i < size; i++) fprintf(g_plot_pipe, "%f %f\n", (double)i, second_tracker[i]);
+	fprintf(g_plot_pipe, "e\n");
+
+	close_pipe(g_plot_pipe);
+}
+
+void plot_multivariate_tracker(double** tracker, char** name, char** label, int num, int size, char* filename) {
 	FILE* g_plot_pipe;
 	open_pipe(&g_plot_pipe, filename);
 

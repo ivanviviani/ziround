@@ -35,7 +35,7 @@ void zi_round(instance* inst, int* numrounds) {
 	bufind = 0;
 	
 	// Allocate / Initialize plotting variables
-	inst->size_frac = 0; inst->size_cost = 0; inst->size_rounded = 0;
+	inst->size_frac = 0; inst->size_cost = 0; inst->size_toround = 0;
 	inst->len_frac = 10; inst->len_cost = 10; inst->len_rounded = 10;
 	inst->tracker_sol_frac = (double*)calloc(inst->len_frac, sizeof(double));
 	inst->tracker_sol_cost = (double*)calloc(inst->len_cost, sizeof(double));
@@ -56,7 +56,7 @@ void zi_round(instance* inst, int* numrounds) {
 	if (VERBOSE >= 10) {
 		if (PLOT_SOL_FRAC) add_point_single_tracker(frac[bufind], &(inst->tracker_sol_frac), &(inst->len_frac), &(inst->size_frac));
 		if (PLOT_SOL_COST) add_point_single_tracker(objval[bufind], &(inst->tracker_sol_cost), &(inst->len_cost), &(inst->size_cost));
-		if (PLOT_NUM_VARS_TO_ROUND) add_point_single_tracker(toround[bufind], &(inst->tracker_toround), &(inst->len_rounded), &(inst->size_rounded));
+		if (PLOT_NUM_VARS_TO_ROUND) add_point_single_tracker(toround[bufind], &(inst->tracker_toround), &(inst->len_rounded), &(inst->size_toround));
 	}
 	bufind = !bufind;
 
@@ -185,7 +185,7 @@ void zi_round(instance* inst, int* numrounds) {
 			if (VERBOSE >= 10) {
 				if (PLOT_SOL_FRAC) add_point_single_tracker(frac[bufind], &(inst->tracker_sol_frac), &(inst->len_frac), &(inst->size_frac));
 				if (PLOT_SOL_COST) add_point_single_tracker(objval[bufind], &(inst->tracker_sol_cost), &(inst->len_cost), &(inst->size_cost));
-				if (PLOT_NUM_VARS_TO_ROUND) add_point_single_tracker(toround[bufind], &(inst->tracker_toround), &(inst->len_rounded), &(inst->size_rounded));
+				if (PLOT_NUM_VARS_TO_ROUND) add_point_single_tracker(toround[bufind], &(inst->tracker_toround), &(inst->len_rounded), &(inst->size_toround));
 			}
 			bufind = !bufind;
 		} // end inner loop

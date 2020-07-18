@@ -82,7 +82,7 @@
 /**
 * @brief Plot solution cost flag (0-1).
 */
-#define PLOT_SOL_COST 1
+#define PLOT_SOL_COST 0
 
 /**
  * @brief Plot number of rounded variables flag (0-1).
@@ -144,13 +144,13 @@ typedef struct {
     // Plotting variables
     int size_frac;            /**< Actual current size of the solution fractionality tracker array. */
     int size_cost;            /**< Actual current size of the solution cost tracker array. */
-    int size_rounded;         /**< Actual current size of the number of rounded variables array. */
+    int size_toround;         /**< Actual current size of the number of variables to round array. */
     int len_frac;             /**< Maximum length of the solution fractionality tracker array (resizable). */
     int len_cost;             /**< Maximum length of the solution cost tracker array (resizable). */
     int len_rounded;          /**< Maximum length of the number of rounded variables array (resizable). */
     double* tracker_sol_frac; /**< Tracker of solution fractionality. */
     double* tracker_sol_cost; /**< Tracker of solution cost. */
-    double* tracker_toround;  /**< Tracker of number of rounded variables. */
+    double* tracker_toround;  /**< Tracker of number of variables to round. */
 
     // Parameters
     CPXENVptr env;            /**< CPLEX environment pointer. */
@@ -393,10 +393,10 @@ void check_slacks(instance* inst, int j, double delta_up, double delta_down, con
  * @param delta_down Candidate down-shift of variable \p j.
  * @param is_fractional Flag that indicates whether variable \p j is fractional or integer.
  * @param solfrac Pointer to the solution fractionality.
- * @param num_rounded Pointer to the number of rounded variables.
+ * @param num_toround Pointer to the number of variables to round.
  * @return 1 if variable \p j has been updated, 0 otherwise.
  */
-int round_xj_bestobj(instance* inst, int j, double objcoef, double delta_up, double delta_down, int is_fractional, double* solfrac, int* num_rounded);
+int round_xj_bestobj(instance* inst, int j, double objcoef, double delta_up, double delta_down, int is_fractional, double* solfrac, int* num_toround);
 
 /**
  * @brief Update the slack array field of the instance (incrementally)
@@ -571,7 +571,7 @@ void add_point_single_tracker(double point, double** tracker, int* len, int* siz
 void add_point_multiple_trackers(double* point, double** tracker, int num, int* len, int* size);
 
 /**
- * @brief Plot the results of the tracking.
+ * @brief Plot the results of a single tracker.
  *
  * @param tracker The array with the tracking information.
  * @param name The name of the tracker.
@@ -584,18 +584,32 @@ void add_point_multiple_trackers(double* point, double** tracker, int num, int* 
 void plot_tracker(double* tracker, char* name, char** label, int size, char* filename);
 
 /**
- * @brief Plot the result of two tracker on the same plot.
+ * @brief Plot the results of a pair of trackers with two different y-axis.
+ *
+ * @param first_tracker The array with the first tracker information.
+ * @param second_tracker The array with the second tracker information.
+ * @param name The names of the two trackers.
+ * @param label The labels of the two trackers (x, y1, y2).
+ * @param size The size of both arrays.
+ * @param filename The name of the file, where the plot is saved, this file
+ *        should have the `.png` extension. If this parameter is `NULL` the plot
+ *        is displayed on the screen.
+ */
+void plot_tracker_pair(double* first_tracker, double* second_tracker, char** name, char** label, int size, char* filename);
+
+/**
+ * @brief Plot the results of a multivariate tracker on the same plot.
  *
  * @param tracker  The matrix with tracking information.
- * @param name     The names of the trackers.
+ * @param name     The names of the tracker dimensions.
  * @param label    The labels of x and y axes.
- * @param num      The number of trackers.
- * @param size     The size of each tracker.
+ * @param num      The number of dimensions of the tracker.
+ * @param size     The size of the tracker.
  * @param filename The name of the file, where the plot is saved, this file
  *        should have the .png extension. If this parameter is null, the plot
  *        is displayed on the screen.
  */
-void plot_multiple_trackers(double** tracker, char** name, char** label, int num, int size, char* filename);
+void plot_multivariate_tracker(double** tracker, char** name, char** label, int num, int size, char* filename);
 
 /**
  * @brief Open a pipe, and set basic properties.

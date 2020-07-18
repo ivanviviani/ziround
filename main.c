@@ -214,46 +214,69 @@ void test_folder(instance* inst) {
 void plot(instance* inst) {
 
 	// Plot trackers of solution fractionality, cost or number of rounded variables
-	if (PLOT_SOL_FRAC) {
-		char** labels = (char**)calloc(2, sizeof(char*));
-		labels[0] = (char*)calloc(20, sizeof(char));
-		labels[1] = (char*)calloc(20, sizeof(char));
+	if (PLOT_SOL_FRAC && PLOT_NUM_VARS_TO_ROUND) {
+		char** label = (char**)calloc(3, sizeof(char*));
+		label[0] = (char*)calloc(6, sizeof(char));
+		label[1] = (char*)calloc(30, sizeof(char));
+		label[2] = (char*)calloc(30, sizeof(char));
+		char** name = (char**)calloc(2, sizeof(char*));
+		name[0] = (char*)calloc(20, sizeof(char));
+		name[1] = (char*)calloc(20, sizeof(char));
+		char* temp = (char*)calloc(20, sizeof(char));
+		sprintf(label[0], "Round");
+		sprintf(label[1], "Solution Fractionality (SF)");
+		sprintf(label[2], "#Variables to Round (#VR)");
+		sprintf(temp, inst->input_file);
+		strtok(temp, "/.");
+		sprintf(name[0], "%s (SF)", strtok(NULL, "/."));
+		sprintf(temp, inst->input_file);
+		strtok(temp, "/.");
+		sprintf(name[1], "%s (#VR)", strtok(NULL, "/."));
+		assert(inst->size_frac == inst->size_toround);
+		plot_tracker_pair(inst->tracker_sol_frac, inst->tracker_toround, name, label, inst->size_frac, NULL);
+		free_all(8, label[0], label[1], label[2], label, name[0], name[1], name, temp);
+	}
+	else if (PLOT_SOL_FRAC) {
+		char** label = (char**)calloc(2, sizeof(char*));
+		label[0] = (char*)calloc(6, sizeof(char));
+		label[1] = (char*)calloc(30, sizeof(char));
 		char* name = (char*)calloc(20, sizeof(char));
 		char* temp = (char*)calloc(20, sizeof(char));
-		sprintf(labels[0], "Round");
-		sprintf(labels[1], "Fractionality");
+		sprintf(label[0], "Round");
+		sprintf(label[1], "Solution Fractionality");
 		sprintf(temp, inst->input_file);
 		strtok(temp, "/.");
 		sprintf(name, strtok(NULL, "/."));
-		plot_tracker(inst->tracker_sol_frac, name, labels, inst->size_frac, NULL);
-		free_all(5, labels[0], labels[1], labels, name, temp);
+		plot_tracker(inst->tracker_sol_frac, name, label, inst->size_frac, NULL);
+		free_all(5, label[0], label[1], label, name, temp);
 	}
+	else if (PLOT_NUM_VARS_TO_ROUND) {
+		char** label = (char**)calloc(2, sizeof(char*));
+		label[0] = (char*)calloc(6, sizeof(char));
+		label[1] = (char*)calloc(30, sizeof(char));
+		char* name = (char*)calloc(20, sizeof(char));
+		char* temp = (char*)calloc(20, sizeof(char));
+		sprintf(label[0], "Round");
+		sprintf(label[1], "#Variables to Round");
+		sprintf(temp, inst->input_file);
+		strtok(temp, "/.");
+		sprintf(name, strtok(NULL, "/."));
+		plot_tracker(inst->tracker_toround, name, label, inst->size_toround, NULL);
+		free_all(5, label[0], label[1], label, name, temp);
+	}
+	
 	if (PLOT_SOL_COST) {
-		char** labels = (char**)calloc(2, sizeof(char*));
-		labels[0] = (char*)calloc(20, sizeof(char));
-		labels[1] = (char*)calloc(20, sizeof(char));
+		char** label = (char**)calloc(2, sizeof(char*));
+		label[0] = (char*)calloc(6, sizeof(char));
+		label[1] = (char*)calloc(30, sizeof(char));
 		char* name = (char*)calloc(20, sizeof(char));
 		char* temp = (char*)calloc(20, sizeof(char));
-		sprintf(labels[0], "Round");
-		sprintf(labels[1], "Cost");
+		sprintf(label[0], "Round");
+		sprintf(label[1], "Solution Cost");
 		sprintf(temp, inst->input_file);
 		strtok(temp, "/.");
 		sprintf(name, strtok(NULL, "/."));
-		plot_tracker(inst->tracker_sol_cost, name, labels, inst->size_cost, NULL);
-		free_all(5, labels[0], labels[1], labels, name, temp);
-	}
-	if (PLOT_NUM_VARS_TO_ROUND) {
-		char** labels = (char**)calloc(2, sizeof(char*));
-		labels[0] = (char*)calloc(20, sizeof(char));
-		labels[1] = (char*)calloc(20, sizeof(char));
-		char* name = (char*)calloc(20, sizeof(char));
-		char* temp = (char*)calloc(20, sizeof(char));
-		sprintf(labels[0], "Round");
-		sprintf(labels[1], "Rounded Variables");
-		sprintf(temp, inst->input_file);
-		strtok(temp, "/.");
-		sprintf(name, strtok(NULL, "/."));
-		plot_tracker(inst->tracker_toround, name, labels, inst->size_rounded, NULL);
-		free_all(5, labels[0], labels[1], labels, name, temp);
+		plot_tracker(inst->tracker_sol_cost, name, label, inst->size_cost, NULL);
+		free_all(5, label[0], label[1], label, name, temp);
 	}
 }

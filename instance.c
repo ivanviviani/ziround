@@ -62,7 +62,7 @@ void free_inst(instance* inst) {
 		if (status) {
 			print_warning("[free_inst]: Could not close CPLEX environment.\n");
 			CPXgeterrorstring(inst->env, status, errmsg);
-			print_error(stderr, "[free_inst]: %s", errmsg);
+			print_error("[free_inst]: %s\n", errmsg);
 		}
 	}
 
