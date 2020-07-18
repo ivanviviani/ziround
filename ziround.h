@@ -82,7 +82,7 @@
 /**
 * @brief Plot solution cost flag (0-1).
 */
-#define PLOT_SOL_COST 0
+#define PLOT_SOL_COST 1
 
 /**
  * @brief Plot number of rounded variables flag (0-1).
