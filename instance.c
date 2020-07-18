@@ -32,7 +32,7 @@ void init_inst(instance* inst) {
 	inst->rhs              = NULL;
 	inst->tracker_sol_frac = NULL;
 	inst->tracker_sol_cost = NULL;
-	inst->tracker_rounded  = NULL;
+	inst->tracker_toround  = NULL;
 	inst->env              = NULL; 
 	inst->lp               = NULL;
 	inst->objsen           = CPX_MIN;
@@ -52,7 +52,7 @@ void free_inst(instance* inst) {
 		inst->int_var, inst->row_singletons, inst->num_singletons, inst->rs_beg, 
 		inst->rs_coef, inst->ss_val, inst->ss_ub, inst->ss_lb, inst->rmatbeg, inst->rmatind,
 		inst->rmatval, inst->cmatbeg, inst->cmatind, inst->cmatval, inst->sense,
-		inst->rhs, inst->tracker_sol_frac, inst->tracker_sol_cost, inst->tracker_rounded);
+		inst->rhs, inst->tracker_sol_frac, inst->tracker_sol_cost, inst->tracker_toround);
 	
 	if (inst->lp != NULL) {
 		if (CPXfreeprob(inst->env, &(inst->lp))) print_error("[free_inst]: CPXfreeprob failed, error code %d.\n", status);

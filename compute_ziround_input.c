@@ -52,14 +52,14 @@ void save_integer_variables(instance* inst) {
 	assert(valid_var_types(inst->vartype, ncols));
 
 	// Remember integer variables {CPX_BINARY, CPX_INTEGER}
-	inst->vars_to_round = 0;
+	inst->num_int_vars = 0;
 	for (int j = 0; j < ncols; j++) {
 
 		switch (inst->vartype[j]) {
 			case CPX_INTEGER:
 			case CPX_BINARY:
 				inst->int_var[j] = 1;
-				(inst->vars_to_round)++;
+				(inst->num_int_vars)++;
 				break;
 			case CPX_CONTINUOUS:
 				inst->int_var[j] = 0;

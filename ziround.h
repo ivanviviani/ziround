@@ -77,17 +77,17 @@
 /**
  * @brief Plot solution fractionality flag (0-1).
  */
-#define PLOT_SOL_FRAC 0
+#define PLOT_SOL_FRAC 1
 
 /**
 * @brief Plot solution cost flag (0-1).
 */
-#define PLOT_SOL_COST 0
+#define PLOT_SOL_COST 1
 
 /**
  * @brief Plot number of rounded variables flag (0-1).
  */
-#define PLOT_NUM_ROUNDED_VARS 0
+#define PLOT_NUM_VARS_TO_ROUND 1
 
 /**
  * @brief Tolerance for non-integer numbers as considered by CPLEX.
@@ -117,7 +117,7 @@ typedef struct {
     int objsen;               /**< Objective function sense, CPX_MIN (default) or CPX_MAX (specified from command line). */
     char* vartype;            /**< Variable types (before converting MIP to LP), integer/binary or continuous. */
     int* int_var;             /**< Flags array that keeps track of integer/binary (value 1) and continuous (value 0) variables. */
-    int vars_to_round;        /**< Number of integer/binary variables to round. */
+    int num_int_vars;         /**< Number of integer/binary variables to round. */
     double solfrac;           /**< Solution fractionality. */
 
     // Singletons
@@ -150,7 +150,7 @@ typedef struct {
     int len_rounded;          /**< Maximum length of the number of rounded variables array (resizable). */
     double* tracker_sol_frac; /**< Tracker of solution fractionality. */
     double* tracker_sol_cost; /**< Tracker of solution cost. */
-    double* tracker_rounded;  /**< Tracker of number of rounded variables. */
+    double* tracker_toround;  /**< Tracker of number of rounded variables. */
 
     // Parameters
     CPXENVptr env;            /**< CPLEX environment pointer. */

@@ -242,7 +242,7 @@ void plot(instance* inst) {
 		plot_tracker(inst->tracker_sol_cost, name, labels, inst->size_cost, NULL);
 		free_all(5, labels[0], labels[1], labels, name, temp);
 	}
-	if (PLOT_NUM_ROUNDED_VARS) {
+	if (PLOT_NUM_VARS_TO_ROUND) {
 		char** labels = (char**)calloc(2, sizeof(char*));
 		labels[0] = (char*)calloc(20, sizeof(char));
 		labels[1] = (char*)calloc(20, sizeof(char));
@@ -253,7 +253,7 @@ void plot(instance* inst) {
 		sprintf(temp, inst->input_file);
 		strtok(temp, "/.");
 		sprintf(name, strtok(NULL, "/."));
-		plot_tracker(inst->tracker_rounded, name, labels, inst->size_rounded, NULL);
+		plot_tracker(inst->tracker_toround, name, labels, inst->size_rounded, NULL);
 		free_all(5, labels[0], labels[1], labels, name, temp);
 	}
 }
