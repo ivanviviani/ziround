@@ -15,7 +15,7 @@ void setup_CPLEX_env(instance* inst) {
 	if (inst->env == NULL) {
 		print_warning("[setup_CPLEX_env]: Could not open CPLEX environment.\n");
 		CPXgeterrorstring(inst->env, status, errmsg);
-		print_error("[setup_CPLEX_env]: %s", errmsg);
+		print_error("[setup_CPLEX_env]: %s\n", errmsg);
 	}
 
 	// Set CPLEX parameters

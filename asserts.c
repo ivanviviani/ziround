@@ -28,12 +28,12 @@ int non_positive(double num) {
 
 int negative(double num) {
 
-	return !non_negative(num);
+	return (!non_negative(num));
 }
 
 int positive(double num) {
 
-	return !non_positive(num);
+	return (!non_positive(num));
 }
 
 int zero(double num) {
@@ -43,22 +43,22 @@ int zero(double num) {
 
 int equals(double x, double y) {
 
-	return zero(x - y);
+	return (zero(x - y));
 }
 
 int not_equals(double x, double y) {
 
-	return !zero(x - y);
+	return (!zero(x - y));
 }
 
 int less_than(double x, double y) {
 
-	return negative(x - y);
+	return (negative(x - y));
 }
 
 int greater_than(double x, double y) {
 
-	return positive(x - y);
+	return (positive(x - y));
 }
 
 int index_in_bounds(int ind, int len) {

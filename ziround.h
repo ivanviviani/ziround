@@ -25,17 +25,17 @@
 /**
  * @brief Plot solution fractionality flag (0-1).
  */
-#define PLOT_SOL_FRAC 0
+#define PLOT_SOL_FRAC 1
 
 /**
 * @brief Plot solution cost flag (0-1).
 */
-#define PLOT_SOL_COST 0
+#define PLOT_SOL_COST 1
 
 /**
  * @brief Plot number of rounded variables flag (0-1).
  */
-#define PLOT_NUM_VARS_TO_ROUND 0
+#define PLOT_NUM_VARS_TO_ROUND 1
 
 /**
  * @brief Tolerance for non-integer numbers as considered by CPLEX.
