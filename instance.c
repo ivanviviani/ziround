@@ -7,34 +7,13 @@
 #include "ziround.h"
 
 void init_inst(instance* inst) {
-
-	inst->x                = NULL; 
-	inst->obj              = NULL; 
-	inst->lb               = NULL; 
-	inst->ub               = NULL;
-	inst->slack            = NULL; 
-	inst->vartype          = NULL;
-	inst->int_var          = NULL;
-	inst->row_singletons   = NULL;
-	inst->num_singletons   = NULL;
-	inst->rs_beg           = NULL;
-	inst->rs_coef          = NULL;
-	inst->ss_val           = NULL;
-	inst->ss_ub            = NULL;
-	inst->ss_lb            = NULL;
-	inst->rmatbeg          = NULL; 
-	inst->rmatind          = NULL;
-	inst->rmatval          = NULL; 
-	inst->cmatbeg          = NULL; 
-	inst->cmatind          = NULL;
-	inst->cmatval          = NULL; 
-	inst->sense            = NULL; 
-	inst->rhs              = NULL;
-	inst->tracker_sol_frac = NULL;
-	inst->tracker_sol_cost = NULL;
-	inst->tracker_toround  = NULL;
-	inst->env              = NULL; 
-	inst->lp               = NULL;
+	
+	null_all(27, inst->x, inst->obj, inst->lb, inst->ub, inst->slack, inst->vartype,
+		inst->int_var, inst->row_singletons, inst->num_singletons, inst->rs_beg,
+		inst->rs_coef, inst->ss_val, inst->ss_ub, inst->ss_lb, inst->rmatbeg,
+		inst->rmatind, inst->rmatval, inst->cmatbeg, inst->cmatind, inst->cmatval,
+		inst->sense, inst->rhs, inst->tracker_sol_frac, inst->tracker_sol_cost,
+		inst->tracker_toround, inst->env, inst->lp);
 	inst->objsen           = CPX_MIN;
 	inst->extension        = 0;
 	inst->timelimit        = 3600;

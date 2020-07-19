@@ -125,3 +125,16 @@ void free_all(int count, ...) {
 	va_end(args);
 	fflush(NULL);
 }
+
+void null_all(int count, ...) {
+	va_list args;
+	va_start(args, count);
+
+	for (int i = 0; i < count; i++) {
+		void* elem = va_arg(args, void*);
+		elem = NULL;
+	}
+
+	va_end(args);
+	fflush(NULL);
+}

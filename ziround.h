@@ -7,59 +7,7 @@
 #pragma once
 #ifndef ZIROUND_H_
 #define ZIROUND_H_
-/*  README.md
-    ZI-Round MIP Rounding Heuristic (version 2)
 
-    Usage: ziroundv2 --input-mip [filename.mps] --obj-sense [max/min]
-
-    Variables:
-
-        Primal feasible point x = [x1, x2, ..., xj, ...]
-        Upper bounds of all xj
-        Lower bounds of all xj
-        Slacks si
-        Constraint matrix coefficients aij (both by rows and by columns)
-        Constraints senses {'L','E','G'}
-        Objective coefficients
-        Problem type {CPX_MAX,CPX_MIN}
-        Threshold epsilon = 0.00001
-
-    Formulas:
-
-        Fractionality of xj: ZI(xj) = min{xj - floor(xj), ceil(xj) - xj}
-        Integer infeasibility of x[]: ZI(x) = sum{ZI(xj)}
-        For 'L' (<=) constraints: (si non-negative)
-            ub_j = min_i{si/aij : aij > 0}
-            lb_j = min_i{-si/aij : aij < 0}
-        For 'G' (>=) constraints: (si non-positive)
-            ub_j = min_i{si/aij : aij < 0}
-            lb_j = min_i{-si/aij : aij > 0}
-        UBj = min{ub_j, ub(xj) - xj}
-        LBj = min{lb_j, xj - lb(xj)}
-
-    ZI-Round Algorithm (version 2):
-        Input: Primal feasible point x
-
-        Repeat
-        Loop For each integer variable xj
-            If xj non-fractional
-            Then
-                Calculate UBj,LBj,1
-                If cj > 0 and LBj = 1 or cj < 0 and UB = 1
-                Then Update xj to improve objective and Update slacks
-            If xj fractional
-            Then
-                Calculate UBj,LBj,epsilon
-                If ZI(xj + UBj) = ZI(xj - LBj) and ZI(xj + UBj) < ZI(xj)
-                Then Update xj to improve objective and Update slacks
-                Else If ZI(xj + UBj) < ZI(xj - LBj) and ZI(xj + UBj) < ZI(xj)
-                Then Set xj = xj + UBj and Update slacks
-                Else If ZI(xj - LBj) < ZI(xj + UBj) and ZI(xj - LBj) < ZI(xj)
-                Then Set xj = xj - LBj and Update slacks
-        Until No more updates found
-
-        Detail: stop calculating UBj,LBj if they both fall below epsilon
-*/
 #include <cplex.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -163,7 +111,7 @@ typedef struct {
 
 } instance;
 
-// MAIN ----------------------------------------------------------------------------------------------
+// MAIN.C ----------------------------------------------------------------------------------------------
 
 /**
  * @brief Test ZI-Round on a single instance.
@@ -185,9 +133,9 @@ void test_folder(instance* inst);
  * @param inst Pointer to the instance.
  */
 void plot(instance* inst);
-// ---------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------------------
 
-// INSTANCE ------------------------------------------------------------------------------------------
+// INSTANCE.C ------------------------------------------------------------------------------------------
 
 /**
  * @brief Initialize the appropriate fields of the instance.
@@ -202,9 +150,9 @@ void init_inst(instance* inst);
  * @param inst Pointer to the already populated instance.
  */
 void free_inst(instance* inst);
-// ---------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------------------
 
-// CMD_INTERFACE -------------------------------------------------------------------------------------
+// CMD_INTERFACE.C -------------------------------------------------------------------------------------
 
 /**
  * @brief Parse the arguments from the command line and populate the
@@ -215,9 +163,9 @@ void free_inst(instance* inst);
  * @param inst Pointer to the instance.
  */
 void parse_cmd(int argc, char** argv, instance* inst);
-// ---------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------------------
 
-// COMPUTE_ZIROUND_INPUT -----------------------------------------------------------------------------
+// COMPUTE_ZIROUND_INPUT.C -----------------------------------------------------------------------------
 
 /**
  * @brief Setup the CPLEX environment for the problem represented by the instance.
@@ -250,9 +198,9 @@ void save_integer_variables(instance* inst);
  * @param inst Pointer to the already populated instance.
  */
 void solve_continuous_relaxation(instance* inst);
-// ---------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------------------
 
-// READ_ZIROUND_INPUT --------------------------------------------------------------------------------
+// READ_ZIROUND_INPUT.C --------------------------------------------------------------------------------
 
 /**
  * @brief Read the problem data from the CPLEX lp using all the read functions,
@@ -357,9 +305,9 @@ void compute_singletons_slacks(instance* inst);
  * @param obj Objective function coefficients.
  */
 void sort_singletons(int start, int end, int* rs_ind, double* rs_coef, double* obj);
-// ---------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------------------
 
-// ZIROUND -------------------------------------------------------------------------------------------
+// ZIROUND.C -------------------------------------------------------------------------------------------
 
 /**
  * @brief Use the ZI-Round heuristic to round the continuous relaxation solution
@@ -439,9 +387,9 @@ void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, c
  * @return Singletons slack of the constraint.
  */
 double compute_ss_val(instance* inst, int rowind);
-// ---------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------------------
 
-// UTIL ----------------------------------------------------------------------------------------------
+// UTIL.C ----------------------------------------------------------------------------------------------
 
 /**
  * @brief Check that all the variable bounds are satisfied, for the given solution \p x.
@@ -545,9 +493,20 @@ void clone_array(double* arr, double* clo, int len);
  * @param ... The actual pointers.
  */
 void free_all(int count, ...);
-// ---------------------------------------------------------------------------------------------------
 
-// PLOT ----------------------------------------------------------------------------------------------
+/**
+ * @brief Initialize multiple pointers to NULL.
+ *
+ * @details It does not check the type of the passed ellipsis parameters, so
+ * be sure that actual pointers are passed. Use with care.
+ *
+ * @param count The number of pointers.
+ * @param ... The actual pointers.
+ */
+void null_all(int count, ...);
+// -----------------------------------------------------------------------------------------------------
+
+// PLOT.C ----------------------------------------------------------------------------------------------
 
 /**
  * @brief Given a tracker, add a new point to it.
@@ -633,9 +592,9 @@ static void open_pipe(FILE** pointer_to_g_plot_pipe, char* filename);
  * @param g_plot_pipe The pipe to close.
  */
 static void close_pipe(FILE* g_plot_pipe);
-// ---------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------------------
 
-// PRINT ---------------------------------------------------------------------------------------------
+// PRINT.C ---------------------------------------------------------------------------------------------
 
 /**
  *	@brief Print a warning message. The message is preceeded by `"\n\nWARNING: "`.
@@ -671,9 +630,9 @@ void print_verbose(int msg_verb, const char* format, ...);
  * @param to_file Flag set to 1 if the problem info is to be printed to file, 0 otherwise.
  */
 void print_problem_info(instance* inst, int sol_available, int to_file);
-// ---------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------------------
 
-// ASSERTS -------------------------------------------------------------------------------------------
+// ASSERTS.C -------------------------------------------------------------------------------------------
 
 /**
  * @brief Check whether an integer number is positive.
@@ -862,6 +821,6 @@ int valid_bounds(double* lower, double* upper, int nvars);
  * @return 1 If the assert succeeds, 0 otherwise.
  */
 int var_in_bounds(double var, double lb, double ub);
-// ---------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------------------
 
 #endif /* ZIROUND_H_ */
