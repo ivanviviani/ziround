@@ -484,17 +484,6 @@ double dot_product(double* coef, double* var_value, int len);
  * @param ... The actual pointers.
  */
 void free_all(int count, ...);
-
-/**
- * @brief Initialize multiple pointers to NULL.
- *
- * @details It does not check the type of the passed ellipsis parameters, so
- * be sure that actual pointers are passed. Use with care.
- *
- * @param count The number of pointers.
- * @param ... The actual pointers.
- */
-void null_all(int count, ...);
 // -----------------------------------------------------------------------------------------------------
 
 // PLOT.C ----------------------------------------------------------------------------------------------
