@@ -17,10 +17,10 @@ void zi_round(instance* inst, int* numrounds) {
 	double ZIplus; 		 /**< Fractionality of a shifted up variable (used in function zi_round). */
 	double ZIminus; 	 /**< Fractionality of a shifted down variable (used in fucntion zi_round). */
 	int updated;	     /**< Flag set to 1 when at least one variable shift has been made. */
-	int num_toround;     /**< Current number of toround variables (binary/integer from the original MIP). */
+	int num_toround;     /**< Current number of variables to round (binary/integer from the original MIP). */
 	double frac[2];      /**< Circular buffer for current solution fractionality. */
 	double objval[2];    /**< Circular buffer for current objective value. */
-	int toround[2];      /**< Circular buffer for current number of toround variables. */
+	int toround[2];      /**< Circular buffer for current number of variables to round. */
 	int bufind;          /**< Current index in the circular buffer. */
 
 	// Allocate / Initialize
@@ -43,7 +43,7 @@ void zi_round(instance* inst, int* numrounds) {
 
 	print_verbose(10, "[ziround]: Number of integer variables: %d\n", inst->num_int_vars);
 
-	// Print solution fractionality, cost, number of toround solutions and update trackers
+	// Print solution fractionality, cost, number of variables to round and update trackers
 	print_verbose(10, "*******************************\n* Solfrac | Objval | #ToRound | Round *\n");
 	inst->solfrac = sol_fractionality(inst->x, inst->int_var, inst->ncols);
 	frac[bufind] = inst->solfrac;
@@ -132,12 +132,12 @@ void zi_round(instance* inst, int* numrounds) {
 						// Check whether all affected constraints have enough slack for a ROUND UP of xj
 						check_slacks(inst, j, delta_up[j], delta_down[j], 'U');
 
-						inst->solfrac -= fractionality(inst->x[j]); // (1) Assume xj fractional will be toround to an integer
+						inst->solfrac -= fractionality(inst->x[j]); // (1) Assume xj fractional will be rounded to an integer
 						
 						// Round UP
 						inst->x[j] += delta_up[j];
 
-						inst->solfrac += fractionality(inst->x[j]); // (2) In case xj was not toround
+						inst->solfrac += fractionality(inst->x[j]); // (2) In case xj was not rounded
 
 						updated = 1;
 						if (!is_fractional(inst->x[j])) num_toround--;
@@ -156,12 +156,12 @@ void zi_round(instance* inst, int* numrounds) {
 						// Check whether all affected constraints have enough slack for a ROUND DOWN of xj
 						check_slacks(inst, j, delta_up[j], delta_down[j], 'D');
 
-						inst->solfrac -= fractionality(inst->x[j]); // (1) Assume xj fractional will be toround to an integer
+						inst->solfrac -= fractionality(inst->x[j]); // (1) Assume xj fractional will be rounded to an integer
 						
 						// Round DOWN
 						inst->x[j] -= delta_down[j];
 
-						inst->solfrac += fractionality(inst->x[j]); // (2) In case xj was not toround
+						inst->solfrac += fractionality(inst->x[j]); // (2) In case xj was not rounded
 
 						updated = 1;
 						if (!is_fractional(inst->x[j])) num_toround--;
@@ -175,7 +175,7 @@ void zi_round(instance* inst, int* numrounds) {
 					print_error(" in function is_fractional.\n");
 			}
 
-			// Print solution fractionality, cost, number of toround variables and update trackers
+			// Print solution fractionality, cost, number of variables to round and update trackers
 			frac[bufind] = inst->solfrac;
 			objval[bufind] = inst->objval;
 			toround[bufind] = num_toround;
@@ -312,7 +312,7 @@ void check_slacks(instance* inst, int j, double delta_up, double delta_down, con
 				}
 				else {
 					// Extension disabled OR enabled but no singletons
-					print_error("[check_slacks][x_%d][row %d '%c']: Extension disabled OR constraint has no singletons --> slack ZERO --> x_%d cannot be toround.\n", j + 1, rowind + 1, inst->sense[rowind], j + 1);
+					print_error("[check_slacks][x_%d][row %d '%c']: Extension disabled OR constraint has no singletons --> slack ZERO --> x_%d cannot be rounded.\n", j + 1, rowind + 1, inst->sense[rowind], j + 1);
 				}
 
 				break;
@@ -353,7 +353,7 @@ int round_xj_bestobj(instance* inst, int j, double objcoef, double delta_up, dou
 				// Check whether all affected constraints have enough slack for a ROUND UP of xj
 				check_slacks(inst, j, delta_up, delta_down, 'U');
 
-				// (1) Assume xj fractional will be toround to an integer
+				// (1) Assume xj fractional will be rounded to an integer
 				if (xj_fractional) { 
 					(*num_toround)--; 
 					*solfrac -= fractionality(inst->x[j]); 
@@ -362,7 +362,7 @@ int round_xj_bestobj(instance* inst, int j, double objcoef, double delta_up, dou
 				// Round UP (if xj is not fractional then delta_up[j] must be 1.0)
 				inst->x[j] += delta_up;
 
-				// (2) If xj was not toround to an integer
+				// (2) If xj was not rounded to an integer
 				if (is_fractional(inst->x[j])) {
 					(*num_toround)++;
 					*solfrac += fractionality(inst->x[j]);
@@ -386,7 +386,7 @@ int round_xj_bestobj(instance* inst, int j, double objcoef, double delta_up, dou
 				// Check whether all affected constraints have enough slack for a ROUND DOWN of xj
 				check_slacks(inst, j, delta_up, delta_down, 'D');
 				
-				// (1) Assume xj fractional will be toround to an integer
+				// (1) Assume xj fractional will be rounded to an integer
 				if (xj_fractional) {
 					(*num_toround)--;
 					*solfrac -= fractionality(inst->x[j]);
@@ -395,7 +395,7 @@ int round_xj_bestobj(instance* inst, int j, double objcoef, double delta_up, dou
 				// Round DOWN (if xj is not fractional then delta_down[j] must be 1.0)
 				inst->x[j] -= delta_down;
 
-				// (2) If xj was not toround to an integer
+				// (2) If xj was not rounded to an integer
 				if (is_fractional(inst->x[j])) {
 					(*num_toround)++;
 					*solfrac += fractionality(inst->x[j]);
@@ -416,7 +416,7 @@ int round_xj_bestobj(instance* inst, int j, double objcoef, double delta_up, dou
 				// Check whether all affected constraints have enough slack for a ROUND DOWN of xj
 				check_slacks(inst, j, delta_up, delta_down, 'D');
 
-				// (1) Assume xj fractional will be toround to an integer
+				// (1) Assume xj fractional will be rounded to an integer
 				if (xj_fractional) {
 					(*num_toround)--;
 					*solfrac -= fractionality(inst->x[j]);
@@ -425,7 +425,7 @@ int round_xj_bestobj(instance* inst, int j, double objcoef, double delta_up, dou
 				// Round arbitrarily (DOWN)
 				inst->x[j] -= delta_down;
 
-				// (2) If xj was not toround to an integer
+				// (2) If xj was not rounded to an integer
 				if (is_fractional(inst->x[j])) {
 					(*num_toround)++;
 					*solfrac += fractionality(inst->x[j]);
@@ -446,7 +446,7 @@ int round_xj_bestobj(instance* inst, int j, double objcoef, double delta_up, dou
 				// Check whether all affected constraints have enough slack for a ROUND UP of xj
 				check_slacks(inst, j, delta_up, delta_down, 'U');
 
-				// (1) Assume xj fractional will be toround to an integer
+				// (1) Assume xj fractional will be rounded to an integer
 				if (xj_fractional) {
 					(*num_toround)--;
 					*solfrac -= fractionality(inst->x[j]);
@@ -455,7 +455,7 @@ int round_xj_bestobj(instance* inst, int j, double objcoef, double delta_up, dou
 				// Round arbitrarily (UP)
 				inst->x[j] += delta_up;
 
-				// (2) If xj was not toround to an integer
+				// (2) If xj was not rounded to an integer
 				if (is_fractional(inst->x[j])) {
 					(*num_toround)++;
 					*solfrac += fractionality(inst->x[j]);
@@ -485,7 +485,7 @@ int round_xj_bestobj(instance* inst, int j, double objcoef, double delta_up, dou
 				// Check whether all affected constraints have enough slack for a ROUND UP of xj
 				check_slacks(inst, j, delta_up, delta_down, 'U');
 
-				// (1) Assume xj fractional will be toround to an integer
+				// (1) Assume xj fractional will be rounded to an integer
 				if (xj_fractional) {
 					(*num_toround)--;
 					*solfrac -= fractionality(inst->x[j]);
@@ -494,7 +494,7 @@ int round_xj_bestobj(instance* inst, int j, double objcoef, double delta_up, dou
 				// Round UP (if xj is not fractional then delta_up[j] must be 1.0)
 				inst->x[j] += delta_up;
 
-				// (2) If xj was not toround to an integer
+				// (2) If xj was not rounded to an integer
 				if (is_fractional(inst->x[j])) {
 					(*num_toround)++;
 					*solfrac += fractionality(inst->x[j]);
@@ -518,7 +518,7 @@ int round_xj_bestobj(instance* inst, int j, double objcoef, double delta_up, dou
 				// Check whether all affected constraints have enough slack for a ROUND DOWN of xj
 				check_slacks(inst, j, delta_up, delta_down, 'D');
 
-				// (1) Assume xj fractional will be toround to an integer
+				// (1) Assume xj fractional will be rounded to an integer
 				if (xj_fractional) {
 					(*num_toround)--;
 					*solfrac -= fractionality(inst->x[j]);
@@ -527,7 +527,7 @@ int round_xj_bestobj(instance* inst, int j, double objcoef, double delta_up, dou
 				// Round DOWN (if xj is not fractional then delta_down[j] must be 1.0)
 				inst->x[j] -= delta_down;
 
-				// (2) If xj was not toround to an integer
+				// (2) If xj was not rounded to an integer
 				if (is_fractional(inst->x[j])) {
 					(*num_toround)++;
 					*solfrac += fractionality(inst->x[j]);
@@ -548,7 +548,7 @@ int round_xj_bestobj(instance* inst, int j, double objcoef, double delta_up, dou
 				// Check whether all affected constraints have enough slack for a ROUND DOWN of xj
 				check_slacks(inst, j, delta_up, delta_down, 'D');
 
-				// (1) Assume xj fractional will be toround to an integer
+				// (1) Assume xj fractional will be rounded to an integer
 				if (xj_fractional) {
 					(*num_toround)--;
 					*solfrac -= fractionality(inst->x[j]);
@@ -557,7 +557,7 @@ int round_xj_bestobj(instance* inst, int j, double objcoef, double delta_up, dou
 				// Round arbitrarily (DOWN)
 				inst->x[j] -= delta_down;
 
-				// (2) If xj was not toround to an integer
+				// (2) If xj was not rounded to an integer
 				if (is_fractional(inst->x[j])) {
 					(*num_toround)++;
 					*solfrac += fractionality(inst->x[j]);
@@ -578,7 +578,7 @@ int round_xj_bestobj(instance* inst, int j, double objcoef, double delta_up, dou
 				// Check whether all affected constraints have enough slack for a ROUND UP of xj
 				check_slacks(inst, j, delta_up, delta_down, 'U');
 
-				// (1) Assume xj fractional will be toround to an integer
+				// (1) Assume xj fractional will be rounded to an integer
 				if (xj_fractional) {
 					(*num_toround)--;
 					*solfrac -= fractionality(inst->x[j]);
@@ -587,7 +587,7 @@ int round_xj_bestobj(instance* inst, int j, double objcoef, double delta_up, dou
 				// Round arbitrarily (UP)
 				inst->x[j] += delta_up;
 
-				// (2) If xj was not toround to an integer
+				// (2) If xj was not rounded to an integer
 				if (is_fractional(inst->x[j])) {
 					(*num_toround)++;
 					*solfrac += fractionality(inst->x[j]);
