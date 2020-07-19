@@ -25,17 +25,17 @@
 /**
  * @brief Plot solution fractionality flag (0-1).
  */
-#define PLOT_SOL_FRAC 1
+#define PLOT_SOL_FRAC 0
 
 /**
 * @brief Plot solution cost flag (0-1).
 */
-#define PLOT_SOL_COST 1
+#define PLOT_SOL_COST 0
 
 /**
  * @brief Plot number of rounded variables flag (0-1).
  */
-#define PLOT_NUM_VARS_TO_ROUND 1
+#define PLOT_NUM_VARS_TO_ROUND 0
 
 /**
  * @brief Tolerance for non-integer numbers as considered by CPLEX.
@@ -95,7 +95,7 @@ typedef struct {
     int size_toround;         /**< Actual current size of the number of variables to round array. */
     int len_frac;             /**< Maximum length of the solution fractionality tracker array (resizable). */
     int len_cost;             /**< Maximum length of the solution cost tracker array (resizable). */
-    int len_rounded;          /**< Maximum length of the number of rounded variables array (resizable). */
+    int len_toround;          /**< Maximum length of the number of rounded variables array (resizable). */
     double* tracker_sol_frac; /**< Tracker of solution fractionality. */
     double* tracker_sol_cost; /**< Tracker of solution cost. */
     double* tracker_toround;  /**< Tracker of number of variables to round. */
@@ -475,15 +475,6 @@ int is_fractional(double num);
 double dot_product(double* coef, double* var_value, int len);
 
 /**
- * @brief Clone an array into a copy (both already allocated).
- *
- * @param arr The array to be cloned.
- * @param clo Clone copy of the given array.
- * @param len Length of the array.
- */
-void clone_array(double* arr, double* clo, int len);
-
-/**
  * @brief Free memory allocated to multiple pointers.
  *
  * @details It does not check the type of the passed ellipsis parameters, so
@@ -621,15 +612,6 @@ void print_error(const char* err, ...);
  *	@param ... The multiple parameters.
  */
 void print_verbose(int msg_verb, const char* format, ...);
-
-/**
- * @brief [DEBUG] Print problem information to standard output or file.
- *
- * @param inst Pointer to the already populated instance.
- * @param sol_available Flag set to 1 if the instance contains a solution, 0 otherwise.
- * @param to_file Flag set to 1 if the problem info is to be printed to file, 0 otherwise.
- */
-void print_problem_info(instance* inst, int sol_available, int to_file);
 // -----------------------------------------------------------------------------------------------------
 
 // ASSERTS.C -------------------------------------------------------------------------------------------

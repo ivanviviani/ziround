@@ -18,28 +18,14 @@ int main(int argc, char** argv) {
 
 	instance inst; /**< General support structure. */
 	
-	// Initialize instance
 	init_inst(&inst);
 	
-	// Parse command line arguments
 	parse_cmd(argc, argv, &inst);
 
-	// [] Test a single instance
-	if (strcmp(inst.input_file, "NULL")) {
+	strcmp(inst.input_file, "NULL")   ? test_instance(&inst) :
+	strcmp(inst.input_folder, "NULL") ? test_folder(&inst) :
+	print_error("Input file or folder required! See help.\n");
 
-		test_instance(&inst);
-	}
-	// [] Test all instances in a folder
-	else if (strcmp(inst.input_folder, "NULL")) {
-
-		test_folder(&inst);
-	}
-	// [] More parameters are required
-	else {
-		print_error("Input file or folder required! See help.\n");
-	}
-
-	// Free instance
 	free_inst(&inst);
 	
 	return EXIT_SUCCESS;
@@ -59,9 +45,6 @@ void test_instance(instance* inst) {
 	// Remember integer/binary variables of the original MIP
 	save_integer_variables(inst);
 
-	// [DEBUG ONLY]: Print problem info to file
-	if (VERBOSE >= 201) print_problem_info(inst, 0, 1);
-
 	// Solve continuous relaxation of the MIP problem
 	solve_continuous_relaxation(inst);
 
@@ -72,7 +55,6 @@ void test_instance(instance* inst) {
 	populate_inst(inst);
 
 	// Print problem info to file
-	if (VERBOSE >= 201) print_problem_info(inst, 1, 1);
 	if (VERBOSE >= 201) {
 		output = fopen("output.txt", "a");
 		fprintf(output, "\n[INFO]: Continuous relaxation objective value: %.10g.\n", inst->objval);
@@ -127,14 +109,16 @@ void test_instance(instance* inst) {
 
 void test_folder(instance* inst) {
 
-	time_t start, exec_time;   /**< Execution time variables. */
-	double solfrac = LONG_MIN; /**< Solution fractionality. */
-	int numrounds = 0;         /**< Number of rounds (outer loops) of ZI-Round. */
+	time_t start, exec_time;        /**< Execution time variables. */
+	double solfrac = LONG_MIN;      /**< Solution fractionality. */
+	int numrounds = 0;              /**< Number of rounds (outer loops) of ZI-Round. */
+	char* input_folder_name = NULL; /**< Input folder name. */
+	char* output_path = NULL;       /**< Output path. */
 
 	// Allocate input folder and output path
-	char* input_folder_name = (char*)calloc(30, sizeof(char));
-	char* output_path = (char*)calloc(60, sizeof(char)); if (input_folder_name == NULL || output_path == NULL) print_error("[test_folder]: Failed to allocate input filename, folder or output path.\n");
-	sprintf(input_folder_name, "%s", inst->input_folder);
+	input_folder_name = (char*)calloc(30, sizeof(char));
+	output_path = (char*)calloc(60, sizeof(char)); if (input_folder_name == NULL || output_path == NULL) print_error("[test_folder]: Failed to allocate input filename, folder or output path.\n");
+	sprintf(input_folder_name, inst->input_folder);
 
 	// Set output file name
 	sprintf(output_path, "ziround_test_results.csv");

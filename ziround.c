@@ -33,10 +33,10 @@ void zi_round(instance* inst, int* numrounds) {
 	
 	// Allocate / Initialize plotting variables
 	inst->size_frac = 0; inst->size_cost = 0; inst->size_toround = 0;
-	inst->len_frac = 10; inst->len_cost = 10; inst->len_rounded = 10;
+	inst->len_frac = 10; inst->len_cost = 10; inst->len_toround = 10;
 	inst->tracker_sol_frac = (double*)calloc(inst->len_frac, sizeof(double));
 	inst->tracker_sol_cost = (double*)calloc(inst->len_cost, sizeof(double));
-	inst->tracker_toround = (double*)calloc(inst->len_rounded, sizeof(double)); if (inst->tracker_sol_frac == NULL || inst->tracker_sol_cost == NULL || inst->tracker_toround == NULL) print_error("[ziround]: Failed to allocate trackers.\n");
+	inst->tracker_toround = (double*)calloc(inst->len_toround, sizeof(double)); if (inst->tracker_sol_frac == NULL || inst->tracker_sol_cost == NULL || inst->tracker_toround == NULL) print_error("[ziround]: Failed to allocate trackers.\n");
 
 	print_verbose(10, "[ziround]: Number of integer variables: %d\n", inst->num_int_vars);
 
@@ -53,7 +53,7 @@ void zi_round(instance* inst, int* numrounds) {
 	if (VERBOSE >= 10) {
 		if (PLOT_SOL_FRAC) add_point_single_tracker(frac[bufind], &(inst->tracker_sol_frac), &(inst->len_frac), &(inst->size_frac));
 		if (PLOT_SOL_COST) add_point_single_tracker(objval[bufind], &(inst->tracker_sol_cost), &(inst->len_cost), &(inst->size_cost));
-		if (PLOT_NUM_VARS_TO_ROUND) add_point_single_tracker(toround[bufind], &(inst->tracker_toround), &(inst->len_rounded), &(inst->size_toround));
+		if (PLOT_NUM_VARS_TO_ROUND) add_point_single_tracker(toround[bufind], &(inst->tracker_toround), &(inst->len_toround), &(inst->size_toround));
 	}
 	bufind = !bufind;
 
@@ -182,7 +182,7 @@ void zi_round(instance* inst, int* numrounds) {
 			if (VERBOSE >= 10) {
 				if (PLOT_SOL_FRAC) add_point_single_tracker(frac[bufind], &(inst->tracker_sol_frac), &(inst->len_frac), &(inst->size_frac));
 				if (PLOT_SOL_COST) add_point_single_tracker(objval[bufind], &(inst->tracker_sol_cost), &(inst->len_cost), &(inst->size_cost));
-				if (PLOT_NUM_VARS_TO_ROUND) add_point_single_tracker(toround[bufind], &(inst->tracker_toround), &(inst->len_rounded), &(inst->size_toround));
+				if (PLOT_NUM_VARS_TO_ROUND) add_point_single_tracker(toround[bufind], &(inst->tracker_toround), &(inst->len_toround), &(inst->size_toround));
 			}
 			bufind = !bufind;
 		} // end inner loop

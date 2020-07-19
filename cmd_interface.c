@@ -8,7 +8,7 @@
 
 void parse_cmd(int argc, char** argv, instance* inst) {
 
-	int help = (argc < 2) ? 1 : 0;
+	int help = (argc < 2);
 
 	// Parse command line arguments
 	for (int i = 1; i < argc; i++) {

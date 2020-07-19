@@ -10,9 +10,9 @@ void check_bounds(double* x, double* lb, double* ub, int ncols) {
 
 	// Scan xj variables
 	for (int j = 0; j < ncols; j++) {
-		if ((x[j] < lb[j] - TOLERANCE) || (x[j] > ub[j] + TOLERANCE)) {
-			print_error("[check_bounds]: Bound %d violated: %f <= x_%d %f <= %f\n", j + 1, lb[j], j + 1, x[j], ub[j]);
-		}
+
+		// Terminate program at the first violated bounds
+		if (!var_in_bounds(x[j], lb[j], ub[j])) print_error("[check_bounds]: Some variable bounds are violated!\n");
 	}
 }
 
@@ -55,8 +55,9 @@ void check_constraints(double* x, int ncols, int nrows, int nzcnt, int* rmatbeg,
 		}
 
 		// Terminate program at the first violated constraint
-		if (violated) print_error("[check_constraints]: Some constraints are not satisfied!\n");
+		if (violated) print_error("[check_constraints]: Some constraints are violated!\n");
 	}
+
 	print_verbose(100, "[check_constraints][OK]: Constraints satisfied.\n");
 }
 
@@ -67,6 +68,7 @@ int check_rounding(double* x, int ncols, int* int_var, char* vartype) {
 		if (!(int_var[j])) continue;
 		assert(var_type_integer_or_binary(vartype[j]));
 
+		// Stop at the first integer variable not rounded
 		if (is_fractional(x[j])) return 0;
 	}
 
@@ -89,29 +91,36 @@ int count_rounded(double* x, int ncols, int* int_var, char* vartype) {
 }
 
 double fractionality(double xj) {
-	double minusfloor = xj - floor(xj);
-	double minusceil = ceil(xj) - xj;
-	return min(minusfloor, minusceil);
+
+	return min(xj - floor(xj), ceil(xj) - xj);
 }
 
 double sol_fractionality(double* x, int* int_var, int len) {
+
 	double solfrac = 0.0;
+
 	for (int j = 0; j < len; j++) {
 		if (!(int_var[j])) continue;
+
 		solfrac += fractionality(x[j]);
 	}
+
 	return solfrac;
 }
 
-int is_fractional(double num) { return 1 - (fabs(num - round(num)) < TOLERANCE); }
+int is_fractional(double num) { 
 
-double dot_product(double* coef, double* var_value, int len) {
-	double dotprod = 0;
-	for (int j = 0; j < len; j++) dotprod += (coef[j]) * (var_value[j]);
-	return dotprod;
+	return 1 - (fabs(num - round(num)) < TOLERANCE); 
 }
 
-void clone_array(double* arr, double* clo, int len) { for (int i = 0; i < len; i++) clo[i] = arr[i]; }
+double dot_product(double* coef, double* var_value, int len) {
+
+	double dotprod = 0;
+
+	for (int j = 0; j < len; j++) dotprod += (coef[j]) * (var_value[j]);
+
+	return dotprod;
+}
 
 void free_all(int count, ...) {
 	va_list args;
