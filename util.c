@@ -42,13 +42,13 @@ void check_constraints(double* x, int ncols, int nrows, int nzcnt, int* rmatbeg,
 		// Check compliance with the constraint sense
 		switch (sense[i]) {
 			case 'L':
-				if (rowact > rhs[i] + TOLERANCE) violated = 1; // print_error("[check_constraints]: Constraint %d violated: rowact %f <= rhs %f\n", i + 1, rowact, rhs[i]);
+				if (rowact > rhs[i] + TOLERANCE) violated = 1;
 				break;
 			case 'G':
-				if (rowact < rhs[i] - TOLERANCE) violated = 1; // print_error("[check_constraints]: Constraint %d violated: rowact %f >= rhs %f\n", i + 1, rowact, rhs[i]);
+				if (rowact < rhs[i] - TOLERANCE) violated = 1;
 				break;
 			case 'E':
-				if (fabs(rowact - rhs[i]) > TOLERANCE) violated = 1; // print_error("[check_constraints]: Constraint %d violated: rowact %f = rhs %f\n", i + 1, rowact, rhs[i]);
+				if (fabs(rowact - rhs[i]) > TOLERANCE) violated = 1;
 				break;
 			default:
 				print_error("[check_constraints]: Constraint sense '%c' not supported.\n", sense[i]);

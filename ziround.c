@@ -6,9 +6,6 @@
 
 #include "ziround.h"
 
-//**************************************************************************************************************************************************************
-//*************************************** ZI-ROUND *************************************************************************************************************
-//**************************************************************************************************************************************************************
 void zi_round(instance* inst, int* numrounds) {
 
 	double* delta_up; 	 /**< Maximum variable up-shifts. */
@@ -205,9 +202,6 @@ void zi_round(instance* inst, int* numrounds) {
 	free(delta_up);
 	free(delta_down);
 }
-//**************************************************************************************************************************************************************
-//**************************************************************************************************************************************************************
-//**************************************************************************************************************************************************************
 
 void check_slacks(instance* inst, int j, double delta_up, double delta_down, const char round_updown) {
 
@@ -264,7 +258,7 @@ void check_slacks(instance* inst, int j, double delta_up, double delta_down, con
 						// Compute singletons slack of constraint rowind and get bounds
 						ss_lb = inst->ss_lb[rowind];
 						ss_ub = inst->ss_ub[rowind];
-						singletons_slack = inst->ss_val[rowind]; // compute_ss_val(inst, rowind);
+						singletons_slack = inst->ss_val[rowind];
 						assert(var_in_bounds(singletons_slack, ss_lb, ss_ub));
 
 						// Singletons slack after rounding
@@ -273,7 +267,7 @@ void check_slacks(instance* inst, int j, double delta_up, double delta_down, con
 						assert(var_in_bounds(new_ss, ss_lb, ss_ub));
 
 						// New singletons slack must stay within its bounds
-						enough_slack = var_in_bounds(new_ss, ss_lb, ss_ub); // !((new_ss < ss_lb - TOLERANCE) || (new_ss > ss_ub + TOLERANCE));
+						enough_slack = var_in_bounds(new_ss, ss_lb, ss_ub);
 					}
 					else {
 						// Extension enabled, row has singletons, but new_slack is non-negative --> no need to use singletons
@@ -297,7 +291,7 @@ void check_slacks(instance* inst, int j, double delta_up, double delta_down, con
 					// Compute singletons slack of constraint rowind (with bounds)
 					ss_lb = inst->ss_lb[rowind];
 					ss_ub = inst->ss_ub[rowind];
-					curr_slack = inst->ss_val[rowind]; // compute_ss_val(inst, rowind);
+					curr_slack = inst->ss_val[rowind];
 					assert(var_in_bounds(curr_slack, ss_lb, ss_ub));
 					delta_slack = (round_updown == 'U') ? (aij * delta_up) : (aij * (-delta_down));
 
@@ -306,7 +300,7 @@ void check_slacks(instance* inst, int j, double delta_up, double delta_down, con
 					assert(var_in_bounds(new_ss, ss_lb, ss_ub));
 
 					// New singletons slack must stay within its bounds
-					enough_slack = var_in_bounds(new_ss, ss_lb, ss_ub); // !((new_ss < ss_lb - TOLERANCE) || (new_ss > ss_ub + TOLERANCE));
+					enough_slack = var_in_bounds(new_ss, ss_lb, ss_ub);
 					
 					if (!enough_slack) print_error("[check_slacks][extension][x_%d][row %d '%c']: After rounding, singletons slack out of bounds. Found %f <= %f <= %f.\n", j + 1, rowind + 1, inst->sense[rowind], ss_lb, new_ss, ss_ub);
 				}
@@ -339,7 +333,7 @@ int round_xj_bestobj(instance* inst, int j, double objcoef, double delta_up, dou
 
 		case CPX_MIN:
 
-			// [] Adding delta_up to x_j improves objval
+			// [] Adding delta_up to x_j improves objval more
 			if (negative(obj_deltaplus) && less_than(obj_deltaplus, obj_deltaminus)) {
 
 				// Skip variable if delta_up = 0
@@ -372,7 +366,7 @@ int round_xj_bestobj(instance* inst, int j, double objcoef, double delta_up, dou
 				update_slacks(inst, j, delta_up);
 				inst->objval += obj_deltaplus;
 			}
-			// [] Adding -delta_down to x_j improves objval
+			// [] Adding -delta_down to x_j improves objval more
 			else if (negative(obj_deltaminus) && less_than(obj_deltaminus, obj_deltaplus)) {
 
 				// Skip variable if delta_down = 0
@@ -471,7 +465,7 @@ int round_xj_bestobj(instance* inst, int j, double objcoef, double delta_up, dou
 		// (problems from mps files should always be MIN)
 		case CPX_MAX:
 
-			// [] Adding delta_up to x_j improves objval
+			// [] Adding delta_up to x_j improves objval more
 			if (positive(obj_deltaplus) && greater_than(obj_deltaplus, obj_deltaminus)) {
 
 				// Skip variable if delta_up = 0
@@ -504,7 +498,7 @@ int round_xj_bestobj(instance* inst, int j, double objcoef, double delta_up, dou
 				update_slacks(inst, j, delta_up);
 				inst->objval += obj_deltaplus;
 			}
-			// [] Adding delta_down to x_j improves objval
+			// [] Adding delta_down to x_j improves objval more
 			else if (positive(obj_deltaminus) && greater_than(obj_deltaminus, obj_deltaplus)) {
 
 				// Skip variable if delta_down = 0
@@ -607,7 +601,7 @@ int round_xj_bestobj(instance* inst, int j, double objcoef, double delta_up, dou
 	return updated;
 }
 
-// Incremental update of row slacks (only for the rows where the variable xj is involved)
+// Incremental update of row slacks and singletons slacks (only for the rows where the variable xj is involved)
 // Whenever it is called, only one variable xj has been updated
 void update_slacks(instance* inst, int j, double signed_delta) {
 
@@ -783,17 +777,6 @@ void update_singletons(instance* inst, int rowind, double delta_ss) {
 	print_verbose(120, "[update_singletons][extension][row %d '%c']: delta_ss distributed, remaining %f\n", rowind + 1, inst->sense[rowind], delta_ss);
 }
 
-/*
-	For 'L' (<=) constraints: (si non-negative)
-		delta_up1_L = min_i{si/aij : aij > 0}
-		delta_down1_L = min_i{-si/aij : aij < 0}
-	For 'G' (>=) constraints: (si non-positive)
-		delta_up1_G = min_i{si/aij : aij < 0}
-		delta_down1_G = min_i{-si/aij : aij > 0}
-
-	--> delta_up1 = min{ delta_up1_L , delta_up1_G }
-	--> delta_down1 = min{ delta_down1_L , delta_down1_G }
-*/
 void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, const double epsilon) {
 
 	double delta_up1;		 /**< First delta_up[j] major candidate. */

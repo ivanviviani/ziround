@@ -560,15 +560,15 @@ void free_all(int count, ...);
 void add_point_single_tracker(double point, double** tracker, int* len, int* size);
 
 /**
- *  @brief Given a list of trackers, add a new point to each tracker.
+ *  @brief Given a multivariate tracker, add a new point to it.
  *
- *  @param point   The new points to add to the trackers, represented by an array.
+ *  @param point   The new point to add to the multivariate tracker, represented by an array.
  *  @param tracker The tracking matrix.
- *  @param num     The number of trackers.
- *  @param len     The actual length of each tracker.
+ *  @param num     The number of dimensions of the multivariate tracker.
+ *  @param len     The size of the tracker.
  *  @param size    The number of elements currently in each tracker.
  */
-void add_point_multiple_trackers(double* point, double** tracker, int num, int* len, int* size);
+void add_point_multivariate_tracker(double* point, double** tracker, int num, int* len, int* size);
 
 /**
  * @brief Plot the results of a single tracker.
