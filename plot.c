@@ -24,7 +24,7 @@ void add_point_single_tracker(double point, double** tracker, int* len, int* siz
 	*size = *size + 1;
 }
 
-void add_point_multiple_trackers(double* point, double** tracker, int num, int* len, int* size) {
+void add_point_multivariate_tracker(double* point, double** tracker, int num, int* len, int* size) {
 
 	size_t length = *len;
 
