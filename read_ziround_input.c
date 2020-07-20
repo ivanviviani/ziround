@@ -189,7 +189,7 @@ void find_singletons(instance* inst) {
 	for (int j = 0; j < inst->ncols; j++) {
 		
 		// Skip non-continuous variables and FIXED variables (lb = ub)
-		if ((inst->vartype[j] != CPX_CONTINUOUS) || (fabs(inst->ub[j] - inst->lb[j]) < TOLERANCE)) continue;
+		if ((inst->vartype[j] != CPX_CONTINUOUS) || equals(inst->lb[j], inst->ub[j])) continue;
 		assert(var_type_continuous(inst->vartype[j]));
 
 		// Row index of the last constraint in which x_j appears
@@ -245,7 +245,7 @@ void find_singletons(instance* inst) {
 	for (int j = 0; j < inst->ncols; j++) {
 
 		// Skip non-continuous variables and FIXED variables (lb = ub)
-		if ((inst->vartype[j] != CPX_CONTINUOUS) || (fabs(inst->ub[j] - inst->lb[j]) < TOLERANCE)) continue;
+		if ((inst->vartype[j] != CPX_CONTINUOUS) || equals(inst->lb[j], inst->ub[j])) continue;
 		assert(var_type_continuous(inst->vartype[j]));
 
 		colend = (j < inst->ncols - 1) ? inst->cmatbeg[j + 1] : inst->nzcnt;
