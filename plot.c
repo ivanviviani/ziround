@@ -113,6 +113,58 @@ void plot(instance* inst) {
 		plot_tracker(inst->tracker_sol_cost, name, label, inst->size_cost, NULL);
 		free_all(5, label[0], label[1], label, name, temp);
 	}
+
+	// Try to plot solution cost and number of variables to round as a pair first
+	if (PLOT_SOL_COST && PLOT_NUM_VARS_TO_ROUND) {
+		char** label = (char**)calloc(3, sizeof(char*));
+		label[0] = (char*)calloc(10, sizeof(char));
+		label[1] = (char*)calloc(30, sizeof(char));
+		label[2] = (char*)calloc(30, sizeof(char));
+		char** name = (char**)calloc(2, sizeof(char*));
+		name[0] = (char*)calloc(20, sizeof(char));
+		name[1] = (char*)calloc(20, sizeof(char));
+		char* temp = (char*)calloc(20, sizeof(char));
+		sprintf(label[0], "Iteration");
+		sprintf(label[1], "Solution Cost (SC)");
+		sprintf(label[2], "#Variables to Round (#VR)");
+		sprintf(temp, inst->input_file);
+		strtok(temp, "/.");
+		sprintf(name[0], "%s (SC)", strtok(NULL, "/."));
+		sprintf(temp, inst->input_file);
+		strtok(temp, "/.");
+		sprintf(name[1], "%s (#VR)", strtok(NULL, "/."));
+		assert(inst->size_cost == inst->size_toround);
+		plot_tracker_pair(inst->tracker_sol_cost, inst->tracker_toround, name, label, inst->size_cost, NULL);
+		free_all(8, label[0], label[1], label[2], label, name[0], name[1], name, temp);
+	}
+	else if (PLOT_SOL_COST) {
+		char** label = (char**)calloc(2, sizeof(char*));
+		label[0] = (char*)calloc(10, sizeof(char));
+		label[1] = (char*)calloc(30, sizeof(char));
+		char* name = (char*)calloc(20, sizeof(char));
+		char* temp = (char*)calloc(20, sizeof(char));
+		sprintf(label[0], "Iteration");
+		sprintf(label[1], "Solution Cost");
+		sprintf(temp, inst->input_file);
+		strtok(temp, "/.");
+		sprintf(name, strtok(NULL, "/."));
+		plot_tracker(inst->tracker_sol_cost, name, label, inst->size_cost, NULL);
+		free_all(5, label[0], label[1], label, name, temp);
+	}
+	else if (PLOT_NUM_VARS_TO_ROUND) {
+		char** label = (char**)calloc(2, sizeof(char*));
+		label[0] = (char*)calloc(10, sizeof(char));
+		label[1] = (char*)calloc(30, sizeof(char));
+		char* name = (char*)calloc(20, sizeof(char));
+		char* temp = (char*)calloc(20, sizeof(char));
+		sprintf(label[0], "Iteration");
+		sprintf(label[1], "#Variables to Round");
+		sprintf(temp, inst->input_file);
+		strtok(temp, "/.");
+		sprintf(name, strtok(NULL, "/."));
+		plot_tracker(inst->tracker_toround, name, label, inst->size_toround, NULL);
+		free_all(5, label[0], label[1], label, name, temp);
+	}
 }
 
 void add_point_single_tracker(double point, double** tracker, int* len, int* size) {
