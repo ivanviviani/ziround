@@ -105,7 +105,7 @@ typedef struct {
     CPXLPptr lp;              /**< CPLEX lp pointer. */
     char input_file[30];      /**< Input filename (mps format, specified from command line). */
     char input_folder[30];    /**< Input folder. */
-    int extension;            /**< Flag for ZI-Round extension. */
+    int singletons;           /**< Flag for the use of singletons in ZI-Round (default 1 = ON). */
     int timelimit;            /**< Time limit in seconds. */
     int rseed;                /**< Random seed. */
 

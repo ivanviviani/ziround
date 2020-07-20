@@ -247,8 +247,8 @@ void check_slacks(instance* inst, int j, double delta_up, double delta_down, con
 				new_slack = curr_slack - delta_slack;
 				print_verbose(200, "[check_slacks][x_%d aij %f][row %d '%c']: new_slack = %f\n", j + 1, aij, rowind + 1, inst->sense[rowind], new_slack);
 
-				// [EXTENSION] Distinguish inequality constraints with singletons (if extension enabled)
-				if ((inst->extension) && (inst->num_singletons[rowind] > 0)) {
+				// [EXTENSION] Distinguish inequality constraints with singletons (if singletons enabled)
+				if ((inst->singletons) && (inst->num_singletons[rowind] > 0)) {
 
 					// If the new row slack is negative for 'L', positive for 'G' constraints, then the remaining amount must be covered by the singletons slack
 					if ((inst->sense[rowind] == 'L' && negative(new_slack)) || (inst->sense[rowind] == 'G' && positive(new_slack))) {
@@ -283,10 +283,10 @@ void check_slacks(instance* inst, int j, double delta_up, double delta_down, con
 
 				break;
 			
-			case 'E': // (slack zero if extension disabled)
+			case 'E': // (slack zero if singletons disabled)
 
-				// [EXTENSION] Distinguish equality constraints with singletons (if extension enabled)
-				if (inst->extension && inst->num_singletons[rowind] > 0) {
+				// [EXTENSION] Distinguish equality constraints with singletons (if singletons enabled)
+				if (inst->singletons && inst->num_singletons[rowind] > 0) {
 
 					// Compute singletons slack of constraint rowind (with bounds)
 					ss_lb = inst->ss_lb[rowind];
@@ -302,7 +302,7 @@ void check_slacks(instance* inst, int j, double delta_up, double delta_down, con
 					// New singletons slack must stay within its bounds
 					enough_slack = var_in_bounds(new_ss, ss_lb, ss_ub);
 					
-					if (!enough_slack) print_error("[check_slacks][extension][x_%d][row %d '%c']: After rounding, singletons slack out of bounds. Found %f <= %f <= %f.\n", j + 1, rowind + 1, inst->sense[rowind], ss_lb, new_ss, ss_ub);
+					if (!enough_slack) print_error("[check_slacks][singletons][x_%d][row %d '%c']: After rounding, singletons slack out of bounds. Found %f <= %f <= %f.\n", j + 1, rowind + 1, inst->sense[rowind], ss_lb, new_ss, ss_ub);
 				}
 				else {
 					// Extension disabled OR enabled but no singletons
@@ -629,8 +629,8 @@ void update_slacks(instance* inst, int j, double signed_delta) {
 			case 'L': // (slack non-negative)
 			case 'G': // (slack non-positive)
 
-				// [EXTENSION] Distinguish inequality constraints with singletons (if extension enabled)
-				if (inst->extension && inst->num_singletons[rowind] > 0) {
+				// [EXTENSION] Distinguish inequality constraints with singletons (if singletons enabled)
+				if (inst->singletons && inst->num_singletons[rowind] > 0) {
 
 					// First, use at most all the row slack available to cover delta_slack
 					temp_slack = curr_slack - delta_slack;
@@ -666,8 +666,8 @@ void update_slacks(instance* inst, int j, double signed_delta) {
 
 			case 'E':
 
-				// [EXTENSION] Distinguish equality constraints with singletons (if extension enabled)
-				if (inst->extension && inst->num_singletons[rowind] > 0) {
+				// [EXTENSION] Distinguish equality constraints with singletons (if singletons enabled)
+				if (inst->singletons && inst->num_singletons[rowind] > 0) {
 
 					// Equality constraint --> row slack is always zero
 					
@@ -679,7 +679,7 @@ void update_slacks(instance* inst, int j, double signed_delta) {
 				}
 				else {
 					// Extension disabled OR enabled but zero singletons
-					print_error("[update_slacks]: Tried to update slack of an equality constraint with extension disabled or zero singletons!\n");
+					print_error("[update_slacks]: Tried to update slack of an equality constraint with singletons disabled or zero singletons!\n");
 				}
 
 				break;
@@ -715,11 +715,11 @@ void update_singletons(instance* inst, int rowind, double delta_ss) {
 
 		// Stop updating the singletons when delta singletons slack has been covered (s_slack_increase in the two conditions is necessary...)
 		if ((s_slack_increase && non_positive(delta_ss)) || (!s_slack_increase &&  non_negative(delta_ss))) {
-			print_verbose(200, "[update_singletons][extension][row %d '%c']: delta_ss covered, found %f\n", rowind + 1, inst->sense[rowind], delta_ss);
+			print_verbose(200, "[update_singletons][singletons][row %d '%c']: delta_ss covered, found %f\n", rowind + 1, inst->sense[rowind], delta_ss);
 			break;
 		}
 		(s_slack_increase) ? assert(non_negative(delta_ss)) : assert(non_positive(delta_ss));
-		print_verbose(120, "[update_slacks][extension][row %d '%c']: Remaining delta singletons slack to distribute: %f.\n", rowind + 1, inst->sense[rowind], delta_ss);
+		print_verbose(120, "[update_slacks][singletons][row %d '%c']: Remaining delta singletons slack to distribute: %f.\n", rowind + 1, inst->sense[rowind], delta_ss);
 
 		// Singleton info
 		assert(index_in_bounds(beg + k, inst->rs_size));
@@ -774,7 +774,7 @@ void update_singletons(instance* inst, int rowind, double delta_ss) {
 
 	// Delta slack must have been distributed among the singletons
 	assert(zero(delta_ss));
-	print_verbose(120, "[update_singletons][extension][row %d '%c']: delta_ss distributed, remaining %f\n", rowind + 1, inst->sense[rowind], delta_ss);
+	print_verbose(120, "[update_singletons][singletons][row %d '%c']: delta_ss distributed, remaining %f\n", rowind + 1, inst->sense[rowind], delta_ss);
 }
 
 void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, const double epsilon) {
@@ -823,7 +823,7 @@ void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, c
 		singletons_slack = 0.0;
 		ss_delta_up = 0.0;
 		ss_delta_down = 0.0;
-		if (inst->extension && inst->num_singletons[rowind] > 0) {
+		if (inst->singletons && inst->num_singletons[rowind] > 0) {
 
 			// Compute singletons slack of constraint rowind and get bounds
 			ss_lb = inst->ss_lb[rowind];
@@ -857,7 +857,7 @@ void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, c
 				assert(equals(slack, inst->slack[rowind]));
 
 				// [EXTENSION] Update available slack: 'L' constraint --> singletons slack (if any) should decrease
-				if (inst->extension && inst->num_singletons[rowind] > 0) slack += ss_delta_down; // overall slack increases
+				if (inst->singletons && inst->num_singletons[rowind] > 0) slack += ss_delta_down; // overall slack increases
 
 				if (aij > 0.0) { 
 					
@@ -890,7 +890,7 @@ void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, c
 				assert(equals(slack, inst->slack[rowind]));
 
 				// [EXTENSION] Update available slack: 'G' constraint --> singletons slack (if any) should increase
-				if (inst->extension && inst->num_singletons[rowind] > 0) slack -= ss_delta_up; // overall slack decreases (increases in absolute value)
+				if (inst->singletons && inst->num_singletons[rowind] > 0) slack -= ss_delta_up; // overall slack decreases (increases in absolute value)
 
 				if (aij < 0.0) {
 
@@ -911,10 +911,10 @@ void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, c
 
 				break;
 
-			case 'E': // (slack zero if extension disabled)
+			case 'E': // (slack zero if singletons disabled)
 
-				// [EXTENSION] Distinguish equality constraints with singletons (if extension enabled)
-				if (inst->extension && inst->num_singletons[rowind] > 0) {
+				// [EXTENSION] Distinguish equality constraints with singletons (if singletons enabled)
+				if (inst->singletons && inst->num_singletons[rowind] > 0) {
 
 					// Compute singletons slack of constraint rowind and get bounds (done above)
 					print_verbose(201, "Singletons slack = %f. Bounds %f <= ss <= %f\n", singletons_slack, ss_lb, ss_ub);
@@ -1004,7 +1004,7 @@ void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, c
 double compute_ss_val(instance* inst, int rowind) {
 
 	assert(index_in_bounds(rowind, inst->nrows));
-	if (inst->num_singletons[rowind] <= 0) print_error("[compute_ss_val][extension]: Tried to compute singletons slack of row %d with no singletons.\n", rowind + 1);
+	if (inst->num_singletons[rowind] <= 0) print_error("[compute_ss_val][singletons]: Tried to compute singletons slack of row %d with no singletons.\n", rowind + 1);
 
 	double singletons_slack; /**< Current singletons slack value. */
 	int beg;                 /**< Begin index of singleton indices for row \p rowind. */

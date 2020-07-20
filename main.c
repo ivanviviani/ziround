@@ -97,13 +97,13 @@ void test_folder(instance* inst) {
 		instance test_inst;
 		init_inst(&test_inst);
 		sprintf(test_inst.input_file, "%s/%s", ((strcmp(input_folder_name, "NULL")) ? input_folder_name : "."), direlem->d_name);
-		test_inst.extension = inst->extension;
+		test_inst.singletons = inst->singletons;
 		test_inst.timelimit = inst->timelimit;
 		test_inst.rseed = inst->rseed;
 
 		print_verbose(10, "TEST INSTANCE ------------------------------------------------------------------\n");
 		print_verbose(10, "[] Instance name: %s\n", test_inst.input_file);
-		print_verbose(10, "[] Extension flag: %d\n", test_inst.extension);
+		print_verbose(10, "[] Use singletons: %d\n", test_inst.singletons);
 		print_verbose(10, "[] Random seed: %d\n", test_inst.rseed);
 		print_verbose(10, "--------------------------------------------------------------------------------\n");
 
@@ -117,10 +117,8 @@ void test_folder(instance* inst) {
 		zi_round(&test_inst, &numrounds);
 		exec_time = time(NULL) - start;
 
-		printf("_____solfrac______ %f != %f\n", inst->solfrac, sol_fractionality(inst->x, inst->int_var, inst->ncols));
-		printf("_____objval______ %f != %f\n", inst->objval, dot_product(inst->obj, inst->x, inst->ncols));
-		assert(equals(inst->solfrac, sol_fractionality(inst->x, inst->int_var, inst->ncols)));
-		assert(equals(inst->objval, dot_product(inst->obj, inst->x, inst->ncols)));
+		assert(equals(test_inst.solfrac, sol_fractionality(test_inst.x, test_inst.int_var, test_inst.ncols)));
+		assert(equals(test_inst.objval, dot_product(test_inst.obj, test_inst.x, test_inst.ncols)));
 		check_bounds(test_inst.x, test_inst.lb, test_inst.ub, test_inst.ncols);
 		check_constraints(test_inst.x, test_inst.ncols, test_inst.nrows, test_inst.nzcnt, test_inst.rmatbeg,
 						  test_inst.rmatind, test_inst.rmatval, test_inst.sense, test_inst.rhs);

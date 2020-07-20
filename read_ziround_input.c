@@ -33,7 +33,7 @@ void populate_inst(instance* inst) {
 	read_row_slacks(inst);
 
 	// Extension (if enabled)
-	if (inst->extension) {
+	if (inst->singletons) {
 		find_singletons(inst);
 		compute_singletons_slacks(inst);
 	}
@@ -182,7 +182,7 @@ void find_singletons(instance* inst) {
 
 	// Allocate
 	inst->num_singletons = (int*)calloc((size_t)inst->nrows, sizeof(int)); 
-	count = (int*)calloc((size_t)inst->nrows, sizeof(int)); if (inst->num_singletons == NULL || count == NULL) print_error("[find_singletons][extension]: Failed to allocate num_singletons or count.\n");
+	count = (int*)calloc((size_t)inst->nrows, sizeof(int)); if (inst->num_singletons == NULL || count == NULL) print_error("[find_singletons][singletons]: Failed to allocate num_singletons or count.\n");
 
 	// Count number of singletons for each row (scan continuous variables)
 	inst->rs_size = 0; // Total number of singletons
@@ -200,14 +200,14 @@ void find_singletons(instance* inst) {
 
 			rowind = inst->cmatind[inst->cmatbeg[j]];
 			assert(index_in_bounds(rowind, inst->nrows));
-			print_verbose(200, "[find_singletons][extension]: x_%d = %f in constraint %d ('%c')\n", j + 1, inst->x[j], rowind, inst->sense[rowind]);
+			print_verbose(200, "[find_singletons][singletons]: x_%d = %f in constraint %d ('%c')\n", j + 1, inst->x[j], rowind, inst->sense[rowind]);
 			inst->num_singletons[rowind]++;
 			count[rowind]++;
 			inst->rs_size++;
 		}
 	}
 	assert(non_negative_integer(inst->rs_size));
-	print_verbose(120, "[find_singletons][extension]: Total number of singletons = %d\n", inst->rs_size);
+	print_verbose(120, "[find_singletons][singletons]: Total number of singletons = %d\n", inst->rs_size);
 
 	// Allocate / Initialize
 	inst->row_singletons = (int*)malloc((size_t)inst->rs_size * sizeof(int));
@@ -236,10 +236,10 @@ void find_singletons(instance* inst) {
 		}
 		
 		// [DEBUG ONLY] Print row singletons begin indices
-		print_verbose(200, "[DEBUG][find_singletons][extension]: Row %d | %d singletons | rs_beg = %d\n", i, inst->num_singletons[i], inst->rs_beg[i]);
+		print_verbose(200, "[DEBUG][find_singletons][singletons]: Row %d | %d singletons | rs_beg = %d\n", i, inst->num_singletons[i], inst->rs_beg[i]);
 	}
 	// [DEBUG ONLY] Print size of row singletons array
-	print_verbose(200, "[DEBUG][find_singletons][extension]: rs_size = %d\n", inst->rs_size);
+	print_verbose(200, "[DEBUG][find_singletons][singletons]: rs_size = %d\n", inst->rs_size);
 
 	// Populate singleton indices and coefficients for each row
 	for (int j = 0; j < inst->ncols; j++) {
@@ -283,9 +283,9 @@ void find_singletons(instance* inst) {
 
 	// [DEBUG ONLY] Print row singletons (indices)
 	if (VERBOSE >= 201) {
-		fprintf(stdout, "\n[DEBUG][find_singletons][extension]: Row singletons (index | coef):\n");
+		fprintf(stdout, "\n[DEBUG][find_singletons][singletons]: Row singletons (index | coef):\n");
 		for (int i = 0; i < inst->nrows; i++) {
-			fprintf(stdout, "[DEBUG][find_singletons][extension]: Row %d: ", i);
+			fprintf(stdout, "[DEBUG][find_singletons][singletons]: Row %d: ", i);
 			if (inst->num_singletons[i] == 0) fprintf(stdout, "-");
 			beg = inst->rs_beg[i];
 			for (int k = 0; k < inst->num_singletons[i]; k++) {
@@ -307,7 +307,7 @@ void compute_singletons_slacks(instance* inst) {
 	// Allocate
 	inst->ss_val = (double*)calloc((size_t)inst->nrows, sizeof(double));
 	inst->ss_ub = (double*)calloc((size_t)inst->nrows, sizeof(double));
-	inst->ss_lb = (double*)calloc((size_t)inst->nrows, sizeof(double)); if (inst->ss_val == NULL || inst->ss_ub == NULL || inst->ss_lb == NULL) print_error("[compute_singletons_slacks][extension]: Failed to allocate singletons slacks structures.\n");
+	inst->ss_lb = (double*)calloc((size_t)inst->nrows, sizeof(double)); if (inst->ss_val == NULL || inst->ss_ub == NULL || inst->ss_lb == NULL) print_error("[compute_singletons_slacks][singletons]: Failed to allocate singletons slacks structures.\n");
 
 	// Scan constraints that have singletons
 	for (int i = 0; i < inst->nrows; i++) {
@@ -341,7 +341,7 @@ void compute_singletons_slacks(instance* inst) {
 		assert(var_in_bounds(inst->ss_val[i], inst->ss_lb[i], inst->ss_ub[i]));
 
 		// [DEBUG ONLY] Print singletons slacks bounds
-		print_verbose(200, "[DEBUG][compute_singletons_slacks][extension][row %d]: ss_lb = %f | ss_val = %f | ss_ub = %f\n", i + 1, inst->ss_lb[i], inst->ss_val[i], inst->ss_ub[i]);
+		print_verbose(200, "[DEBUG][compute_singletons_slacks][singletons][row %d]: ss_lb = %f | ss_val = %f | ss_ub = %f\n", i + 1, inst->ss_lb[i], inst->ss_val[i], inst->ss_ub[i]);
 	}
 	assert(valid_bounds(inst->ss_lb, inst->ss_ub, inst->nrows));
 }
