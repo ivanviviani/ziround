@@ -44,7 +44,9 @@ void test_instance(instance* inst) {
 	zi_round(inst, &numrounds);
 
 	print_verbose(10, "[INFO]: ZI-Round terminated. #Rounds: %d\n", numrounds);
-	print_verbose(10, "[INFO]: Solution fractionality: %f.\n", sol_fractionality(inst->x, inst->int_var, inst->ncols));
+	assert(equals(inst->solfrac, sol_fractionality(inst->x, inst->int_var, inst->ncols)));
+	assert(equals(inst->objval, dot_product(inst->obj, inst->x, inst->ncols)));
+	print_verbose(10, "[INFO]: Solution fractionality: %f.\n", inst->solfrac);
 	print_verbose(20, "[INFO]: Candidate objective value: %f\n", inst->objval);
 	
 	check_bounds(inst->x, inst->lb, inst->ub, inst->ncols);
@@ -115,6 +117,10 @@ void test_folder(instance* inst) {
 		zi_round(&test_inst, &numrounds);
 		exec_time = time(NULL) - start;
 
+		printf("_____solfrac______ %f != %f\n", inst->solfrac, sol_fractionality(inst->x, inst->int_var, inst->ncols));
+		printf("_____objval______ %f != %f\n", inst->objval, dot_product(inst->obj, inst->x, inst->ncols));
+		assert(equals(inst->solfrac, sol_fractionality(inst->x, inst->int_var, inst->ncols)));
+		assert(equals(inst->objval, dot_product(inst->obj, inst->x, inst->ncols)));
 		check_bounds(test_inst.x, test_inst.lb, test_inst.ub, test_inst.ncols);
 		check_constraints(test_inst.x, test_inst.ncols, test_inst.nrows, test_inst.nzcnt, test_inst.rmatbeg,
 						  test_inst.rmatind, test_inst.rmatval, test_inst.sense, test_inst.rhs);

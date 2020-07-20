@@ -22,6 +22,7 @@ void init_inst(instance* inst) {
 	inst->tracker_sol_frac = NULL; inst->tracker_sol_cost = NULL;
 	inst->tracker_toround  = NULL; inst->env              = NULL;
 	inst->lp               = NULL; inst->objsen           = CPX_MIN;
+	inst->solfrac          = 0.0;  inst->objval           = 0.0;
 	inst->extension        = 0;    
 	inst->timelimit        = 3600;
 	inst->rseed            = -1;
