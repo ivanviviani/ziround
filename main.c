@@ -98,6 +98,7 @@ void test_folder(instance* inst) {
 		init_inst(&test_inst);
 		sprintf(test_inst.input_file, "%s/%s", ((strcmp(input_folder_name, "NULL")) ? input_folder_name : "."), direlem->d_name);
 		test_inst.singletons = inst->singletons;
+		test_inst.shift_nonfracvars = inst->shift_nonfracvars;
 		test_inst.timelimit = inst->timelimit;
 		test_inst.rseed = inst->rseed;
 

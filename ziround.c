@@ -74,6 +74,9 @@ void zi_round(instance* inst, int* numrounds) {
 				// xj non fractional
 				case 0:
 
+					// Skip xj if shifting of non-fractional integer variables is disabled
+					if (!(inst->shift_nonfracvars)) continue;
+
 					// Calculate deltas (with epsilon = 1.0)
 					delta_updown(inst, j, delta_up, delta_down, 1.0);
 					assert(

@@ -106,6 +106,7 @@ typedef struct {
     char input_file[30];      /**< Input filename (mps format, specified from command line). */
     char input_folder[30];    /**< Input folder. */
     int singletons;           /**< Flag for the use of singletons in ZI-Round (default 1 = ON). */
+    int shift_nonfracvars;    /**< Flag for shifting also non-fractional integer variables in ZI-Round (default 1 = ON). */
     int timelimit;            /**< Time limit in seconds. */
     int rseed;                /**< Random seed. */
 

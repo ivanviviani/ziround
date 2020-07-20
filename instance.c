@@ -8,26 +8,24 @@
 
 void init_inst(instance* inst) {
 	
-	inst->x                = NULL; inst->obj              = NULL;
-	inst->lb               = NULL; inst->ub               = NULL;
-	inst->slack            = NULL; inst->vartype          = NULL;
-	inst->int_var          = NULL; inst->row_singletons   = NULL;
-	inst->num_singletons   = NULL; inst->rs_beg           = NULL;
-	inst->rs_coef          = NULL; inst->ss_val           = NULL;
-	inst->ss_ub            = NULL; inst->ss_lb            = NULL;
-	inst->rmatbeg          = NULL; inst->rmatind          = NULL;
-	inst->rmatval          = NULL; inst->cmatbeg          = NULL;
-	inst->cmatind          = NULL; inst->cmatval          = NULL;
-	inst->sense            = NULL; inst->rhs              = NULL;
-	inst->tracker_sol_frac = NULL; inst->tracker_sol_cost = NULL;
-	inst->tracker_toround  = NULL; inst->env              = NULL;
-	inst->lp               = NULL; inst->objsen           = CPX_MIN;
-	inst->solfrac          = 0.0;  inst->objval           = 0.0;
-	inst->singletons        = 1;    
-	inst->timelimit        = 3600;
-	inst->rseed            = -1;
-	strcpy(inst->input_file, "NULL");
-	strcpy(inst->input_folder, "NULL");
+	inst->x                = NULL;    inst->obj              = NULL;
+	inst->lb               = NULL;    inst->ub               = NULL;
+	inst->slack            = NULL;    inst->vartype          = NULL;
+	inst->int_var          = NULL;    inst->row_singletons   = NULL;
+	inst->num_singletons   = NULL;    inst->rs_beg           = NULL;
+	inst->rs_coef          = NULL;    inst->ss_val           = NULL;
+	inst->ss_ub            = NULL;    inst->ss_lb            = NULL;
+	inst->rmatbeg          = NULL;    inst->rmatind          = NULL;
+	inst->rmatval          = NULL;    inst->cmatbeg          = NULL;
+	inst->cmatind          = NULL;    inst->cmatval          = NULL;
+	inst->sense            = NULL;    inst->rhs              = NULL;
+	inst->tracker_sol_frac = NULL;    inst->tracker_sol_cost = NULL;
+	inst->tracker_toround  = NULL;    inst->env              = NULL;
+	inst->lp               = NULL;    inst->objsen           = CPX_MIN;
+	inst->solfrac          = 0.0;     inst->objval           = 0.0;
+	inst->singletons       = 1;       inst->shift_nonfracvars = 1;
+	inst->timelimit        = 3600;    inst->rseed            = -1;
+	strcpy(inst->input_file, "NULL"); strcpy(inst->input_folder, "NULL");
 }
 
 void free_inst(instance* inst) {
