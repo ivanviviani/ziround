@@ -343,6 +343,24 @@ Note that since the singletons of the constraint are actual variables of the MIP
 
 On a final note, the observations and experimental results of C. Wallace \cite{wallace2010} show that ZI-Round can round any variable that Simple Rounding can round, while maintaining similar overall running times, but ZI-Round can find more solutions.
 
+\chapter{Computational results}
+%! Descrizione (specifiche) del computer usato per fare le run
+The following tests are performed on a Dell XPS $15$ $7590$ exa-core $4.5$ GHz i$7$-$9750$H processor with $10$ Gigabytes of available RAM, using the Windows $10$ Pro (version $2004$) operating system.
+%! Funzioni usate per misurare il tempo di esecuzione
+...
+%! Descrizione del test-bed usato (MIPLIB 2003 + 2010 + 2017)
+%! + uso di 3/5 random seeds diversi per espanderlo ulteriormente e verificare l'effetto della performance variability
+...
+%* Elenco delle varianti di ZI-Round testate
+%? Sezioni separate ?
+We investigate how the single features influence the performance of ZI-Round by testing the following variants:
+\begin{enumerate}
+	\item At the start, the singletons of each row are sorted in ascending order of their objective coefficients, so that when a singletons slack shift has to be distributed the singletons that lightly influence the objective value are updated first;
+	\item Once rounded, non-fractional integer variables are not shifted by one to improve the objective value, so to see how those $1$-OPT shifts influence the success rate of ZI-Round;
+	\item The $1$-OPT shifting of non-fractional integer variables is activated as soon as the solution fractionality reaches zero, so to let the slacks be used for rounding all fractional integer variables first;
+	\item In case of ties on the fractionality improvement when rounding fractional integer variables, choose the direction that worsens the objective value, following the assumption that generally the satisfiability of the constraints is greater when the objective value is worse.
+\end{enumerate}
+
 \nocite{*}
 \renewcommand{\bibname}{References}
 \begin{thebibliography}{9}

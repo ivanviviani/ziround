@@ -6,6 +6,8 @@
 
 #include "ziround.h"
 #include "dirent.h"
+#include <windows.h>
+#include <winnt.h>
 
 /**
  * @brief Main.
@@ -33,17 +35,35 @@ int main(int argc, char** argv) {
 
 void test_instance(instance* inst) {
 
-	int numrounds = 0; /**< Number of rounds (outer loops) of ZI-Round. */
-
+	LARGE_INTEGER lpfreq, lpstart, lpend; /**< Variables for measuring execution time for solving the initial continuous relaxation. */
+	LARGE_INTEGER zifreq, zistart, ziend; /**< Variables for measuring execution time of ZI-Round. */
+	int lp_solve_exec_time = 0;           /**< Execution time for solving the initial continuous relaxation. */
+	int ziround_exec_time;                /**< Execution time of ZI-Round. */
+	int numrounds = 0;                    /**< Number of rounds (outer loops) of ZI-Round. */
+		
 	setup_CPLEX_env(inst);
 	read_MIP_problem(inst, inst->input_file);
 	save_integer_variables(inst);
+	
+	// Measure execution time (in milliseconds) for solving the continuous relaxation (time limit of 5 minutes)
+	QueryPerformanceFrequency(&lpfreq);
+	QueryPerformanceCounter(&lpstart);
 	solve_continuous_relaxation(inst);
+	QueryPerformanceCounter(&lpend);
+	lp_solve_exec_time = (lpend.QuadPart - lpstart.QuadPart) * 1000 / lpfreq.QuadPart;
+	print_verbose(10, "[INFO]: LP solve execution time (milliseconds): %d.\n", lp_solve_exec_time);
+
 	populate_inst(inst);
 
+	// Measure execution time (in milliseconds) of ZI-Round
+	QueryPerformanceFrequency(&zifreq);
+	QueryPerformanceCounter(&zistart);
 	zi_round(inst, &numrounds);
+	QueryPerformanceCounter(&ziend);
+	ziround_exec_time = (ziend.QuadPart - zistart.QuadPart) * 1000 / zifreq.QuadPart;
 
 	print_verbose(10, "[INFO]: ZI-Round terminated. #Rounds: %d\n", numrounds);
+	print_verbose(10, "[INFO]: ZI-Round execution time (milliseconds): %d.\n", ziround_exec_time);
 	assert(equals(inst->solfrac, sol_fractionality(inst->x, inst->int_var, inst->ncols)));
 	assert(equals(inst->objval, dot_product(inst->obj, inst->x, inst->ncols)));
 	print_verbose(10, "[INFO]: Solution fractionality: %f.\n", inst->solfrac);

@@ -115,6 +115,7 @@ void plot(instance* inst) {
 	}
 
 	// Try to plot solution cost and number of variables to round as a pair first
+	/*
 	if (PLOT_SOL_COST && PLOT_NUM_VARS_TO_ROUND) {
 		char** label = (char**)calloc(3, sizeof(char*));
 		label[0] = (char*)calloc(10, sizeof(char));
@@ -165,6 +166,7 @@ void plot(instance* inst) {
 		plot_tracker(inst->tracker_toround, name, label, inst->size_toround, NULL);
 		free_all(5, label[0], label[1], label, name, temp);
 	}
+	*/
 }
 
 void add_point_single_tracker(double point, double** tracker, int* len, int* size) {
