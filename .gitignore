@@ -6,7 +6,6 @@
 # Ignore miplib2003 folder and mps/txt files
 miplib2003/*
 *.mps
-*.txt
 
 #Ignore latex auxiliary files
 *.aux

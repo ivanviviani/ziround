@@ -1,0 +1,22 @@
+1. ordinare i singleton all'inizio per coef obj cresc 
+2. no shift 1 -> effetto # sols
+3. 1-OPT solo dopo frac = 0
+4. ties -> contro objval
+
+test-bed: miplib 2003 + 2010 + 2017 (no duplicates)
++ 3/5 seeds
+
+timelimit 5/10 minuti
+
+numero fissato di passate
+
+Misure aggregate test-bed
+- % successo
+- tempi di calcolo: media geometrica shiftata
+  1. shift tempi (1s per lp, ?0.1 per ziround)
+  2. geom dei tempi shiftati
+  3. shift indietro
+  (medie geometriche di tempi lp e ziround)
+- rapporto tempo ziround / lp
+- gap con sol ottime (%) -> media dei gap
+
