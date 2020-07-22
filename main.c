@@ -37,8 +37,8 @@ void test_instance(instance* inst) {
 
 	LARGE_INTEGER lpfreq, lpstart, lpend; /**< Variables for measuring execution time for solving the initial continuous relaxation. */
 	LARGE_INTEGER zifreq, zistart, ziend; /**< Variables for measuring execution time of ZI-Round. */
-	int lp_solve_exec_time = 0;           /**< Execution time for solving the initial continuous relaxation. */
-	int ziround_exec_time;                /**< Execution time of ZI-Round. */
+	int lp_solve_exec_time = 0;           /**< Execution time (in milliseconds) for solving the initial continuous relaxation. */
+	int ziround_exec_time = 0;            /**< Execution time (in milliseconds) of ZI-Round. */
 	int numrounds = 0;                    /**< Number of rounds (outer loops) of ZI-Round. */
 		
 	setup_CPLEX_env(inst);
@@ -51,7 +51,6 @@ void test_instance(instance* inst) {
 	solve_continuous_relaxation(inst);
 	QueryPerformanceCounter(&lpend);
 	lp_solve_exec_time = (lpend.QuadPart - lpstart.QuadPart) * 1000 / lpfreq.QuadPart;
-	print_verbose(10, "[INFO]: LP solve execution time (milliseconds): %d.\n", lp_solve_exec_time);
 
 	populate_inst(inst);
 
@@ -63,10 +62,12 @@ void test_instance(instance* inst) {
 	ziround_exec_time = (ziend.QuadPart - zistart.QuadPart) * 1000 / zifreq.QuadPart;
 
 	print_verbose(10, "[INFO]: ZI-Round terminated. #Rounds: %d\n", numrounds);
-	print_verbose(10, "[INFO]: ZI-Round execution time (milliseconds): %d.\n", ziround_exec_time);
+	print_verbose(10, "[INFO]: LP solve execution time (in milliseconds): %d ms\n", lp_solve_exec_time);
+	print_verbose(10, "[INFO]: ZI-Round execution time (in milliseconds): %d ms\n", ziround_exec_time);
+	print_verbose(10, "[INFO]: Sum of LP solve + ZI-Round execution time (in milliseconds): %d ms\n", lp_solve_exec_time + ziround_exec_time);
 	assert(equals(inst->solfrac, sol_fractionality(inst->x, inst->int_var, inst->ncols)));
 	assert(equals(inst->objval, dot_product(inst->obj, inst->x, inst->ncols)));
-	print_verbose(10, "[INFO]: Solution fractionality: %f.\n", inst->solfrac);
+	print_verbose(10, "[INFO]: Solution fractionality: %f\n", inst->solfrac);
 	print_verbose(20, "[INFO]: Candidate objective value: %f\n", inst->objval);
 	
 	check_bounds(inst->x, inst->lb, inst->ub, inst->ncols);
@@ -84,11 +85,14 @@ void test_instance(instance* inst) {
 
 void test_folder(instance* inst) {
 
-	time_t start, exec_time;        /**< Execution time variables. */
-	double solfrac = LONG_MIN;      /**< Solution fractionality. */
-	int numrounds = 0;              /**< Number of rounds (outer loops) of ZI-Round. */
-	char* input_folder_name = NULL; /**< Input folder name. */
-	char* output_path = NULL;       /**< Output path. */
+	LARGE_INTEGER lpfreq, lpstart, lpend; /**< Variables for measuring execution time for solving the initial continuous relaxation. */
+	LARGE_INTEGER zifreq, zistart, ziend; /**< Variables for measuring execution time of ZI-Round. */
+	int lp_solve_exec_time = 0;           /**< Execution time (in milliseconds) for solving the initial continuous relaxation. */
+	int ziround_exec_time = 0;            /**< Execution time (in milliseconds) of ZI-Round. */
+	double solfrac = LONG_MIN;            /**< Solution fractionality. */
+	int numrounds = 0;                    /**< Number of rounds (outer loops) of ZI-Round. */
+	char* input_folder_name = NULL;       /**< Input folder name. */
+	char* output_path = NULL;             /**< Output path. */
 
 	// Allocate input folder and output path
 	input_folder_name = (char*)calloc(30, sizeof(char));
@@ -104,7 +108,7 @@ void test_folder(instance* inst) {
 
 	// Print file header
 	FILE* output = fopen(output_path, "w");
-	fprintf(output, "Instance;Cost;Fractionality;#Rounds;Time\n");
+	fprintf(output, "Instance;Cost;Fractionality;#Rounds;LPtime(ms);ZItime(ms);LP+ZI(ms)\n");
 	fclose(output);
 
 	// Scan files
@@ -132,12 +136,22 @@ void test_folder(instance* inst) {
 		setup_CPLEX_env(&test_inst);
 		read_MIP_problem(&test_inst, test_inst.input_file);
 		save_integer_variables(&test_inst);
+
+		// Measure execution time (in milliseconds) for solving the continuous relaxation (time limit of 5 minutes)
+		QueryPerformanceFrequency(&lpfreq);
+		QueryPerformanceCounter(&lpstart);
 		solve_continuous_relaxation(&test_inst);
+		QueryPerformanceCounter(&lpend);
+		lp_solve_exec_time = (lpend.QuadPart - lpstart.QuadPart) * 1000 / lpfreq.QuadPart;
+
 		populate_inst(&test_inst);
 
-		start = time(NULL);
+		// Measure execution time (in milliseconds) of ZI-Round
+		QueryPerformanceFrequency(&zifreq);
+		QueryPerformanceCounter(&zistart);
 		zi_round(&test_inst, &numrounds);
-		exec_time = time(NULL) - start;
+		QueryPerformanceCounter(&ziend);
+		ziround_exec_time = (ziend.QuadPart - zistart.QuadPart) * 1000 / zifreq.QuadPart;
 
 		assert(equals(test_inst.solfrac, sol_fractionality(test_inst.x, test_inst.int_var, test_inst.ncols)));
 		assert(equals(test_inst.objval, dot_product(test_inst.obj, test_inst.x, test_inst.ncols)));
@@ -151,13 +165,16 @@ void test_folder(instance* inst) {
 
 		// Print results to file
 		output = fopen(output_path, "a");
-		fprintf(output, "%s;%f;%f;%d;%d\n", strtok(direlem->d_name, "."), test_inst.objval, solfrac, numrounds, (long)exec_time);
+		fprintf(output, "%s;%f;%f;%d;%d;%d;%d\n", 
+			strtok(direlem->d_name, "."), test_inst.objval, solfrac, numrounds, lp_solve_exec_time, ziround_exec_time, lp_solve_exec_time + ziround_exec_time);
 		fclose(output);
 
 		print_verbose(10, "TEST RESULT --------------------------------------------------------------------\n");
 		print_verbose(10, "[] Solution cost: %f\n", test_inst.objval);
 		print_verbose(10, "[] Solution fractionality: %f\n", solfrac);
-		print_verbose(10, "[] Execution time: %d s\n", exec_time);
+		print_verbose(10, "[] LP solve execution time (in milliseconds): %d ms\n", lp_solve_exec_time);
+		print_verbose(10, "[] ZI-Round execution time (in milliseconds): %d ms\n", ziround_exec_time);
+		print_verbose(10, "[] Sum of LP solve + ZI-Round execution time (in milliseconds): %d ms\n", lp_solve_exec_time + ziround_exec_time);
 		print_verbose(10, "--------------------------------------------------------------------------------\n\n\n");
 
 		free_inst(&test_inst);
