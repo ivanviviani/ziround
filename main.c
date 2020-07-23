@@ -37,8 +37,8 @@ void test_instance(instance* inst) {
 
 	LARGE_INTEGER lpfreq, lpstart, lpend; /**< Variables for measuring execution time for solving the initial continuous relaxation. */
 	LARGE_INTEGER zifreq, zistart, ziend; /**< Variables for measuring execution time of ZI-Round. */
-	int lp_solve_exec_time = 0;           /**< Execution time (in milliseconds) for solving the initial continuous relaxation. */
-	int ziround_exec_time = 0;            /**< Execution time (in milliseconds) of ZI-Round. */
+	LONG64 lp_solve_exec_time = 0;        /**< Execution time (in milliseconds) for solving the initial continuous relaxation. */
+	LONG64 ziround_exec_time = 0;         /**< Execution time (in milliseconds) of ZI-Round. */
 	int numrounds = 0;                    /**< Number of rounds (outer loops) of ZI-Round. */
 		
 	setup_CPLEX_env(inst);
@@ -62,9 +62,9 @@ void test_instance(instance* inst) {
 	ziround_exec_time = (ziend.QuadPart - zistart.QuadPart) * 1000 / zifreq.QuadPart;
 
 	print_verbose(10, "[INFO]: ZI-Round terminated. #Rounds: %d\n", numrounds);
-	print_verbose(10, "[INFO]: LP solve execution time (in milliseconds): %d ms\n", lp_solve_exec_time);
-	print_verbose(10, "[INFO]: ZI-Round execution time (in milliseconds): %d ms\n", ziround_exec_time);
-	print_verbose(10, "[INFO]: Sum of LP solve + ZI-Round execution time (in milliseconds): %d ms\n", lp_solve_exec_time + ziround_exec_time);
+	print_verbose(10, "[INFO]: LP solve execution time (in milliseconds): %lld ms\n", lp_solve_exec_time);
+	print_verbose(10, "[INFO]: ZI-Round execution time (in milliseconds): %lld ms\n", ziround_exec_time);
+	print_verbose(10, "[INFO]: Sum of LP solve + ZI-Round execution time (in milliseconds): %lld ms\n", lp_solve_exec_time + ziround_exec_time);
 	assert(equals(inst->solfrac, sol_fractionality(inst->x, inst->int_var, inst->ncols)));
 	assert(equals(inst->objval, dot_product(inst->obj, inst->x, inst->ncols)));
 	print_verbose(10, "[INFO]: Solution fractionality: %f\n", inst->solfrac);
@@ -87,29 +87,37 @@ void test_folder(instance* inst) {
 
 	LARGE_INTEGER lpfreq, lpstart, lpend; /**< Variables for measuring execution time for solving the initial continuous relaxation. */
 	LARGE_INTEGER zifreq, zistart, ziend; /**< Variables for measuring execution time of ZI-Round. */
-	int lp_solve_exec_time = 0;           /**< Execution time (in milliseconds) for solving the initial continuous relaxation. */
-	int ziround_exec_time = 0;            /**< Execution time (in milliseconds) of ZI-Round. */
+	LONG64 lp_solve_exec_time = 0;           /**< Execution time (in milliseconds) for solving the initial continuous relaxation. */
+	LONG64 ziround_exec_time = 0;            /**< Execution time (in milliseconds) of ZI-Round. */
+	double num_succ = 0, num_inst = 0;    /**< Number of successful and total instances. */
 	double solfrac = LONG_MIN;            /**< Solution fractionality. */
 	int numrounds = 0;                    /**< Number of rounds (outer loops) of ZI-Round. */
 	char* input_folder_name = NULL;       /**< Input folder name. */
-	char* output_path = NULL;             /**< Output path. */
+	char* output_path = NULL;             /**< Test results output path. */
+	char* aggr_path = NULL;               /**< Test-bed aggregate measures output path. */
 
-	// Allocate input folder and output path
+	// Allocate input folder name, test results output path and test-bed aggregate measures output path
 	input_folder_name = (char*)calloc(30, sizeof(char));
-	output_path = (char*)calloc(60, sizeof(char)); if (input_folder_name == NULL || output_path == NULL) print_error("[test_folder]: Failed to allocate input filename, folder or output path.\n");
-	sprintf(input_folder_name, inst->input_folder);
+	output_path = (char*)calloc(60, sizeof(char));
+	aggr_path = (char*)calloc(60, sizeof(char));
+	if (input_folder_name == NULL || output_path == NULL || aggr_path == NULL) print_error("[test_folder]: Failed to allocate output related structures.\n");
 
-	// Set output file name
-	sprintf(output_path, "ziround_test_results.csv");
+	// Set file/folder names
+	sprintf(input_folder_name, inst->input_folder);
+	sprintf(output_path, "test_results.csv");
+	sprintf(aggr_path, "aggregate_measures.csv");
 
 	// Initialize the directory and the directory element that represents a single file  
 	DIR* dir = opendir(input_folder_name); if (dir == NULL) print_error("[test_folder]: Failed to open directory %s.\n", input_folder_name);
 	struct dirent* direlem;
 
-	// Print file header
+	// Print file headers
 	FILE* output = fopen(output_path, "w");
 	fprintf(output, "Instance (rseed);Cost;Fractionality;#Rounds;LPtime(ms);ZItime(ms);LP+ZI(ms)\n");
 	fclose(output);
+	FILE* aggr_output = fopen(aggr_path, "w");
+	fprintf(aggr_output, "SuccessRate(%%);SGM-LPtime(ms);SGM-ZItime(ms);SGM-ZI/SGM-LP;avgOPTGAP\n");
+	fclose(aggr_output);
 
 	// Scan files
 	while ((direlem = readdir(dir)) != NULL) {
@@ -160,26 +168,35 @@ void test_folder(instance* inst) {
 						  test_inst.rmatind, test_inst.rmatval, test_inst.sense, test_inst.rhs);
 
 		solfrac = sol_fractionality(test_inst.x, test_inst.int_var, test_inst.ncols);
+		num_inst++;
+		num_succ += zero(solfrac);
 
 		// if (VERBOSE >= 10) plot(&test_inst);
 
-		// Print results to file
+		// Print test results to file
 		output = fopen(output_path, "a");
-		fprintf(output, "%s (%d);%f;%f;%d;%d;%d;%d\n", 
+		fprintf(output, "%s (%d);%f;%f;%d;%lld;%lld;%lld\n", 
 			strtok(direlem->d_name, "."), test_inst.rseed, test_inst.objval, solfrac, numrounds, lp_solve_exec_time, ziround_exec_time, lp_solve_exec_time + ziround_exec_time);
 		fclose(output);
 
 		print_verbose(10, "TEST RESULT --------------------------------------------------------------------\n");
 		print_verbose(10, "[] Solution cost: %f\n", test_inst.objval);
 		print_verbose(10, "[] Solution fractionality: %f\n", solfrac);
-		print_verbose(10, "[] LP solve execution time (in milliseconds): %d ms\n", lp_solve_exec_time);
-		print_verbose(10, "[] ZI-Round execution time (in milliseconds): %d ms\n", ziround_exec_time);
-		print_verbose(10, "[] Sum of LP solve + ZI-Round execution time (in milliseconds): %d ms\n", lp_solve_exec_time + ziround_exec_time);
+		print_verbose(10, "[] LP solve execution time (in milliseconds): %lld ms\n", lp_solve_exec_time);
+		print_verbose(10, "[] ZI-Round execution time (in milliseconds): %lld ms\n", ziround_exec_time);
+		print_verbose(10, "[] Sum of LP solve + ZI-Round execution time (in milliseconds): %lld ms\n", lp_solve_exec_time + ziround_exec_time);
 		print_verbose(10, "--------------------------------------------------------------------------------\n\n\n");
 
 		free_inst(&test_inst);
 	} // end while
 
-	free_all(2, output_path, input_folder_name);
+	// Compute test-bed aggregate measures
+
+	// Print test-bed aggregate measures to file
+	aggr_output = fopen(aggr_path, "a");
+	fprintf(aggr_output, "%.2f\n", num_succ / num_inst * 100);
+	fclose(aggr_output);
+	
+	free_all(3, output_path, input_folder_name, aggr_path);
 	closedir(dir);
 }
