@@ -16,15 +16,16 @@ X Controllare che dopo aver ordinato i singletons i loro bounds corrispondano (d
 X Cambiare l'estensione verso un default attiva e con flag opzionale settare "disattiva uso dei singletons"
 X Aggiungere l'ultima combinazione di plot (solcost + vars to round)
 X Mettere come opzionale l'estensione che shifta le variabili intere di 1.0 migliorando objval
+X Nel codice, aggiustare la misurazione del tempo di esecuzione dell'algoritmo ZI-Round in se e separatamente della risoluzione del LP (stabilendo una deviazione standard di errore sui millisecondi misurati). -> errore 14 millisecondi
+X Rifare il test per std misurazione tempi ripetendo 1000 volte la risoluzione della stessa istanza campione arbitraria (es. fast0507) -> errore 14 millisecondi
+X Impostare il timelimit di default a 5/10 minuti (necessario per risolvere gli lp)
+X Aggiungere il supporto nel codice e stampa dei dati con aggiunta di (seed) dopo nome istanza
 
-?? Rifare il test per std misurazione tempi ripetendo 1000 volte la risoluzione della stessa istanza campione arbitraria (es. seymour)
-?? Preparare il testbed: MIPLIB 2003 + 2010 + 2017 (senza duplicati) e RIMUOVERE le istanze con vincoli RANGED e quelle INFEASIBLE (anche quelle per cui una soluzione ottima non è conosciuta??)
-?? Scegliere 3/5 semi random per espandere il test-bed ulteriormente + aggiungere il supporto nel codice e stampa dei dati con aggiunta di (seed) dopo nome istanza
-?? Impostare il timelimit di default a 5/10 minuti (necessario per risolvere gli lp)
+?? Nel codice, preparare la stampa delle misure aggregate sul test-bed (usa miplib2003 per debug) (in un altro file ??)
+?? Scegliere 3/5 semi random per espandere il test-bed ulteriormente
 ?? Nel codice, aggiungere l'opzione settabile di attivare lo shifting di 1 delle variabili già rounded dopo che la fractionality della soluzione raggiunge zero: occhio che quando sono rounded ho già una soluzione feasible in mano
 ?? Nel codice, aggiungere i'opzione di scegliere quante passate delle variabili fare (da 1 in su): raggiunto il limite uscire dal ciclo esterno e ritornare la soluzione corrente
-?? Nel codice, aggiustare la misurazione del tempo di esecuzione dell'algoritmo ZI-Round in se e separatamente della risoluzione del LP (stabilendo una deviazione standard di errore sui millisecondi misurati).
-?? Nel codice, preparare la stampa delle misure aggregate sul test-bed (usa miplib2003 per debug) (in un altro file ??)
+?? Preparare il testbed: MIPLIB 2003 + 2010 + 2017 (senza duplicati) e RIMUOVERE le istanze con vincoli RANGED e quelle INFEASIBLE (anche quelle per cui una soluzione ottima non è conosciuta??)
 ?? Una volta creato il test-bed definitivo, creare un file di testo con l'elenco delle istanze usate
 ?? Fare i test sul test-bed definitivo
 
