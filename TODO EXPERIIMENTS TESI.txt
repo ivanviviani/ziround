@@ -11,7 +11,7 @@ timelimit 5/10 minuti
 numero fissato di passate
 
 Misure aggregate test-bed
-- % successo
+X- % successo
 - tempi di calcolo: media geometrica shiftata
   1. shift tempi (1s per lp, ?0.1 per ziround)
   2. geom dei tempi shiftati

@@ -16,6 +16,8 @@
 #include <math.h>
 #include <assert.h>
 #include <time.h>
+#include <windows.h>
+#include <winnt.h>
 
 /**
  * @brief Verbosity level.

@@ -6,8 +6,6 @@
 
 #include "ziround.h"
 #include "dirent.h"
-#include <windows.h>
-#include <winnt.h>
 
 /**
  * @brief Main.
