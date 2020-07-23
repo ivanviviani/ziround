@@ -108,7 +108,7 @@ void test_folder(instance* inst) {
 
 	// Print file header
 	FILE* output = fopen(output_path, "w");
-	fprintf(output, "Instance;Cost;Fractionality;#Rounds;LPtime(ms);ZItime(ms);LP+ZI(ms)\n");
+	fprintf(output, "Instance (rseed);Cost;Fractionality;#Rounds;LPtime(ms);ZItime(ms);LP+ZI(ms)\n");
 	fclose(output);
 
 	// Scan files
@@ -165,8 +165,8 @@ void test_folder(instance* inst) {
 
 		// Print results to file
 		output = fopen(output_path, "a");
-		fprintf(output, "%s;%f;%f;%d;%d;%d;%d\n", 
-			strtok(direlem->d_name, "."), test_inst.objval, solfrac, numrounds, lp_solve_exec_time, ziround_exec_time, lp_solve_exec_time + ziround_exec_time);
+		fprintf(output, "%s (%d);%f;%f;%d;%d;%d;%d\n", 
+			strtok(direlem->d_name, "."), test_inst.rseed, test_inst.objval, solfrac, numrounds, lp_solve_exec_time, ziround_exec_time, lp_solve_exec_time + ziround_exec_time);
 		fclose(output);
 
 		print_verbose(10, "TEST RESULT --------------------------------------------------------------------\n");
