@@ -21,11 +21,12 @@ X Rifare il test per std misurazione tempi ripetendo 1000 volte la risoluzione d
 X Impostare il timelimit di default a 5/10 minuti (necessario per risolvere gli lp)
 X Aggiungere il supporto nel codice e stampa dei dati con aggiunta di (seed) dopo nome istanza
 
+?? [IMPORTANTE] Escludere dalle 3 miplib le istanze con vincoli RANGED e quelle con variabili SEMIINT/SEMICONT
 ?? Nel codice, preparare la stampa delle misure aggregate sul test-bed (usa miplib2003 per debug) (in un altro file ??)
 ?? Scegliere 3/5 semi random per espandere il test-bed ulteriormente
 ?? Nel codice, aggiungere l'opzione settabile di attivare lo shifting di 1 delle variabili già rounded dopo che la fractionality della soluzione raggiunge zero: occhio che quando sono rounded ho già una soluzione feasible in mano
 ?? Nel codice, aggiungere i'opzione di scegliere quante passate delle variabili fare (da 1 in su): raggiunto il limite uscire dal ciclo esterno e ritornare la soluzione corrente
-?? Preparare il testbed: MIPLIB 2003 + 2010 + 2017 (senza duplicati) e RIMUOVERE le istanze con vincoli RANGED e quelle INFEASIBLE (anche quelle per cui una soluzione ottima non è conosciuta??)
+?? Preparare il testbed: MIPLIB 2003 + 2010 + 2017 (senza duplicati) e RIMUOVERE le istanze con vincoli RANGED e quelle INFEASIBLE e quelle UNBOUNDED (per quelle per cui una soluzione ottima non è consciuta ("unkn") vedi mail salvagnin -> gap 0% o 100%)
 ?? Una volta creato il test-bed definitivo, creare un file di testo con l'elenco delle istanze usate
 ?? Fare i test sul test-bed definitivo
 
