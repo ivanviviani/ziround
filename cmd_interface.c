@@ -41,7 +41,7 @@ void parse_cmd(int argc, char** argv, instance* inst) {
 		print_verbose(10, "[] -folder <foldername>:       Input folder. \n");
 		print_verbose(10, "[] -singletons [1|0]:          Flag for controlling the use of singletons in ZI-Round (default 1 = ON).\n");
 		print_verbose(10, "[] -nonfracvars [1|0]:         Flag for controlling the shifting of also non-fractional integer variables in ZI-Round (default 1 = ON).\n");
-		print_verbose(10, "[] -timelimit <seconds>:       Execution time limit (default 3600).\n");
+		print_verbose(10, "[] -timelimit <seconds>:       Execution time limit in seconds (default 300).\n");
 		print_verbose(10, "[] -rseed <integer>:           Random seed (default -1). \n");
 		print_verbose(10, "[] -help, --help, -h:          Show help menu.\n");
 		print_verbose(10, "--------------------------------------------------------------------------------\n\n");
