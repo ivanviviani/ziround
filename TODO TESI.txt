@@ -20,8 +20,8 @@ X Nel codice, aggiustare la misurazione del tempo di esecuzione dell'algoritmo Z
 X Rifare il test per std misurazione tempi ripetendo 1000 volte la risoluzione della stessa istanza campione arbitraria (es. fast0507) -> errore 14 millisecondi
 X Impostare il timelimit di default a 5/10 minuti (necessario per risolvere gli lp)
 X Aggiungere il supporto nel codice e stampa dei dati con aggiunta di (seed) dopo nome istanza
+X [IMPORTANTE] Escludere dalle 3 miplib le istanze con vincoli RANGED (X) e quelle con variabili SEMIINT/SEMICONT (X)
 
-?? [IMPORTANTE] Escludere dalle 3 miplib le istanze con vincoli RANGED e quelle con variabili SEMIINT/SEMICONT
 ?? Nel codice, preparare la stampa delle misure aggregate sul test-bed (usa miplib2003 per debug) (in un altro file ??)
 ?? Scegliere 3/5 semi random per espandere il test-bed ulteriormente
 ?? Nel codice, aggiungere l'opzione settabile di attivare lo shifting di 1 delle variabili già rounded dopo che la fractionality della soluzione raggiunge zero: occhio che quando sono rounded ho già una soluzione feasible in mano
