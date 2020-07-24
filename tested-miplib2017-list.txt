@@ -71,7 +71,6 @@ n5-3.mps
 neos-1425699.mps
 ta2-UUE.mps
 misc07.mps
-dsbmip.mps
 air03.mps
 neos-848198.mps
 fiball.mps
@@ -86,7 +85,6 @@ rout.mps
 CMS750_4.mps
 neos-1599274.mps
 nh97_potential.mps
-mod011.mps
 bley_xs1noM.mps
 neos-787933.mps
 sp97ic.mps
@@ -234,7 +232,6 @@ disctom.mps
 dcmulti.mps
 neos-555343.mps
 core2586-950.mps
-neos-1223462.mps
 neos-960392.mps
 neos-574665.mps
 cap6000.mps
@@ -279,7 +276,6 @@ gen.mps
 dano3_5.mps
 neos-633273.mps
 neos-957323.mps
-rentacar.mps
 neos9.mps
 neos17.mps
 trento1.mps
@@ -606,7 +602,6 @@ decomp2.mps
 lr2-22dr3-333vc4v17a-t60.mps
 neos18.mps
 supportcase39.mps
-ns930473.mps
 reblock354.mps
 b-ball.mps
 comp16-3idx.mps
@@ -802,7 +797,6 @@ usAbbrv-8-25_70.mps
 lotsize.mps
 rail02.mps
 gmu-35-40.mps
-gus-sch.mps
 s82.mps
 ns1952667.mps
 ger50_17_trans.mps
@@ -957,7 +951,6 @@ satellites2-40.mps
 satellites2-25.mps
 satellites3-25.mps
 satellites4-25.mps
-ns1644855.mps
 polygonpack4-15.mps
 polygonpack3-15.mps
 polygonpack4-7.mps
