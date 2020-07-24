@@ -304,7 +304,6 @@ stp3d.mps
 map06.mps
 usafa.mps
 acc-tight5.mps
-hawaiiv10-130.mps
 neos6.mps
 s250r10.mps
 mzzv11.mps
@@ -400,7 +399,6 @@ neos-5076235-embley.mps
 neos-4232544-orira.mps
 neos-5116085-kenana.mps
 neos-4736745-arroux.mps
-neos-4535459-waipa.mps
 neos-3699377-maori.mps
 neos-3530903-gauja.mps
 neos-3592146-hawea.mps
