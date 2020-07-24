@@ -67,7 +67,6 @@ gmut-77-40.mps
 go19.mps
 hanoi5.mps
 harp2.mps
-hawaiiv10-130.mps
 ic97_potential.mps
 iis-100-0-cov.mps
 iis-bupa-cov.mps
