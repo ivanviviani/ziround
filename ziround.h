@@ -112,6 +112,7 @@ typedef struct {
     int sort_singletons;      /**< Flag for sorting the singletons of each row in ascending order of objective coefficients (default 0 = OFF). */
     int after0frac;           /**< Flag for activating the shifting of non-fractional integer varables only when fractionality reaches zero (default 0 = OFF). */
     int max_rounds;           /**< Flag for controlling the maximum number of rounds (scans of the variables) performed by ZI-Round (default 0 = OFF). */
+    int fractie_worstobj;     /**< Flag for activating the shifting of non-fractional integer variables to worsen the objective when there are ties on the fractionality improvement (default 0 = OFF). */
     int timelimit;            /**< Time limit in seconds. */
     int rseed;                /**< Random seed. */
 
@@ -350,7 +351,23 @@ void check_slacks(instance* inst, int j, double delta_up, double delta_down, con
  * @param num_toround Pointer to the number of variables to round.
  * @return 1 if variable \p j has been updated, 0 otherwise.
  */
-int round_xj_bestobj(instance* inst, int j, double objcoef, double delta_up, double delta_down, int is_fractional, double* solfrac, int* num_toround);
+int round_xj_bestobj(instance* inst, int j, double objcoef, double delta_up, double delta_down, int xj_fractional, double* solfrac, int* num_toround);
+
+/**
+ * @brief Update variable \p j to worsen objective, according to the values
+ * of \p delta_up and \p delta_down calculated before. Also update the row slacks.
+ *
+ * @param inst Pointer to the already populated instance.
+ * @param j Column (variable xj) index.
+ * @param objcoef Objective coefficient of variable \p j.
+ * @param delta_up Candidate up-shift of variable \p j.
+ * @param delta_down Candidate down-shift of variable \p j.
+ * @param xj_fractional Flag that indicates whether variable \p j is fractional or integer.
+ * @param solfrac Pointer to the solution fractionality.
+ * @param num_toround Pointer to the number of variables to round.
+ * @return 1 if variable \p j has been updated, 0 otherwise.
+ */
+int round_xj_worstobj(instance* inst, int j, double objcoef, double delta_up, double delta_down, int xj_fractional, double* solfrac, int* num_toround);
 
 /**
  * @brief Update the slack array field of the instance (incrementally)

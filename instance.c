@@ -25,7 +25,7 @@ void init_inst(instance* inst) {
 	inst->solfrac          = 0.0;     inst->objval           = 0.0;
 	inst->singletons       = 1;       inst->shift_nonfracvars = 1;
 	inst->sort_singletons  = 0;       inst->after0frac       = 0;
-	inst->max_rounds       = 0;
+	inst->max_rounds       = 0;       inst->fractie_worstobj = 0;
 	inst->timelimit        = 300;     inst->rseed            = -1;
 	strcpy(inst->input_file, "NULL"); strcpy(inst->input_folder, "NULL");
 }

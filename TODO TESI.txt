@@ -30,8 +30,8 @@ X Refactor: aggiungi buffer circolare per stampa del round number
 X Nel codice, aggiungere l'opzione settabile di attivare lo shifting di 1 delle variabili già rounded dopo che la fractionality della soluzione raggiunge zero
 X Nel codice, aggiungere i'opzione di scegliere quante passate delle variabili fare (da 1 in su): raggiunto il limite uscire dal ciclo esterno e ritornare la soluzione corrente
 X Preparare il test-bed: RIMUOVERE le istanze con vincoli RANGED e quelle INFEASIBLE e quelle UNBOUNDED (per quelle per cui una soluzione ottima non è consciuta ("unkn") vedi mail salvagnin -> gap 0% o 100%)
+X [IMPORTANTE] Modifica ZI-Round: aggiungi flag per ties sulle variabili FRAZIONARIE risolti CONTRO la funzione obiettivo (contrario di come è)
 
-?? [IMPORTANTE] Modifica ZI-Round: ties sulle variabili FRAZIONARIE risolti CONTRO la funzione obiettivo (contrario di come è)
 ?? Discutere della scelta degli shift per le SGM
 ?? Preparare il testbed: MIPLIB 2003 + 2010 + 2017 (senza duplicati)
 ?? Una volta creato il test-bed definitivo, creare un file di testo con l'elenco delle istanze usate
