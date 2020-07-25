@@ -109,6 +109,7 @@ typedef struct {
     char input_folder[100];   /**< Input folder. */
     int singletons;           /**< Flag for the use of singletons in ZI-Round (default 1 = ON). */
     int shift_nonfracvars;    /**< Flag for shifting also non-fractional integer variables in ZI-Round (default 1 = ON). */
+    int sort_singletons;      /**< Flag for sorting the singletons of each row in ascending order of objective coefficients (default 0 = OFF). */
     int timelimit;            /**< Time limit in seconds. */
     int rseed;                /**< Random seed. */
 

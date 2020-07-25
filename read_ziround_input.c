@@ -271,14 +271,16 @@ void find_singletons(instance* inst) {
 	free(count);
 
 	// Sort singletons of each row by lowest objective function coefficient
-	for (int i = 0; i < inst->nrows; i++) {
+	if (inst->sort_singletons) {
+		for (int i = 0; i < inst->nrows; i++) {
 
-		// Skip rows that have no singletons
-		if (inst->num_singletons[i] == 0) continue;
-		assert(positive_integer(inst->num_singletons[i]));
+			// Skip rows that have no singletons
+			if (inst->num_singletons[i] == 0) continue;
+			assert(positive_integer(inst->num_singletons[i]));
 
-		// Singletons of a row range from index inst->rs_beg[rowind] to inst->rs_beg[rowind] + inst->num_singletons[rowind]
-		sort_singletons(inst->rs_beg[i], inst->rs_beg[i] + inst->num_singletons[i], inst->row_singletons, inst->rs_coef, inst->obj);
+			// Singletons of a row range from index inst->rs_beg[rowind] to inst->rs_beg[rowind] + inst->num_singletons[rowind]
+			sort_singletons(inst->rs_beg[i], inst->rs_beg[i] + inst->num_singletons[i], inst->row_singletons, inst->rs_coef, inst->obj);
+		}
 	}
 
 	// [DEBUG ONLY] Print row singletons (indices)

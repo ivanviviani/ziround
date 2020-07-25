@@ -24,6 +24,7 @@ void init_inst(instance* inst) {
 	inst->lp               = NULL;    inst->objsen           = CPX_MIN;
 	inst->solfrac          = 0.0;     inst->objval           = 0.0;
 	inst->singletons       = 1;       inst->shift_nonfracvars = 1;
+	inst->sort_singletons  = 0;
 	inst->timelimit        = 300;     inst->rseed            = -1;
 	strcpy(inst->input_file, "NULL"); strcpy(inst->input_folder, "NULL");
 }
