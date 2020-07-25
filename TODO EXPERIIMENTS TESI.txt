@@ -1,7 +1,7 @@
 1. ordinare i singleton all'inizio per coef obj cresc (flag X)
 2. no shift 1 -> effetto # sols (flag X)
 3. 1-OPT solo dopo frac = 0 (flag X)
-4. ties -> contro objval
+4. ties -> contro objval (flag X)
 
 test-bed: miplib 2003 + 2010 + 2017 (no duplicates)
 
