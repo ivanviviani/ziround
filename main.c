@@ -98,7 +98,7 @@ void test_folder(instance* inst) {
 
 	// Set file/folder names
 	sprintf(input_folder_name, inst->input_folder);
-	sprintf(output_path, "test_results_nogap.csv");
+	sprintf(output_path, "test_results_nogap(seed-%d).csv", inst->rseed);
 
 	// Initialize the directory and the directory element that represents a single file  
 	DIR* dir = opendir(input_folder_name); if (dir == NULL) print_error("[test_folder]: Failed to open directory %s.\n", input_folder_name);
