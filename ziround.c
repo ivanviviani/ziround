@@ -18,6 +18,7 @@ void zi_round(instance* inst, int* numrounds) {
 	double frac[2];      /**< Circular buffer for current solution fractionality. */
 	double objval[2];    /**< Circular buffer for current objective value. */
 	int toround[2];      /**< Circular buffer for current number of variables to round. */
+	int round_number[2]; /**< Circular buffer for current round number. */
 	int bufind;          /**< Current index in the circular buffer. */
 
 	// Allocate / Initialize
@@ -29,6 +30,7 @@ void zi_round(instance* inst, int* numrounds) {
 	frac[0] = 0.0; frac[1] = 0.0;
 	objval[0] = 0.0; objval[1] = 0.0;
 	toround[0] = 0; toround[1] = 0;
+	round_number[0] = 1; round_number[1] = 1;
 	bufind = 0;
 	
 	// Allocate / Initialize plotting variables
@@ -47,9 +49,7 @@ void zi_round(instance* inst, int* numrounds) {
 	objval[bufind] = inst->objval;
 	num_toround = inst->num_int_vars - count_rounded(inst->x, inst->ncols, inst->int_var, inst->vartype); // Initialize (brute force) only once
 	toround[bufind] = num_toround;
-	if (not_equals(frac[bufind], frac[!bufind]) || 
-		not_equals(objval[bufind], objval[!bufind]) ||
-		not_equals(toround[bufind], toround[!bufind])) print_verbose(10, "* %.3f | %.3f | %d | %d *\n", frac[bufind], objval[bufind], toround[bufind], *numrounds + 1);
+	print_verbose(10, "* %.3f | %.3f | %d | %d *\n", frac[bufind], objval[bufind], toround[bufind], *numrounds + 1);
 	if (VERBOSE >= 10) {
 		if (PLOT_SOL_FRAC) add_point_single_tracker(frac[bufind], &(inst->tracker_sol_frac), &(inst->len_frac), &(inst->size_frac));
 		if (PLOT_SOL_COST) add_point_single_tracker(objval[bufind], &(inst->tracker_sol_cost), &(inst->len_cost), &(inst->size_cost));
@@ -181,9 +181,14 @@ void zi_round(instance* inst, int* numrounds) {
 			frac[bufind] = inst->solfrac;
 			objval[bufind] = inst->objval;
 			toround[bufind] = num_toround;
-			if (not_equals(frac[bufind], frac[!bufind]) || 
+			round_number[bufind] = *numrounds;
+			if (
+				not_equals(frac[bufind], frac[!bufind]) || 
 				not_equals(objval[bufind], objval[!bufind]) ||
-				not_equals(toround[bufind], toround[!bufind])) print_verbose(10, "* %.3f | %.3f | %d | %d *\n", frac[bufind], objval[bufind], toround[bufind], *numrounds);
+				not_equals(toround[bufind], toround[!bufind]) ||
+				not_equals(round_number[bufind], round_number[!bufind])
+				) 
+				print_verbose(10, "* %.3f | %.3f | %d | %d *\n", frac[bufind], objval[bufind], toround[bufind], round_number[bufind]);
 			if (VERBOSE >= 10) {
 				if (PLOT_SOL_FRAC) add_point_single_tracker(frac[bufind], &(inst->tracker_sol_frac), &(inst->len_frac), &(inst->size_frac));
 				if (PLOT_SOL_COST) add_point_single_tracker(objval[bufind], &(inst->tracker_sol_cost), &(inst->len_cost), &(inst->size_cost));
