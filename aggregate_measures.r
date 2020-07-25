@@ -54,7 +54,7 @@ for (i in 1:dim(data)[1]) {
             # Optimal or best solution exists
             opt <- optimal[i,"Opt"]
             gap <- (data[i,"Cost"] - opt) / abs(opt) * 100
-            data[i,"Gap(%)"] <- round(gap, digits=2)
+            data[i,"Gap(%)"] <- min(round(gap, digits=2), 100)
         } else {
             # No optimal or best solution exists
             data[i,"Gap(%)"] <- 0
@@ -70,7 +70,7 @@ avg_gap <- mean(data[,"Gap(%)"])
 write.table(data, file="test_results.csv", row.names=FALSE, dec=".", sep=";", quote=FALSE)
 
 #! Print aggregate measures to file
-names <- c("SuccessRate(%)","SGM-LPtime","SGM-ZItime","SGM-ratio(ZI/LP)","AvgGap(%)")
+names <- c("SuccessRate(%)","SGM-LPtime(ms)","SGM-ZItime(ms)","SGM-ratio(ZI/LP)","AvgGap(%)")
 aggr <- c(succ_rate, sgm_lptime, sgm_zitime, sgm_ratio, avg_gap)
 df <- t(data.frame(names, aggr))
 write.table(df, file="aggregate_measures.csv", row.names=FALSE, col.names=FALSE, dec=".", sep=";", quote=FALSE)
