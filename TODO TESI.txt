@@ -24,6 +24,7 @@ X [IMPORTANTE] Escludere dalle 3 miplib le istanze con vincoli RANGED (X) e quel
 X Script R: preparare la stampa delle misure aggregate sul test-bed (usa miplib2003 per debug)
 X Scegliere 3/5 semi random per espandere il test-bed ulteriormente --> random seeds: 0 , 1206151 , 37029
 X Aggiungi flag per attivare/disattivare ordinamento dei singleton
+X Aggiungi flag per usare 1OPT solo dopo che la fractionality è stata azzerata
 
 ?? Discutere della scelta degli shift per le SGM
 ?? Nel codice, aggiungere l'opzione settabile di attivare lo shifting di 1 delle variabili già rounded dopo che la fractionality della soluzione raggiunge zero: occhio che quando sono rounded ho già una soluzione feasible in mano

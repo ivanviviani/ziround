@@ -76,6 +76,8 @@ void zi_round(instance* inst, int* numrounds) {
 
 					// Skip xj if shifting of non-fractional integer variables is disabled
 					if (!(inst->shift_nonfracvars)) continue;
+					// Skip xj if want to wait until zero fractionality
+					if (inst->after0frac && !zero(inst->solfrac)) continue;
 
 					// Calculate deltas (with epsilon = 1.0)
 					delta_updown(inst, j, delta_up, delta_down, 1.0);

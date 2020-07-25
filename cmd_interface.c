@@ -17,6 +17,7 @@ void parse_cmd(int argc, char** argv, instance* inst) {
 		if (!strcmp(argv[i], "-singletons"))  { inst->singletons = atoi(argv[++i]);        continue; }
 		if (!strcmp(argv[i], "-nonfracvars")) { inst->shift_nonfracvars = atoi(argv[++i]); continue; }
 		if (!strcmp(argv[i], "-sortsinglet")) { inst->sort_singletons = atoi(argv[++i]);   continue; }
+		if (!strcmp(argv[i], "-after0frac"))  { inst->after0frac = atoi(argv[++i]);        continue; }
 		if (!strcmp(argv[i], "-timelimit"))   { inst->timelimit = atoi(argv[++i]);         continue; }
 		if (!strcmp(argv[i], "-rseed"))       { inst->rseed = atoi(argv[++i]);	           continue; }
 		if (!strcmp(argv[i], "--help"))       { help = 1;                                  continue; }
@@ -33,6 +34,7 @@ void parse_cmd(int argc, char** argv, instance* inst) {
 	print_verbose(10, "[] singletons %d\n",  inst->singletons);
 	print_verbose(10, "[] nonfracvars %d\n", inst->shift_nonfracvars);
 	print_verbose(10, "[] sortsinglet %d\n", inst->sort_singletons);
+	print_verbose(10, "[] after0frac %d\n", inst->after0frac);
 	print_verbose(10, "[] timelimit %d\n",   inst->timelimit);
 	print_verbose(10, "[] rseed %d\n",       inst->rseed);
 	print_verbose(10, "--------------------------------------------------------------------------------\n\n");
@@ -45,6 +47,7 @@ void parse_cmd(int argc, char** argv, instance* inst) {
 		print_verbose(10, "[] -singletons [1|0]:          Flag for controlling the use of singletons in ZI-Round (default 1 = ON).\n");
 		print_verbose(10, "[] -nonfracvars [1|0]:         Flag for controlling the shifting of also non-fractional integer variables in ZI-Round (default 1 = ON).\n");
 		print_verbose(10, "[] -sortsinglet [1|0]:         Flag for controlling the sorting of the singletons in ascending order of objective coefficients (default 0 = OFF).\n");
+		print_verbose(10, "[] -after0frac [1|0]:          Flag for activating the shifting of also non-fractional integer variables in ZI-Round only when fractionality reaches zero (default 0 = OFF).\n");
 		print_verbose(10, "[] -timelimit <seconds>:       Execution time limit in seconds (default 300).\n");
 		print_verbose(10, "[] -rseed <integer>:           Random seed (default -1). \n");
 		print_verbose(10, "[] -help, --help, -h:          Show help menu.\n");
