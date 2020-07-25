@@ -111,6 +111,7 @@ typedef struct {
     int shift_nonfracvars;    /**< Flag for shifting also non-fractional integer variables in ZI-Round (default 1 = ON). */
     int sort_singletons;      /**< Flag for sorting the singletons of each row in ascending order of objective coefficients (default 0 = OFF). */
     int after0frac;           /**< Flag for activating the shifting of non-fractional integer varables only when fractionality reaches zero (default 0 = OFF). */
+    int max_rounds;           /**< Flag for controlling the maximum number of rounds (scans of the variables) performed by ZI-Round (default 0 = OFF). */
     int timelimit;            /**< Time limit in seconds. */
     int rseed;                /**< Random seed. */
 

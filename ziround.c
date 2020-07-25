@@ -49,7 +49,7 @@ void zi_round(instance* inst, int* numrounds) {
 	toround[bufind] = num_toround;
 	if (not_equals(frac[bufind], frac[!bufind]) || 
 		not_equals(objval[bufind], objval[!bufind]) ||
-		not_equals(toround[bufind], toround[!bufind])) print_verbose(10, "* %.3f | %.3f | %d | %d *\n", frac[bufind], objval[bufind], toround[bufind], *numrounds);
+		not_equals(toround[bufind], toround[!bufind])) print_verbose(10, "* %.3f | %.3f | %d | %d *\n", frac[bufind], objval[bufind], toround[bufind], *numrounds + 1);
 	if (VERBOSE >= 10) {
 		if (PLOT_SOL_FRAC) add_point_single_tracker(frac[bufind], &(inst->tracker_sol_frac), &(inst->len_frac), &(inst->size_frac));
 		if (PLOT_SOL_COST) add_point_single_tracker(objval[bufind], &(inst->tracker_sol_cost), &(inst->len_cost), &(inst->size_cost));
@@ -192,14 +192,17 @@ void zi_round(instance* inst, int* numrounds) {
 			bufind = !bufind;
 		} // end inner loop
 
-		if (updated) print_verbose(10, "[zi_round]: ... Some roundings occured, scan variables again ...\n");
-		else print_verbose(10, "[zi_round]: ... No roundings, exit outer loop ...\n");
+		if (updated) print_verbose(20, "[zi_round]: ... Some roundings occured, scan variables again ...\n");
+		else print_verbose(20, "[zi_round]: ... No roundings, exit outer loop ...\n");
 		
 		// [DEBUG ONLY] (BRUTE FORCE)  Check variable bounds and constraints
 		if (VERBOSE >= 201) {
 			check_bounds(inst->x, inst->lb, inst->ub, inst->ncols);
 			check_constraints(inst->x, inst->ncols, inst->nrows, inst->nzcnt, inst->rmatbeg, inst->rmatind, inst->rmatval, inst->sense, inst->rhs);
 		}
+
+		// Exit outer loop if reached max rounds (>0 activated)
+		if ((inst->max_rounds > 0) && (*numrounds == inst->max_rounds)) break;
 
 	} while (updated); // end outer loop
 
