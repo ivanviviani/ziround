@@ -508,6 +508,13 @@ double dot_product(double* coef, double* var_value, int len);
  * @param ... The actual pointers.
  */
 void free_all(int count, ...);
+
+/**
+ * @brief Create a text file with the list of instances in a folder (instances must be .mps files).
+ *
+ * @param folder_path The path to the folder containing the instances.
+ */
+void create_instances_list(const char* folder_path);
 // -----------------------------------------------------------------------------------------------------
 
 // PLOT.C ----------------------------------------------------------------------------------------------

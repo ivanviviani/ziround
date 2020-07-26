@@ -134,3 +134,30 @@ void free_all(int count, ...) {
 	va_end(args);
 	fflush(NULL);
 }
+
+void create_instances_list(const char* folder_path) {
+
+	FILE* output; /**< Pointer to the instances list. */
+
+	// Initialize the directory and the directory element that represents a single file  
+	DIR* dir = opendir(folder_path);
+	struct dirent* direlem;
+
+	// Scan files
+	int count = 0;
+	output = fopen("tested-instances-list.txt", "w");
+	fclose(output);
+	while ((direlem = readdir(dir)) != NULL) {
+
+		// Check whether the input filename (direlem->d_name) is a .mps file
+		if (strlen(direlem->d_name) < 5 || strstr(direlem->d_name, ".mps") == NULL) continue;
+		else count++;
+
+		// Print file name
+		output = fopen("tested-instances-list.txt", "a");
+		fprintf(output, "%s\n", strtok(direlem->d_name, "."));
+		fclose(output);
+	}
+
+	printf("[create_instances_list]: Found %d instances.\n", count);
+}
