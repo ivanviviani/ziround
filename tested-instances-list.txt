@@ -3,7 +3,6 @@
 23588
 2club200v15p5scn
 30n20b8
-30_70_4
 30_70_45_05_100
 30_70_45_095_100
 30_70_45_095_98
@@ -174,9 +173,7 @@ dws012-01
 dws012-02
 dws012-03
 eil33-2
-eil33
 eilA101-2
-eilA101
 eilB101
 eilC76-2
 ej
@@ -362,12 +359,12 @@ mc7
 mc8
 mcsched
 methanosarcina
+mik-250-1-100-1
 mik-250-20-75-1
 mik-250-20-75-2
 mik-250-20-75-3
 mik-250-20-75-4
 mik-250-20-75-5
-mik
 milo-v12-6-r1-58-1
 milo-v12-6-r1-75-1
 milo-v12-6-r2-40-1
@@ -917,7 +914,6 @@ ran12x21
 ran13x13
 ran14x18-disj-8
 ran14x18
-ran14x18
 ran16x16
 rd-rplusc-21
 reblock115
@@ -995,7 +991,7 @@ set3-10
 set3-15
 set3-16
 set3-20
-seymour
+seymour-disj-10
 seymour
 seymour1
 shiftreg1-4
@@ -1127,7 +1123,6 @@ uct-subprob
 umts
 unitcal_7
 usAbbrv-8-25_70
-usAbbrv
 usafa
 v150d30-2hopcds
 van
