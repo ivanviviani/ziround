@@ -135,7 +135,7 @@ void free_all(int count, ...) {
 	fflush(NULL);
 }
 
-void create_instances_list(const char* folder_path) {
+void create_instances_list(const char* folder_path, const char* output_file) {
 
 	FILE* output; /**< Pointer to the instances list. */
 
@@ -145,7 +145,7 @@ void create_instances_list(const char* folder_path) {
 
 	// Scan files
 	int count = 0;
-	output = fopen("tested-instances-list.txt", "w");
+	output = fopen(output_file, "w");
 	fclose(output);
 	while ((direlem = readdir(dir)) != NULL) {
 
@@ -154,7 +154,7 @@ void create_instances_list(const char* folder_path) {
 		else count++;
 
 		// Print file name
-		output = fopen("tested-instances-list.txt", "a");
+		output = fopen(output_file, "a");
 		fprintf(output, "%s\n", strtok(direlem->d_name, "."));
 		fclose(output);
 	}

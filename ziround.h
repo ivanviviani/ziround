@@ -513,8 +513,9 @@ void free_all(int count, ...);
  * @brief Create a text file with the list of instances in a folder (instances must be .mps files).
  *
  * @param folder_path The path to the folder containing the instances.
+ * @param output_file The path to the output file containing the list of instances created.
  */
-void create_instances_list(const char* folder_path);
+void create_instances_list(const char* folder_path, const char* output_file);
 // -----------------------------------------------------------------------------------------------------
 
 // PLOT.C ----------------------------------------------------------------------------------------------
