@@ -1,5 +1,5 @@
 30n20b8
-30_70_4
+30_70_4.5_0.95_100
 50v-10
 a1c1s1
 acc-tight4
@@ -46,8 +46,8 @@ dfn-gwin-UUM
 dg012142
 dolom1
 ds-big
-eil33
-eilA101
+eil33.2
+eilA101.2
 eilB101
 enlight13
 enlight15
@@ -97,7 +97,7 @@ maxgasflow
 mc11
 mcsched
 methanosarcina
-mik
+mik.250-1-100.1
 mine-166-5
 mine-90-10
 mining
@@ -253,7 +253,7 @@ rail02
 rail03
 rail507
 ramos3
-ran14x18
+ran14x18.dsj-8
 ran14x18
 ran16x16
 reblock166
@@ -290,7 +290,7 @@ sct5
 set3-10
 set3-15
 set3-20
-seymour
+seymour.disj-10
 seymour
 shipsched
 shs1023
@@ -324,7 +324,7 @@ uc-case3
 uct-subprob
 umts
 unitcal_7
-usAbbrv
+usAbbrv.8.25_70
 van
 vpphard
 vpphard2
