@@ -34,10 +34,10 @@ X [IMPORTANTE] Modifica ZI-Round: aggiungi flag per ties sulle variabili FRAZION
 X Crea elenchi istanze usate delle tre miplib separatamente
 X Merge delle tre miplib nel test-bed finale
 X Crea elenco instanze del test-bed finale
+X Preparare il testbed: MIPLIB 2003 + 2010 + 2017 (senza duplicati)
+X Una volta creato il test-bed definitivo, creare un file di testo con l'elenco delle istanze usate
 
 ?? Discutere della scelta degli shift per le SGM
-?? Preparare il testbed: MIPLIB 2003 + 2010 + 2017 (senza duplicati)
-?? Una volta creato il test-bed definitivo, creare un file di testo con l'elenco delle istanze usate
 ?? Fare i test sul test-bed definitivo
 
 

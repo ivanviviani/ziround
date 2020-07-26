@@ -3,7 +3,7 @@
 3. 1-OPT solo dopo frac = 0 (flag X)
 4. ties -> contro objval (flag X)
 
-test-bed: miplib 2003 + 2010 + 2017 (no duplicates)
+X test-bed: miplib 2003 + 2010 + 2017 (no duplicates)
 
 X setup for repeating for 3 random seeds: 0, 1206151, 37029
 
