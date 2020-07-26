@@ -18,6 +18,7 @@
 #include <time.h>
 #include <windows.h>
 #include <winnt.h>
+#include "dirent.h"
 
 /**
  * @brief Verbosity level.
