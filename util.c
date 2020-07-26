@@ -154,8 +154,10 @@ void create_instances_list(const char* folder_path, const char* output_file) {
 		else count++;
 
 		// Print file name
+		char inst_name[100] = "";
+		strncpy(inst_name, direlem->d_name, strlen(direlem->d_name) - 4);
 		output = fopen(output_file, "a");
-		fprintf(output, "%s\n", strtok(direlem->d_name, "."));
+		fprintf(output, "%s\n", inst_name);
 		fclose(output);
 	}
 
