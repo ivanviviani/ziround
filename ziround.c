@@ -6,7 +6,7 @@
 
 #include "ziround.h"
 
-void zi_round(instance* inst, int* numrounds) {
+void zi_round(INSTANCE* inst, int* numrounds) {
 
 	double* delta_up; 	 /**< Maximum variable up-shifts. */
 	double* delta_down;  /**< Maximum variable down-shifts. */
@@ -219,7 +219,7 @@ void zi_round(instance* inst, int* numrounds) {
 	free(delta_down);
 }
 
-void check_slacks(instance* inst, int j, double delta_up, double delta_down, const char round_updown) {
+void check_slacks(INSTANCE* inst, int j, double delta_up, double delta_down, const char round_updown) {
 
 	if (round_updown != 'U' && round_updown != 'D') print_error("[check_slacks]: Rounding sense '%c' undefined.\n", round_updown);
 
@@ -333,7 +333,7 @@ void check_slacks(instance* inst, int j, double delta_up, double delta_down, con
 	} // end for
 }
 
-int round_xj_bestobj(instance* inst, int j, double objcoef, double delta_up, double delta_down, int xj_fractional, double* solfrac, int* num_toround) {
+int round_xj_bestobj(INSTANCE* inst, int j, double objcoef, double delta_up, double delta_down, int xj_fractional, double* solfrac, int* num_toround) {
 
 	double obj_deltaplus = 0.0;  /**< Delta obj if xj is shifted up. */
 	double obj_deltaminus = 0.0; /**< Delta obj if xj is shifted down. */
@@ -617,7 +617,7 @@ int round_xj_bestobj(instance* inst, int j, double objcoef, double delta_up, dou
 	return updated;
 }
 
-int round_xj_worstobj(instance* inst, int j, double objcoef, double delta_up, double delta_down, int xj_fractional, double* solfrac, int* num_toround) {
+int round_xj_worstobj(INSTANCE* inst, int j, double objcoef, double delta_up, double delta_down, int xj_fractional, double* solfrac, int* num_toround) {
 
 	double obj_deltaplus = 0.0;  /**< Delta obj if xj is shifted up. */
 	double obj_deltaminus = 0.0; /**< Delta obj if xj is shifted down. */
@@ -903,7 +903,7 @@ int round_xj_worstobj(instance* inst, int j, double objcoef, double delta_up, do
 
 // Incremental update of row slacks and singletons slacks (only for the rows where the variable xj is involved)
 // Whenever it is called, only one variable xj has been updated
-void update_slacks(instance* inst, int j, double signed_delta) {
+void update_slacks(INSTANCE* inst, int j, double signed_delta) {
 
 	int colend;         /**< Index of the last constraint containing variable \p j. */
 	double aij;         /**< Current constraint coefficient of variable \p j. */
@@ -991,7 +991,7 @@ void update_slacks(instance* inst, int j, double signed_delta) {
 }
 
 // [EXTENSION]
-void update_singletons(instance* inst, int rowind, double delta_ss) {
+void update_singletons(INSTANCE* inst, int rowind, double delta_ss) {
 
 	int beg = inst->rs_beg[rowind]; /**< Begin index of the singletons for constraint rowind. */
 	int singleton_index;            /**< Current singleton index. */
@@ -1077,7 +1077,7 @@ void update_singletons(instance* inst, int rowind, double delta_ss) {
 	print_verbose(120, "[update_singletons][singletons][row %d '%c']: delta_ss distributed, remaining %f\n", rowind + 1, inst->sense[rowind], delta_ss);
 }
 
-void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, const double epsilon) {
+void delta_updown(INSTANCE* inst, int j, double* delta_up, double* delta_down, const double epsilon) {
 
 	double delta_up1;		 /**< First delta_up[j] major candidate. */
 	double delta_down1;		 /**< First delta_down[j] major candidate. */
@@ -1301,7 +1301,7 @@ void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, c
 }
 
 // [EXTENSION]
-double compute_ss_val(instance* inst, int rowind) {
+double compute_ss_val(INSTANCE* inst, int rowind) {
 
 	assert(index_in_bounds(rowind, inst->nrows));
 	if (inst->num_singletons[rowind] <= 0) print_error("[compute_ss_val][singletons]: Tried to compute singletons slack of row %d with no singletons.\n", rowind + 1);

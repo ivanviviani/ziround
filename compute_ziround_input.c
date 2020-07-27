@@ -6,7 +6,7 @@
 
 #include "ziround.h"
 
-void setup_CPLEX_env(instance* inst) {
+void setup_CPLEX_env(INSTANCE* inst) {
 
 	char* errmsg = (char*)malloc(CPXMESSAGEBUFSIZE * sizeof(char)); if (errmsg == NULL) print_error("[setup_CPLEX_env]: Failed to allocate errmsg.\n");
 	int status = 0;
@@ -29,7 +29,7 @@ void setup_CPLEX_env(instance* inst) {
 	free(errmsg);
 }
 
-void read_MIP_problem(instance* inst, char* filename) {
+void read_MIP_problem(INSTANCE* inst, char* filename) {
 	
 	int status = 0;
 
@@ -38,7 +38,7 @@ void read_MIP_problem(instance* inst, char* filename) {
 	if (CPXreadcopyprob(inst->env, inst->lp, filename, NULL)) print_error("[read_MIP_problem]: Failed to read and copy the problem data.\n");
 }
 
-void save_integer_variables(instance* inst) {
+void save_integer_variables(INSTANCE* inst) {
 	
 	int ncols = CPXgetnumcols(inst->env, inst->lp); 
 	assert(positive_integer(ncols));
@@ -70,7 +70,7 @@ void save_integer_variables(instance* inst) {
 	}
 }
 
-void solve_continuous_relaxation(instance* inst) {
+void solve_continuous_relaxation(INSTANCE* inst) {
 
 	if (CPXchgprobtype(inst->env, inst->lp, CPXPROB_LP)) print_error("[solve_continuous_relaxation]: Failed to change problem type.\n");
 	if (CPXlpopt(inst->env, inst->lp)) print_error("[solve_continuous_relaxation]: Failed to optimize LP.\n");

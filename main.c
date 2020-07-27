@@ -15,14 +15,15 @@
  */
 int main(int argc, char** argv) {
 
-	instance inst; /**< General support structure. */
+	INSTANCE inst;            /**< General support structure representing a problem instance. */
+	char test_type[100] = ""; /**> Variant of ZI-Round being tested (user-specified). */
 	
 	init_inst(&inst);
 	
-	parse_cmd(argc, argv, &inst);
+	parse_cmd(argc, argv, &inst, test_type);
 
 	strcmp(inst.input_file, "NULL")   ? test_instance(&inst) :
-	strcmp(inst.input_folder, "NULL") ? test_folder(&inst) :
+	strcmp(inst.input_folder, "NULL") ? test_folder(&inst, test_type) :
 	print_error("Input file or folder required! See help.\n");
 
 	free_inst(&inst);
@@ -30,7 +31,7 @@ int main(int argc, char** argv) {
 	return EXIT_SUCCESS;
 }
 
-void test_instance(instance* inst) {
+void test_instance(INSTANCE* inst) {
 
 	LARGE_INTEGER lpfreq, lpstart, lpend; /**< Variables for measuring execution time for solving the initial continuous relaxation. */
 	LARGE_INTEGER zifreq, zistart, ziend; /**< Variables for measuring execution time of ZI-Round. */
@@ -80,7 +81,7 @@ void test_instance(instance* inst) {
 	else print_verbose(10, "[INFO]: Failed to round all integer/binary variables of the MIP ...\n");
 }
 
-void test_folder(instance* inst) {
+void test_folder(INSTANCE* inst, const char* test_type) {
 
 	LARGE_INTEGER lpfreq, lpstart, lpend; /**< Variables for measuring execution time for solving the initial continuous relaxation. */
 	LARGE_INTEGER zifreq, zistart, ziend; /**< Variables for measuring execution time of ZI-Round. */
@@ -97,7 +98,7 @@ void test_folder(instance* inst) {
 
 	// Set file/folder names
 	sprintf(input_folder_name, inst->input_folder);
-	sprintf(output_path, "test_results_nogap(seed_%d).csv", inst->rseed);
+	sprintf(output_path, "test_results_nogap(%s)(seed_%d).csv", test_type, inst->rseed);
 
 	// Initialize the directory and the directory element that represents a single file  
 	DIR* dir = opendir(input_folder_name); if (dir == NULL) print_error("[test_folder]: Failed to open directory %s.\n", input_folder_name);
@@ -115,7 +116,7 @@ void test_folder(instance* inst) {
 		if (strlen(direlem->d_name) < 5 || strstr(direlem->d_name, ".mps") == NULL) continue;
 
 		// Create a new instance (clone)
-		instance test_inst;
+		INSTANCE test_inst;
 		init_inst(&test_inst);
 		sprintf(test_inst.input_file, "%s/%s", ((strcmp(input_folder_name, "NULL")) ? input_folder_name : "."), direlem->d_name);
 		test_inst.singletons = inst->singletons;

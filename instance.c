@@ -6,7 +6,7 @@
 
 #include "ziround.h"
 
-void init_inst(instance* inst) {
+void init_inst(INSTANCE* inst) {
 	
 	inst->x                = NULL;    inst->obj              = NULL;
 	inst->lb               = NULL;    inst->ub               = NULL;
@@ -30,7 +30,7 @@ void init_inst(instance* inst) {
 	strcpy(inst->input_file, "NULL"); strcpy(inst->input_folder, "NULL");
 }
 
-void free_inst(instance* inst) {
+void free_inst(INSTANCE* inst) {
 
 	char* errmsg = (char*)malloc(CPXMESSAGEBUFSIZE * sizeof(char)); if (errmsg == NULL) print_error("[setup_CPLEX_env]: Failed to allocate errmsg.\n");
 	int status = 0;

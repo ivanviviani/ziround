@@ -6,25 +6,26 @@
 
 #include "ziround.h"
 
-void parse_cmd(int argc, char** argv, instance* inst) {
+void parse_cmd(int argc, char** argv, INSTANCE* inst, char* test_type) {
 
 	int help = (argc < 2);
 
 	// Parse command line arguments
 	for (int i = 1; i < argc; i++) {
-		if (!strcmp(argv[i], "-input"))		       { strcpy(inst->input_file, argv[++i]);       continue; }
-		if (!strcmp(argv[i], "-folder"))           { strcpy(inst->input_folder, argv[++i]);     continue; }
-		if (!strcmp(argv[i], "-singletons"))       { inst->singletons = atoi(argv[++i]);        continue; }
-		if (!strcmp(argv[i], "-nonfracvars"))      { inst->shift_nonfracvars = atoi(argv[++i]); continue; }
-		if (!strcmp(argv[i], "-sortsinglet"))      { inst->sort_singletons = atoi(argv[++i]);   continue; }
-		if (!strcmp(argv[i], "-after0frac"))       { inst->after0frac = atoi(argv[++i]);        continue; }
-		if (!strcmp(argv[i], "-maxrounds"))        { inst->max_rounds = atoi(argv[++i]);        continue; }
-		if (!strcmp(argv[i], "-fractieworstobj"))  { inst->fractie_worstobj = atoi(argv[++i]);  continue; }
-		if (!strcmp(argv[i], "-timelimit"))        { inst->timelimit = atoi(argv[++i]);         continue; }
-		if (!strcmp(argv[i], "-rseed"))            { inst->rseed = atoi(argv[++i]);	            continue; }
-		if (!strcmp(argv[i], "--help"))            { help = 1;                                  continue; }
-		if (!strcmp(argv[i], "-help"))             { help = 1;                                  continue; }
-		if (!strcmp(argv[i], "-h"))			       { help = 1;                                  continue; }
+		if (!strcmp(argv[i], "-input"))		      { strcpy(inst->input_file,   argv[++i]);     continue; }
+		if (!strcmp(argv[i], "-folder"))          { strcpy(inst->input_folder, argv[++i]);     continue; }
+		if (!strcmp(argv[i], "-singletons"))      { inst->singletons        = atoi(argv[++i]); continue; }
+		if (!strcmp(argv[i], "-nonfracvars"))     { inst->shift_nonfracvars = atoi(argv[++i]); continue; }
+		if (!strcmp(argv[i], "-sortsinglet"))     { inst->sort_singletons   = atoi(argv[++i]); continue; }
+		if (!strcmp(argv[i], "-after0frac"))      { inst->after0frac        = atoi(argv[++i]); continue; }
+		if (!strcmp(argv[i], "-maxrounds"))       { inst->max_rounds        = atoi(argv[++i]); continue; }
+		if (!strcmp(argv[i], "-fractieworstobj")) { inst->fractie_worstobj  = atoi(argv[++i]); continue; }
+		if (!strcmp(argv[i], "-timelimit"))       { inst->timelimit         = atoi(argv[++i]); continue; }
+		if (!strcmp(argv[i], "-rseed"))           { inst->rseed             = atoi(argv[++i]); continue; }
+		if (!strcmp(argv[i], "-testype"))         { strcpy(test_type, argv[++i]);              continue; }
+		if (!strcmp(argv[i], "--help"))           { help = 1;                                  continue; }
+		if (!strcmp(argv[i], "-help"))            { help = 1;                                  continue; }
+		if (!strcmp(argv[i], "-h"))			      { help = 1;                                  continue; }
 		print_warning("Invalid command: %s.\n", argv[i]);
 		help = 1;
 	}
@@ -33,6 +34,7 @@ void parse_cmd(int argc, char** argv, instance* inst) {
 	print_verbose(10, "CHOSEN PARAMETERS -------------------------------------------------------------\n");
 	print_verbose(10, "[] input %s\n",           inst->input_file);
 	print_verbose(10, "[] folder %s\n",          inst->input_folder);
+	print_verbose(10, "[] testype %s\n",         test_type);
 	print_verbose(10, "[] singletons %d\n",      inst->singletons);
 	print_verbose(10, "[] nonfracvars %d\n",     inst->shift_nonfracvars);
 	print_verbose(10, "[] sortsinglet %d\n",     inst->sort_singletons);
@@ -53,7 +55,8 @@ void parse_cmd(int argc, char** argv, instance* inst) {
 		print_verbose(10, "[] -sortsinglet [1|0]:         Flag for controlling the sorting of the singletons in ascending order of objective coefficients (default 0 = OFF).\n");
 		print_verbose(10, "[] -after0frac [1|0]:          Flag for activating the shifting of also non-fractional integer variables in ZI-Round only when fractionality reaches zero (default 0 = OFF).\n");
 		print_verbose(10, "[] -maxrounds <pos integer>:   Maximum number of rounds (outer loop executions) performed by ZI-Round (default 0 = OFF).\n");
-		print_verbose(10, "[] -fractieworstobj [0|1]:     Flag for activating the shifting of non-fractional integer variables to worsen the objective when there are ties on the fractionality improvement (default 0 = OFF).\n");
+		print_verbose(10, "[] -testype <string>:          Text specification of the variant of ZI-Round being tested according to the flags set (user-specified).\n");
+		print_verbose(10, "[] -folder <foldername>:       Input folder. \n");
 		print_verbose(10, "[] -timelimit <seconds>:       Execution time limit in seconds (default 300).\n");
 		print_verbose(10, "[] -rseed <integer>:           Random seed (default -1). \n");
 		print_verbose(10, "[] -help, --help, -h:          Show help menu.\n");

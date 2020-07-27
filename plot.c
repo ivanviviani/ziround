@@ -6,7 +6,7 @@
 
 #include "ziround.h"
 
-void plot(instance* inst) {
+void plot(INSTANCE* inst) {
 
 	// Plot trackers of solution fractionality, cost or number of variables to round
 

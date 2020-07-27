@@ -117,7 +117,7 @@ typedef struct {
     int timelimit;            /**< Time limit in seconds. */
     int rseed;                /**< Random seed. */
 
-} instance;
+} INSTANCE;
 
 // MAIN.C ----------------------------------------------------------------------------------------------
 
@@ -126,21 +126,22 @@ typedef struct {
  *
  * @param inst Pointer to the instance.
  */
-void test_instance(instance* inst);
+void test_instance(INSTANCE* inst);
 
 /**
  * @brief Test ZI-Round on a folder of instances.
  *
  * @param inst Pointer to the instance.
+ * @param test_type The variant of ZI-Round being tested.
  */
-void test_folder(instance* inst);
+void test_folder(INSTANCE* inst, const char* test_type);
 
 /**
  * @brief Plot the trackers implemented according to the PLOT_* macros.
  *
  * @param inst Pointer to the instance.
  */
-void plot(instance* inst);
+void plot(INSTANCE* inst);
 // -----------------------------------------------------------------------------------------------------
 
 // INSTANCE.C ------------------------------------------------------------------------------------------
@@ -150,14 +151,14 @@ void plot(instance* inst);
  *
  * @param inst Pointer to the instance.
  */
-void init_inst(instance* inst);
+void init_inst(INSTANCE* inst);
 
 /**
  * @brief Deallocate all the fields of the instance.
  *
  * @param inst Pointer to the already populated instance.
  */
-void free_inst(instance* inst);
+void free_inst(INSTANCE* inst);
 // -----------------------------------------------------------------------------------------------------
 
 // CMD_INTERFACE.C -------------------------------------------------------------------------------------
@@ -169,8 +170,9 @@ void free_inst(instance* inst);
  * @param argc Number of command line arguments (includes the program name).
  * @param argv Program arguments (strings).
  * @param inst Pointer to the instance.
+ * @param test_type The variant of ZI-Round being tested (user-specified).
  */
-void parse_cmd(int argc, char** argv, instance* inst);
+void parse_cmd(int argc, char** argv, INSTANCE* inst, char* test_type);
 // -----------------------------------------------------------------------------------------------------
 
 // COMPUTE_ZIROUND_INPUT.C -----------------------------------------------------------------------------
@@ -181,7 +183,7 @@ void parse_cmd(int argc, char** argv, instance* inst);
  *
  * @param inst Pointer to the already initialized and populated instance.
  */
-void setup_CPLEX_env(instance* inst);
+void setup_CPLEX_env(INSTANCE* inst);
 
 /**
  * @brief Create the lp into the CPLEX env of the instance and populate the lp
@@ -190,7 +192,7 @@ void setup_CPLEX_env(instance* inst);
  * @param inst Pointer to the already populated instance.
  * @param filename Name of the input file (mps format).
  */
-void read_MIP_problem(instance* inst, char* filename);
+void read_MIP_problem(INSTANCE* inst, char* filename);
 
 /**
  * @brief Read and save variable types from the MIP and save the integer/binary ones in a
@@ -198,14 +200,14 @@ void read_MIP_problem(instance* inst, char* filename);
  *
  * @param inst Pointer to the already populated instance.
  */
-void save_integer_variables(instance* inst);
+void save_integer_variables(INSTANCE* inst);
 
 /**
  * @brief Change the problem type from MIP to LP and solve its continuous relaxation.
  *
  * @param inst Pointer to the already populated instance.
  */
-void solve_continuous_relaxation(instance* inst);
+void solve_continuous_relaxation(INSTANCE* inst);
 // -----------------------------------------------------------------------------------------------------
 
 // READ_ZIROUND_INPUT.C --------------------------------------------------------------------------------
@@ -216,7 +218,7 @@ void solve_continuous_relaxation(instance* inst);
  *
  * @param inst Pointer to the already populated instance.
  */
-void populate_inst(instance* inst);
+void populate_inst(INSTANCE* inst);
 
 /**
  * @brief Read the continuous relaxation solution from the CPLEX lp
@@ -224,7 +226,7 @@ void populate_inst(instance* inst);
  *
  * @param inst Pointer to the already populated instance.
  */
-void read_solution(instance* inst);
+void read_solution(INSTANCE* inst);
 
 /**
  * @brief Read the variable bounds from the CPLEX lp
@@ -232,7 +234,7 @@ void read_solution(instance* inst);
  *
  * @param inst Pointer to the already populated instance.
  */
-void read_variable_bounds(instance* inst);
+void read_variable_bounds(INSTANCE* inst);
 
 /**
  * @brief Read the objective value from the CPLEX lp
@@ -240,7 +242,7 @@ void read_variable_bounds(instance* inst);
  *
  * @param inst Pointer to the already populated instance.
  */
-void read_objective_value(instance* inst);
+void read_objective_value(INSTANCE* inst);
 
 /**
  * @brief Read the objective function coefficients from the CPLEX lp
@@ -248,7 +250,7 @@ void read_objective_value(instance* inst);
  *
  * @param inst Pointer to the already populated instance.
  */
-void read_objective_coefficients(instance* inst);
+void read_objective_coefficients(INSTANCE* inst);
 
 /**
  * @brief Read the non-zero constraint coefficients both by row and column
@@ -257,7 +259,7 @@ void read_objective_coefficients(instance* inst);
  *
  * @param inst Pointer to the already populated instance.
  */
-void read_constraints_coefficients(instance* inst);
+void read_constraints_coefficients(INSTANCE* inst);
 
 /**
  * @brief Read the constraint senses from the CPLEX lp,
@@ -265,7 +267,7 @@ void read_constraints_coefficients(instance* inst);
  *
  * @param inst Pointer to the already populated instance.
  */
-void read_constraints_senses(instance* inst);
+void read_constraints_senses(INSTANCE* inst);
 
 /**
  * @brief Read the constraint right hand sides from the CPLEX lp,
@@ -273,7 +275,7 @@ void read_constraints_senses(instance* inst);
  *
  * @param inst Pointer to the already populated instance.
  */
-void read_constraints_right_hand_sides(instance* inst);
+void read_constraints_right_hand_sides(INSTANCE* inst);
 
 /**
  * @brief Read the constraint (row) slacks for the continuous relaxation
@@ -283,7 +285,7 @@ void read_constraints_right_hand_sides(instance* inst);
  *
  * @param inst Pointer to the already populated instance.
  */
-void read_row_slacks(instance* inst);
+void read_row_slacks(INSTANCE* inst);
 
 /**
  * @brief Find singletons of the problem, i.e. continuous variables that
@@ -291,7 +293,7 @@ void read_row_slacks(instance* inst);
  *
  * @param inst Pointer to the instance.
  */
-void find_singletons(instance* inst);
+void find_singletons(INSTANCE* inst);
 
 /**
  * @brief Compute values and bounds of the singletons slacks, seen as a single variable 
@@ -299,7 +301,7 @@ void find_singletons(instance* inst);
  *
  * @param inst Pointer to the instance.
  */
-void compute_singletons_slacks(instance* inst);
+void compute_singletons_slacks(INSTANCE* inst);
 
 /**
  * @brief Sort singleton indices and coefficients of a single row by lowest objective function coefficient.
@@ -325,7 +327,7 @@ void sort_singletons(int start, int end, int* rs_ind, double* rs_coef, double* o
  * @param inst Pointer to the already populated instance.
  * @param numrounds Number of rounds (outer loops) of ZI-Round.
  */
-void zi_round(instance* inst, int* numrounds);
+void zi_round(INSTANCE* inst, int* numrounds);
 
 /**
  * @brief Check whether all constraints affected by a round up/down of xj have enough slack for it.
@@ -336,7 +338,7 @@ void zi_round(instance* inst, int* numrounds);
  * @param delta_down Delta down of variable \p j.
  * @param round_updown
  */
-void check_slacks(instance* inst, int j, double delta_up, double delta_down, const char round_updown);
+void check_slacks(INSTANCE* inst, int j, double delta_up, double delta_down, const char round_updown);
 
 /**
  * @brief Update variable \p j to improve objective, according to the values
@@ -352,7 +354,7 @@ void check_slacks(instance* inst, int j, double delta_up, double delta_down, con
  * @param num_toround Pointer to the number of variables to round.
  * @return 1 if variable \p j has been updated, 0 otherwise.
  */
-int round_xj_bestobj(instance* inst, int j, double objcoef, double delta_up, double delta_down, int xj_fractional, double* solfrac, int* num_toround);
+int round_xj_bestobj(INSTANCE* inst, int j, double objcoef, double delta_up, double delta_down, int xj_fractional, double* solfrac, int* num_toround);
 
 /**
  * @brief Update variable \p j to worsen objective, according to the values
@@ -368,7 +370,7 @@ int round_xj_bestobj(instance* inst, int j, double objcoef, double delta_up, dou
  * @param num_toround Pointer to the number of variables to round.
  * @return 1 if variable \p j has been updated, 0 otherwise.
  */
-int round_xj_worstobj(instance* inst, int j, double objcoef, double delta_up, double delta_down, int xj_fractional, double* solfrac, int* num_toround);
+int round_xj_worstobj(INSTANCE* inst, int j, double objcoef, double delta_up, double delta_down, int xj_fractional, double* solfrac, int* num_toround);
 
 /**
  * @brief Update the slack array field of the instance (incrementally)
@@ -380,7 +382,7 @@ int round_xj_worstobj(instance* inst, int j, double objcoef, double delta_up, do
  * @param j Index of the (only) variable just updated.
  * @param signed_delta Signed delta xj.
  */
-void update_slacks(instance* inst, int j, double signed_delta);
+void update_slacks(INSTANCE* inst, int j, double signed_delta);
 
 /**
  * @brief Update singletons of the constraint \p rowind by distributing \p delta_ss.
@@ -389,7 +391,7 @@ void update_slacks(instance* inst, int j, double signed_delta);
  * @param rowind Index of the constraint.
  * @param delta_ss Delta singletons slack to distribute among the singletons of the constraint.
  */
-void update_singletons(instance* inst, int rowind, double delta_ss);
+void update_singletons(INSTANCE* inst, int rowind, double delta_ss);
 
 /**
  * @brief Compute the j-th entries of the arrays of possible up-shifts and down-shifts
@@ -401,7 +403,7 @@ void update_singletons(instance* inst, int rowind, double delta_ss);
  * @param delta_down Array of possible down-shifts.
  * @param epsilon Tolerance for the computed up/down shifts.
  */
-void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, const double epsilon);
+void delta_updown(INSTANCE* inst, int j, double* delta_up, double* delta_down, const double epsilon);
 
 /**
  * @brief Compute singletons slack of a given constraint (row).
@@ -410,7 +412,7 @@ void delta_updown(instance* inst, int j, double* delta_up, double* delta_down, c
  * @param rowind Index of the constraint.
  * @return Singletons slack of the constraint.
  */
-double compute_ss_val(instance* inst, int rowind);
+double compute_ss_val(INSTANCE* inst, int rowind);
 // -----------------------------------------------------------------------------------------------------
 
 // UTIL.C ----------------------------------------------------------------------------------------------

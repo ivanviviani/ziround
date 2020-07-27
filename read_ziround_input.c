@@ -6,7 +6,7 @@
 
 #include "ziround.h"
 
-void populate_inst(instance* inst) {
+void populate_inst(INSTANCE* inst) {
 
 	// Read problem sizes
 	inst->nrows = CPXgetnumrows(inst->env, inst->lp);
@@ -39,7 +39,7 @@ void populate_inst(instance* inst) {
 	}
 }
 
-void read_solution(instance* inst) {
+void read_solution(INSTANCE* inst) {
 
 	int solstat;   /**< Solution status according to CPLEX. */
 	int solmethod; /**< Solution method according to CPLEX. */
@@ -71,7 +71,7 @@ void read_solution(instance* inst) {
 	if (CPXgetx(inst->env, inst->lp, inst->x, 0, inst->ncols - 1)) print_error("[read_solution]: Failed to obtain primal solution.\n");
 }
 
-void read_variable_bounds(instance* inst) {
+void read_variable_bounds(INSTANCE* inst) {
 
 	// Allocate variable bounds
 	inst->ub = (double*)malloc(inst->ncols * sizeof(double)); if (inst->ub == NULL) print_error("[read_variable_bounds]: Failed to allocate variables upper bounds.\n");
@@ -82,13 +82,13 @@ void read_variable_bounds(instance* inst) {
 	if (CPXgetlb(inst->env, inst->lp, inst->lb, 0, inst->ncols - 1)) print_error("[read_variable_bounds]: Failed to obtain lower bounds.\n");
 }
 
-void read_objective_value(instance* inst) {
+void read_objective_value(INSTANCE* inst) {
 
 	// Get objective value
 	if (CPXgetobjval(inst->env, inst->lp, &(inst->objval))) print_error("[read_objective_value]: Failed to obtain objective value.\n");
 }
 
-void read_objective_coefficients(instance* inst) {
+void read_objective_coefficients(INSTANCE* inst) {
 
 	// Allocate objective coefficients
 	inst->obj = (double*)malloc(inst->ncols * sizeof(double)); if (inst->obj == NULL) print_error("[read_objective_coefficients]: Failed to allocate objective coefficients.\n");
@@ -106,7 +106,7 @@ void read_objective_coefficients(instance* inst) {
 	}
 }
 
-void read_constraints_coefficients(instance* inst) {
+void read_constraints_coefficients(INSTANCE* inst) {
 
 	int unused = 0;
 
@@ -130,7 +130,7 @@ void read_constraints_coefficients(instance* inst) {
 	if (CPXgetcols(inst->env, inst->lp, &unused, inst->cmatbeg, inst->cmatind, inst->cmatval, inst->nzcnt, &unused, 0, inst->ncols - 1)) print_error("[read_constraints_coefficients]: Failed to obtain columns info.\n");
 }
 
-void read_constraints_senses(instance* inst) {
+void read_constraints_senses(INSTANCE* inst) {
 
 	// Allocate constraint senses
 	inst->sense = (char*)malloc(inst->nrows * sizeof(char)); if (inst->sense == NULL) print_error("[read_constraints_senses]: Failed to allocate constraint senses.\n");
@@ -149,7 +149,7 @@ void read_constraints_senses(instance* inst) {
 	}
 }
 
-void read_constraints_right_hand_sides(instance* inst) {
+void read_constraints_right_hand_sides(INSTANCE* inst) {
 
 	// Allocate constraint right hand sides
 	inst->rhs = (double*)malloc(inst->nrows * sizeof(double)); if (inst->rhs == NULL) print_error("[read_constraints_right_hand_sides]: Failed to allocate right hand sides.\n");
@@ -158,7 +158,7 @@ void read_constraints_right_hand_sides(instance* inst) {
 	if (CPXgetrhs(inst->env, inst->lp, inst->rhs, 0, inst->nrows - 1)) print_error("[read_constraints_right_hand_sides]: Failed to obtain rhs.\n");
 }
 
-void read_row_slacks(instance* inst) {
+void read_row_slacks(INSTANCE* inst) {
 
 	// Allocate row slacks
 	inst->slack = (double*)malloc(inst->nrows * sizeof(double)); if (inst->slack == NULL) print_error("[read_row_slacks]: Failed to allocate row slacks.\n");
@@ -169,7 +169,7 @@ void read_row_slacks(instance* inst) {
 }
 
 // [EXTENSION]
-void find_singletons(instance* inst) {
+void find_singletons(INSTANCE* inst) {
 
 	int colend;    /**< Index of the last constraint containing variable x_j. */
 	int rowind;	   /**< Index of the current constraint. */
@@ -300,7 +300,7 @@ void find_singletons(instance* inst) {
 }
 
 // [EXTENSION]
-void compute_singletons_slacks(instance* inst) {
+void compute_singletons_slacks(INSTANCE* inst) {
 
 	int beg;             /**< Index of the first singleton of a given row. */
 	int singleton_index; /**< Absolute index of the current singleton. */
