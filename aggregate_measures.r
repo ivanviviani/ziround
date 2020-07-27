@@ -19,7 +19,7 @@ lptimes <- data$LPtime
 zitimes <- data$ZItime
 # Shifts for the shifted geometric means (in milliseconds)
 lpshift <- 1000
-zishift <- 100
+zishift <- 10
 # Apply shifts
 shifted_lptimes <- lptimes + lpshift
 shifted_zitimes <- zitimes + zishift

@@ -21,3 +21,15 @@ X- tempi di calcolo: media geometrica shiftata
 X- rapporto tempo ziround / lp
 X- gap con sol ottime (%) -> media dei gap
 
+
+-----------------------
+- lettura mps originale
+- writeprob su file .pre
+- read 10teams.mps; write 10teams.pre; read 10teams.pre; write 10teams_pre.mps
+
+?? MAntenere versione paper come default
+?? Mantenere i 3 semi diversi su ogni test
+?? COnvertire il testbed nel formato preprocessed come sopra
+?? Le varianti sono le variazioni di una flag per volta dalla versione di default
+X IMpostati gli shift a 1000 e 10 ms per LP e ZI
+
