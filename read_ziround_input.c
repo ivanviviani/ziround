@@ -165,7 +165,23 @@ void read_row_slacks(INSTANCE* inst) {
 
 	// Get row slacks
 	if (CPXgetslack(inst->env, inst->lp, inst->slack, 0, inst->nrows - 1)) print_error("[read_row_slacks]: Failed to obtain slacks.\n");
-	assert(valid_row_slacks(inst->slack, inst->sense, inst->nrows));
+	//assert(valid_row_slacks(inst->slack, inst->sense, inst->nrows));
+
+	// [DEBUG ONLY] Reject instances with ranged constraints or wrong row slacks
+	for (int i = 0; i < inst->nrows; i++) {
+		switch (inst->sense[i]) {
+			case 'L': // row slack must be non-negative
+				if (inst->slack[i] < -(TOLERANCE)) print_error("[read_row_slacks]: Found 'L' constraint with row slack %f\n", inst->slack[i]);
+			case 'G': // row slack must be non-positive
+				if (inst->slack[i] > TOLERANCE) print_error("[read_row_slacks]: Found 'G' constraint with row slack %f\n", inst->slack[i]);
+			case 'E': // row slack must be zero
+				if (fabs(inst->slack[i]) > TOLERANCE) print_error("[read_row_slacks]: Found 'E' constraint with row slack %f\n", inst->slack[i]);
+			case 'R':
+				print_error("[read_row_slacks]: Ranged constraints (type 'R') not supported.\n");
+			default:
+				print_error("[read_row_slacks]: Unknown constraint type '%c'.\n", inst->sense[i]);
+		}
+	}
 }
 
 // [EXTENSION]
