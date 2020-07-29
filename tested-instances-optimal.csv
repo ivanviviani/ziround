@@ -1083,6 +1083,11 @@ opt;opm2-z8-s0;-15775
 opt;opm2-z7-s8;-11242
 opt;opm2-z6-s1;-6202
 best;a2864-99blp;-257
+opt;square47;1.6E+12
+opt;square31;15
+opt;square41;15
+opt;square37;1.5E+11
+opt;square23;13
 opt;t11nonreg;1029039.5
 opt;gasprod2-1;16285482968
 opt;gasprod2-2;13756316625

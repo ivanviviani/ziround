@@ -172,14 +172,19 @@ void read_row_slacks(INSTANCE* inst) {
 		switch (inst->sense[i]) {
 			case 'L': // row slack must be non-negative
 				if (inst->slack[i] < -(TOLERANCE)) print_error("[read_row_slacks]: Found 'L' constraint with row slack %f\n", inst->slack[i]);
+				break;
 			case 'G': // row slack must be non-positive
 				if (inst->slack[i] > TOLERANCE) print_error("[read_row_slacks]: Found 'G' constraint with row slack %f\n", inst->slack[i]);
+				break;
 			case 'E': // row slack must be zero
 				if (fabs(inst->slack[i]) > TOLERANCE) print_error("[read_row_slacks]: Found 'E' constraint with row slack %f\n", inst->slack[i]);
+				break;
 			case 'R':
 				print_error("[read_row_slacks]: Ranged constraints (type 'R') not supported.\n");
+				break;
 			default:
 				print_error("[read_row_slacks]: Unknown constraint type '%c'.\n", inst->sense[i]);
+				break;
 		}
 	}
 }
