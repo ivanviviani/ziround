@@ -1,0 +1,13 @@
+Intanto le scrivo solo 
+(file spostati in test-done)
+
+bharat.mps
+datt256.mps
+dlr1.mps
+fhnw-binschedule1.mps
+graph40-80-1rand.mps
+highschool1-aigio.mps
+in.mps
+kosova1.mps
+neos-3208254-reiu.mps
+splan1.mps

@@ -2,6 +2,7 @@
 8div-n59k11.mps
 8div-n59k12.mps
 bnatt500.mps
+cdma.mps
 control30-5-10-4.mps
 cryptanalysiskb128n5obj14.mps
 dell.mps

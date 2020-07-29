@@ -93,7 +93,6 @@ buildingenergy
 cap6000
 cbs-cta
 cdc7-4-3-2
-cdma
 chromaticindex1024-7
 chromaticindex128-5
 chromaticindex256-8
@@ -114,7 +113,6 @@ comp08-2idx
 comp12-2idx
 comp16-3idx
 comp21-2idx
-control20-5-10-5
 control30-3-2-3
 core2536-691
 core2586-950

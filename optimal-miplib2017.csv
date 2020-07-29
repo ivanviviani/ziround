@@ -727,7 +727,6 @@ best;neos-3682128-sandon;34666770
 opt;neos-4408804-prosna;1306
 best;neos-3615091-sutlej;-1048730.84101147
 opt;ns1116954;0
-best;cdma;-2.48e+16
 best;hgms62;-44835.6989844961
 best;hgms30;-44338.3173275985
 opt;hgms-det;-47314.0858741549
@@ -965,7 +964,6 @@ opt;chromaticindex512-7;4
 opt;chromaticindex1024-7;4
 best;assign1-10-4;422
 opt;assign1-5-8;211.999999999998
-opt;control20-5-10-5;406205618311810
 opt;control30-3-2-3;-17.25658927192
 opt;binkar10_1;6742.1998835
 opt;blp-ar98;6205.2147104

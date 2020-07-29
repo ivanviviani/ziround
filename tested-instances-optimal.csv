@@ -81,7 +81,6 @@ opt;blp-ic97;4.03E+13
 opt;bnatt350;0
 opt;bnatt400;1
 opt;buildingenergy;33283853236
-unkn;cdma;
 unkn;circ10-3;
 opt;co-100;2639942.06
 opt;core2536-691;689
@@ -1123,7 +1122,6 @@ opt;chromaticindex512-7;4
 opt;chromaticindex1024-7;4
 best;assign1-10-4;422
 opt;assign1-5-8;2.12E+14
-opt;control20-5-10-5;4.06206E+14
 opt;control30-3-2-3;-1.72566E+12
 opt;snip10x10-35r1budget17;7.23086E+14
 opt;istanbul-no-cutoff;20408170701
