@@ -39,7 +39,6 @@ opt;d10200;12430
 unkn;d20200;
 unkn;dano3mip;
 opt;danoint;65.666666667
-unkn;datt256;
 opt;dc1c;1767903.6501
 unkn;dc1l;
 opt;dfn-gwin-UUM;38752
@@ -71,7 +70,6 @@ opt;ic97_potential;3942
 opt;iis-100-0-cov;29
 opt;iis-bupa-cov;36
 opt;iis-pima-cov;33
-opt;in;58
 unkn;ivu06-big;
 opt;ivu52;481.0068
 opt;janos-us-DDM;1492707
@@ -118,7 +116,6 @@ opt;n3seq24;52200
 opt;n4-3;8993
 opt;n9-3;14409
 unkn;nag;
-unkn;nb10tb;
 opt;neos-1109824;378
 opt;neos-1112782;5.72103e+11
 opt;neos-1112787;5.65032e+11
@@ -189,7 +186,6 @@ opt;netdiversion;242
 opt;newdano;65.666666667
 opt;nobel-eu-DBE;608910
 opt;noswot;-41
-opt;npmv07;1.0481e+11
 opt;ns1111636;162
 opt;ns1116954;0
 opt;ns1208400;2
@@ -212,7 +208,6 @@ unkn;ns1905800;
 opt;ns1952667;0
 opt;ns2017839;7.70305e+13
 opt;ns2081729;9
-opt;ns2122603;77700060
 unkn;ns2124243;
 unkn;ns2137859;
 unkn;ns4-pr3;
@@ -267,8 +262,6 @@ opt;rmatr200-p20;837
 opt;rmatr200-p5;4521
 opt;rmine10;-1913.88062
 unkn;rmine14;
-unkn;rmine21;
-unkn;rmine25;
 opt;rmine6;-457.18614
 opt;rocII-4-11;-6.652756
 unkn;rocII-7-11;
@@ -293,7 +286,6 @@ opt;set3-20;159462.572721458
 opt;seymour;423
 opt;seymour-disj-10;287
 unkn;shipsched;
-opt;shs1023;13136.636273
 unkn;siena1;
 unkn;sing161;
 unkn;sing245;
@@ -302,7 +294,6 @@ unkn;sing359;
 opt;sp97ar;660705645.76
 opt;sp98ic;449144758.4
 opt;sp98ir;219676790.4
-unkn;splan1;
 unkn;stockholm;
 opt;stp3d;493.71965
 unkn;sts405;
@@ -330,5 +321,4 @@ opt;vpphard2;81
 opt;vpphard;5
 opt;wachplan;-8
 opt;wnq-n100-mw99-14;259
-unkn;zib01;
 opt;zib54-UUE;10334015.82

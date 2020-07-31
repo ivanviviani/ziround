@@ -91,7 +91,6 @@ opt;csched008;173
 opt;csched010;408
 opt;d10200;12430
 unkn;d20200;
-unkn;datt256;
 opt;dc1c;17679036501
 unkn;dc1l;
 opt;dfn-gwin-UUM;38752
@@ -121,7 +120,6 @@ opt;ic97_potential;3942
 opt;iis-100-0-cov;29
 opt;iis-bupa-cov;36
 opt;iis-pima-cov;33
-opt;in;58
 unkn;ivu06-big;
 opt;ivu52;4810068
 opt;janos-us-DDM;1492707
@@ -161,7 +159,6 @@ opt;n3seq24;52200
 opt;n4-3;8993
 opt;n9-3;14409
 unkn;nag;
-unkn;nb10tb;
 opt;neos-1109824;378
 opt;neos-1112782;5.72E+16
 opt;neos-1112787;5.65E+16
@@ -230,7 +227,6 @@ opt;neos-984165;2188
 opt;netdiversion;242
 opt;newdano;65666666667
 opt;nobel-eu-DBE;608910
-opt;npmv07;1.05E+15
 opt;ns1111636;162
 opt;ns1116954;0
 opt;ns1208400;2
@@ -253,7 +249,6 @@ unkn;ns1905800;
 opt;ns1952667;0
 opt;ns2017839;7.7E+18
 opt;ns2081729;9
-opt;ns2122603;77700060
 unkn;ns2124243;
 unkn;ns2137859;
 unkn;ns4-pr3;
@@ -306,8 +301,6 @@ opt;rmatr200-p20;837
 opt;rmatr200-p5;4521
 opt;rmine10;-191388062
 unkn;rmine14;
-unkn;rmine21;
-unkn;rmine25;
 opt;rmine6;-45718614
 opt;rocII-4-11;-6652756
 unkn;rocII-7-11;
@@ -330,7 +323,6 @@ opt;set3-15;124886
 opt;set3-20;1.59463E+14
 opt;seymour-disj-10;287
 unkn;shipsched;
-opt;shs1023;13136636273
 unkn;siena1;
 unkn;sing161;
 unkn;sing245;
@@ -338,7 +330,6 @@ unkn;sing2;
 unkn;sing359;
 opt;sp98ic;449144758.4
 opt;sp98ir;219676790.4
-unkn;splan1;
 unkn;stockholm;
 unkn;sts405;
 unkn;sts729;
@@ -362,7 +353,6 @@ opt;vpphard2;81
 opt;vpphard;5
 opt;wachplan;-8
 opt;wnq-n100-mw99-14;259
-unkn;zib01;
 opt;zib54-UUE;10334015.82
 opt;drayage-25-27;1.02184E+11
 opt;drayage-25-32;9139584915
@@ -527,7 +517,6 @@ opt;beasleyC2;144
 opt;gt2;21166
 opt;neos-983171;2360
 opt;sp98ar;529740623.2
-opt;neos4;-48603440751
 opt;neos-691058;2.97E+14
 opt;n13-3;13385
 opt;mik-250-20-75-1;-49716
@@ -632,7 +621,6 @@ opt;sct2;-2309891623
 best;sct31;-29317051745
 opt;fhnw-sq2;0
 unkn;nucorsav;
-best;supportcase38;3.2874E+14
 best;sorrell7;-196.0
 opt;sorrell3;-16
 best;sorrell4;-24
@@ -649,8 +637,6 @@ best;r4l4-02-tree-bounds-50;4.99259E+15
 opt;neos-5013590-toitoi;37724527499
 opt;loopha13;640233
 best;allcolor58;366.0
-best;dlr1;2.70815E+14
-best;dlr2;1.43562E+11
 opt;rocI-4-11;-6020203
 opt;rocII-5-11;-6.6755E+12
 best;rocII-8-11;-8.73985E+14
@@ -676,20 +662,17 @@ opt;neos-3761878-oglio;42276902254
 best;neos-4321076-ruwer;2.1352E+14
 opt;neos-3048764-nadi;-3883988306.4
 opt;neos-5076235-embley;2362
-best;neos-4232544-orira;5.10156E+11
 opt;neos-5116085-kenana;602
 opt;neos-4736745-arroux;247345269.52
 opt;neos-3699377-maori;1.35877E+11
 opt;neos-3530903-gauja;168
 opt;neos-3592146-hawea;15465800718
 best;neos-3594536-henty;401382.0
-best;neos-4531126-vouga;5.25054E+12
 opt;neos-5118834-korana;757
 opt;neos-4532248-waihi;61.6
 opt;neos-4724674-aorere;86091960886
 opt;neos-3611447-jijia;107
 opt;neos-4954672-berkel;2612710
-unkn;neos-3208254-reiu;
 opt;neos-3226448-wkra;0
 unkn;neos-3603137-hoteo;
 opt;neos-3024952-loue;26756
@@ -751,13 +734,10 @@ best;neos-3009394-lami;5.5
 opt;neos-2657525-crna;1810748
 opt;neos-4971100-bodrog;-119000
 opt;neos-3530905-gaula;159
-opt;neos-3421095-cinca;44269368138
 best;neos-2974461-ibar;4.68906E+11
 opt;neos-4335793-snake;27
-opt;neos-4703857-ahuroa;7.86828E+12
 opt;neos-5182409-nasivi;30199999992
 opt;neos-5115478-kaveri;1.234E+14
-best;neos-3754224-navua;2.80714E+14
 opt;neos-2669500-cust;2242
 best;neos-3426085-ticino;225
 best;neos-3740487-motru;1.64469E+15
@@ -849,17 +829,12 @@ best;graph40-40-1rand;-9
 opt;graph20-80-1rand;-6
 best;graph40-20-1rand;-15
 opt;graph20-20-1rand;-9
-best;graph40-80-1rand;-7
 opt;supportcase42;7.75863E+11
 opt;decomp2;-160
 unkn;lr2-22dr3-333vc4v17a-t60;
 best;supportcase39;-1.08507E+12
 opt;b-ball;-1.5E+14
 best;comp16-3idx;24
-opt;woodlands09;0
-best;kottenpark09;2120
-best;kosova1;526
-opt;highschool1-aigio;0
 opt;brazil3;24
 opt;mad;0.0268
 opt;bppc8-09;472
@@ -1004,7 +979,6 @@ opt;f2gap801600;86679
 opt;f2gap401600;82307
 opt;f2gap40400;20772
 opt;f2gap201600;76453
-opt;irish-electricity;3.7235E+12
 opt;triptim7;2566.02
 best;triptim4;98181
 best;triptim8;2566069
@@ -1081,18 +1055,15 @@ opt;opm2-z10-s4;-33269
 opt;opm2-z8-s0;-15775
 opt;opm2-z7-s8;-11242
 opt;opm2-z6-s1;-6202
-best;a2864-99blp;-257
 opt;square47;1.6E+12
 opt;square31;15
 opt;square41;15
 opt;square37;1.5E+11
 opt;square23;13
-opt;t11nonreg;1029039.5
 opt;gasprod2-1;16285482968
 opt;gasprod2-2;13756316625
 opt;ej;25508
 best;fhnw-binschedule0;16128
-best;fhnw-binschedule1;55224
 best;fhnw-binschedule2;2428
 opt;pigeon-16;-15000
 opt;pigeon-20;-19000
@@ -1107,7 +1078,6 @@ best;set3-16;1.3404E+14
 opt;satellites2-40;-19
 opt;satellites2-25;-19
 opt;satellites3-25;-25
-opt;satellites4-25;-25
 best;polygonpack4-15;-5.99233E+15
 best;polygonpack3-15;-5.46803E+13
 best;polygonpack4-7;-5.18377E+14
@@ -1125,7 +1095,6 @@ opt;assign1-5-8;2.12E+14
 opt;control30-3-2-3;-1.72566E+12
 opt;snip10x10-35r1budget17;7.23086E+14
 opt;istanbul-no-cutoff;20408170701
-best;rwth-timetable;791001
 best;shs1014;2.26718E+12
 opt;2club200v15p5scn;-70
 best;snp-10-004-052;5906642865.78
@@ -1134,6 +1103,5 @@ best;snp-06-004-052;1.86953E+12
 best;snp-10-052-052;6.36453E+15
 opt;snp-02-004-104;5.86803E+11
 opt;supportcase40;2.42563E+11
-best;bharat;4.19333E+11
 opt;s1234;29
 best;supportcase31;-3720089081

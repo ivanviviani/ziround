@@ -1,13 +1,24 @@
-Intanto le scrivo solo 
-(file spostati in test-done)
-
-bharat.mps
-datt256.mps
-dlr1.mps
-fhnw-binschedule1.mps
-graph40-80-1rand.mps
-highschool1-aigio.mps
-in.mps
-kosova1.mps
-neos-3208254-reiu.mps
-splan1.mps
+bharat.mps T
+datt256.mps T
+dlr1.mps T
+dlr2.mps T
+fhnw-binschedule1.mps T
+graph40-80-1rand.mps T
+highschool1-aigio.mps T
+in.mps T
+kosova1.mps T
+neos-3208254-reiu.mps T
+neos-3421095-cinca.mps NO_OPT
+neos-3754224-navua.mps T
+neos-4232544-orira.mps NO_OPT
+neos-4531126-vouga.mps NO_OPT
+neos-4703857-ahuroa.mps NO_OPT
+npmv07.mps NO_OPT
+rmine21.mps T
+rmine25.mps T
+shs1023.mps T
+splan1.mps T
+supportcase38.mps T
+t11nonreg.mps T
+woodland09.mps T
+zib01.mps T

@@ -8,7 +8,6 @@
 30_70_45_095_98
 50v-10
 a1c1s1
-a2864-99blp
 a2c1s1
 ab51-40-100
 ab67-40-100
@@ -62,7 +61,6 @@ beavma
 berlin
 berlin_5_8_0
 bg512142
-bharat
 biella1
 bienst1
 bienst2
@@ -142,7 +140,6 @@ dano3mip
 dano3_3
 dano3_5
 danoint
-datt256
 dc1c
 dc1l
 dcmulti
@@ -155,8 +152,6 @@ diameterc-mstc-v20a190d5i
 diameterc-msts-v40a100d5i
 disctom
 disktom
-dlr1
-dlr2
 dolom1
 drayage-100-12
 drayage-100-23
@@ -204,7 +199,6 @@ fhnw-binpack4-48
 fhnw-binpack4-58
 fhnw-binpack4-77
 fhnw-binschedule0
-fhnw-binschedule1
 fhnw-binschedule2
 fhnw-schedule-paira100
 fhnw-schedule-paira200
@@ -265,7 +259,6 @@ graph20-20-1rand
 graph20-80-1rand
 graph40-20-1rand
 graph40-40-1rand
-graph40-80-1rand
 graphdraw-domain
 graphdraw-gemcutter
 graphdraw-grafo2
@@ -286,7 +279,6 @@ harp2
 hgms-det
 hgms30
 hgms62
-highschool1-aigio
 hypothyroid-k1
 ic97_potential
 ic97_tension
@@ -297,8 +289,6 @@ iis-bupa-cov
 iis-glass-cov
 iis-hc-cov
 iis-pima-cov
-in
-irish-electricity
 irp
 istanbul-no-cutoff
 ivu06-big
@@ -311,8 +301,6 @@ k16x240b
 k1mushroom
 k1mushroomi
 khb05250
-kosova1
-kottenpark09
 l2p12
 l2p1i
 l2p2i
@@ -412,7 +400,6 @@ n6-3
 n7-3
 n9-3
 nag
-nb10tb
 neos-1061020
 neos-1067731
 neos-1109824
@@ -488,7 +475,6 @@ neos-3083819-nubu
 neos-3116779-oban
 neos-3118745-obra
 neos-3148108-pahi
-neos-3208254-reiu
 neos-3209462-rhin
 neos-3209519-ruhr
 neos-3214367-sovi
@@ -504,7 +490,6 @@ neos-3372571-onahau
 neos-3373491-avoca
 neos-3381206-awhea
 neos-3402294-bobin
-neos-3421095-cinca
 neos-3426085-ticino
 neos-3426132-dieze
 neos-3437289-erdre
@@ -537,7 +522,6 @@ neos-3699377-maori
 neos-3703351-marne
 neos-3734794-moppy
 neos-3740487-motru
-neos-3754224-navua
 neos-3754480-nidda
 neos-3755335-nizao
 neos-3759587-noosa
@@ -545,7 +529,6 @@ neos-3761878-oglio
 neos-3762025-ognon
 neos-4165869-wannon
 neos-4230265-orari
-neos-4232544-orira
 neos-4260495-otere
 neos-4264598-oueme
 neos-4285819-pedja
@@ -573,7 +556,6 @@ neos-4393408-tinui
 neos-4408804-prosna
 neos-4409277-trave
 neos-4413714-turia
-neos-4531126-vouga
 neos-4532248-waihi
 neos-4533806-waima
 neos-4545615-waita
@@ -583,7 +565,6 @@ neos-4647027-thurso
 neos-4647030-tutaki
 neos-4647032-veleka
 neos-4650160-yukon
-neos-4703857-ahuroa
 neos-4722843-widden
 neos-4724674-aorere
 neos-4736745-arroux
@@ -742,7 +723,6 @@ neos17
 neos18
 neos2
 neos22
-neos4
 neos5
 neos6
 neos8
@@ -762,7 +742,6 @@ nj2
 nj3
 nobel-eu-DBE
 noswot
-npmv07
 ns1111636
 ns1116954
 ns1208400
@@ -793,7 +772,6 @@ ns2017839
 ns2034125
 ns2071214
 ns2081729
-ns2122603
 ns2122698
 ns2124243
 ns2137859
@@ -931,8 +909,6 @@ rmine11
 rmine13
 rmine14
 rmine15
-rmine21
-rmine25
 rmine6
 rocI-3-11
 rocI-4-11
@@ -954,7 +930,6 @@ roll3000
 rout
 rpp22falsei
 rvb-sub
-rwth-timetable
 s100
 s1234
 s250r10
@@ -968,7 +943,6 @@ satellites2-60
 satellites3-25
 satellites3-40-fs
 satellites3-40
-satellites4-25
 savsched1
 scpj4scip
 scpk4
@@ -1000,7 +974,6 @@ shipschedule3shipsi
 shipschedule6shipsmixi
 shipschedule8shipsmixuci
 shs1014
-shs1023
 shs1042
 siena1
 sing11
@@ -1028,7 +1001,6 @@ sp97ic
 sp98ar
 sp98ic
 sp98ir
-splan1
 splice1k1
 splice1k1i
 square23
@@ -1065,7 +1037,6 @@ supportcase33
 supportcase34
 supportcase35
 supportcase37
-supportcase38
 supportcase39
 supportcase4
 supportcase40
@@ -1078,7 +1049,6 @@ swath
 swath1
 swath2
 swath3
-t11nonreg
 t1717
 t1722
 ta1-UUM
@@ -1130,10 +1100,8 @@ vpphard
 vpphard2
 wachplan
 wnq-n100-mw99-14
-woodlands09
 xmas10-2
 xmas10
 z26
 zeil
-zib01
 zib54-UUE

@@ -39,7 +39,6 @@ d10200
 d20200
 dano3mip
 danoint
-datt256
 dc1c
 dc1l
 dfn-gwin-UUM
@@ -71,7 +70,6 @@ ic97_potential
 iis-100-0-cov
 iis-bupa-cov
 iis-pima-cov
-in
 ivu06-big
 ivu52
 janos-us-DDM
@@ -118,7 +116,6 @@ n3seq24
 n4-3
 n9-3
 nag
-nb10tb
 neos-1109824
 neos-1112782
 neos-1112787
@@ -189,7 +186,6 @@ netdiversion
 newdano
 nobel-eu-DBE
 noswot
-npmv07
 ns1111636
 ns1116954
 ns1208400
@@ -212,7 +208,6 @@ ns1905800
 ns1952667
 ns2017839
 ns2081729
-ns2122603
 ns2124243
 ns2137859
 ns4-pr3
@@ -267,8 +262,6 @@ rmatr200-p20
 rmatr200-p5
 rmine10
 rmine14
-rmine21
-rmine25
 rmine6
 rocII-4-11
 rocII-7-11
@@ -293,7 +286,6 @@ set3-20
 seymour.disj-10
 seymour
 shipsched
-shs1023
 siena1
 sing161
 sing2
@@ -302,7 +294,6 @@ sing359
 sp97ar
 sp98ic
 sp98ir
-splan1
 stockholm
 stp3d
 sts405
@@ -330,5 +321,4 @@ vpphard
 vpphard2
 wachplan
 wnq-n100-mw99-14
-zib01
 zib54-UUE
