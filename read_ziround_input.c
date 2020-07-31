@@ -52,13 +52,14 @@ void read_solution(INSTANCE* inst) {
 	solstat = CPXgetstat(inst->env, inst->lp);
 
 	switch (solstat) {
-		case CPX_STAT_UNBOUNDED:
-			print_warning("[read_solution]: Model is unbounded.\n");               exit(EXIT_FAILURE);
-		case CPX_STAT_INFEASIBLE:
-			print_warning("[read_solution]: Model is infeasible.\n");              exit(EXIT_FAILURE);
-		case CPX_STAT_INForUNBD:
-			print_warning("[read_solution]: Model is infeasible or unbounded.\n"); exit(EXIT_FAILURE);
+
+		case CPX_STAT_OPTIMAL:
+			// Optimal lp solution found, proceed with ZI-Round
+			break;
+
 		default:
+			// Terminate program (cannot proceed with ZI-Round)
+			print_error("Optimal LP solution not found. Cannot proceed with ZI-Round.\n");
 			break;
 	}
 
@@ -169,6 +170,7 @@ void read_row_slacks(INSTANCE* inst) {
 
 	// [DEBUG ONLY] Reject instances with ranged constraints or wrong row slacks
 	for (int i = 0; i < inst->nrows; i++) {
+
 		switch (inst->sense[i]) {
 			case 'L': // row slack must be non-negative
 				if (inst->slack[i] < -(TOLERANCE)) print_error("[read_row_slacks]: Found 'L' constraint with row slack %f\n", inst->slack[i]);

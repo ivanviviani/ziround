@@ -65,8 +65,8 @@ void zi_round(INSTANCE* inst, int* numrounds) {
 		// Inner loop (for each variable xj that was integer/binary in the original MIP)
 		for (int j = 0; j < inst->ncols; j++) {
 
-			// Skip non-integer variables
-			if (!(inst->int_var[j])) continue;
+			// Skip non-integer variables and FIXED variables
+			if (!(inst->int_var[j]) || equals(inst->lb[j], inst->ub[j])) continue;
 			assert(var_type_integer_or_binary(inst->vartype[j]));
 
 			switch (is_fractional(inst->x[j])) {
@@ -1097,6 +1097,8 @@ void delta_updown(INSTANCE* inst, int j, double* delta_up, double* delta_down, c
 	double ss_delta_up;      /**< Maximum delta up for current singletons slack. */
 	double ss_delta_down;    /**< Maximum delta down for current singletons slack. */
 
+	delta_up[j] = 0.0;
+	delta_down[j] = 0.0;
 	delta_up1   = LONG_MAX;
 	delta_down1 = LONG_MAX;
 	delta_up2   = inst->ub[j] - inst->x[j];
@@ -1129,6 +1131,7 @@ void delta_updown(INSTANCE* inst, int j, double* delta_up, double* delta_down, c
 			ss_lb = inst->ss_lb[rowind];
 			ss_ub = inst->ss_ub[rowind];
 			singletons_slack = inst->ss_val[rowind]; // compute_ss_val(inst, rowind);
+			assert(equals(singletons_slack, compute_ss_val(inst, rowind)));
 			assert(var_in_bounds(singletons_slack, ss_lb, ss_ub));
 
 			// Compute singletons slack deltas (clip to zero if slightly non-positive)
