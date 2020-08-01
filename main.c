@@ -16,7 +16,7 @@
 int main(int argc, char** argv) {
 
 	INSTANCE inst;            /**< General support structure representing a problem instance. */
-	char test_type[100] = ""; /**> Variant of ZI-Round being tested (user-specified). */
+	char test_type[100] = ""; /**< Variant of ZI-Round being tested (user-specified). */
 	
 	init_inst(&inst);
 	
@@ -105,11 +105,12 @@ void test_folder(INSTANCE* inst, const char* test_type) {
 	struct dirent* direlem;
 
 	// Print file headers
-	FILE* output = fopen(output_path, "w");
+	FILE* output = fopen(output_path, "a");
 	fprintf(output, "Instance;Seed;Cost;Fractionality;Rounds;LPtime(ms);ZItime(ms);SumLPZI(ms)\n");
 	fclose(output);
 
 	// Scan files
+	int count = 0;
 	while ((direlem = readdir(dir)) != NULL) {
 
 		// Check whether the input filename (direlem->d_name) is a .mps file
@@ -129,7 +130,7 @@ void test_folder(INSTANCE* inst, const char* test_type) {
 		test_inst.rseed = inst->rseed;
 
 		print_verbose(10, "TEST INSTANCE ------------------------------------------------------------------\n");
-		print_verbose(10, "[] Instance name: %s\n", test_inst.input_file);
+		print_verbose(1,  "[%d] Instance name: %s\n", test_inst.input_file, count++);
 		print_verbose(10, "[] Use singletons: %d\n", test_inst.singletons);
 		print_verbose(10, "[] Shift non-fractional integer variables: %d\n", test_inst.shift_nonfracvars);
 		print_verbose(10, "[] Random seed: %d\n", test_inst.rseed);
@@ -155,13 +156,10 @@ void test_folder(INSTANCE* inst, const char* test_type) {
 		QueryPerformanceCounter(&ziend);
 		ziround_exec_time = (ziend.QuadPart - zistart.QuadPart) * 1000 / zifreq.QuadPart;
 
-		assert(equals(test_inst.solfrac, sol_fractionality(test_inst.x, test_inst.int_var, test_inst.ncols)));
-		assert(equals(test_inst.objval, dot_product(test_inst.obj, test_inst.x, test_inst.ncols)));
+		assert(fabs(test_inst.solfrac - sol_fractionality(test_inst.x, test_inst.int_var, test_inst.ncols)) < 0.01);
+		assert(fabs(test_inst.objval - dot_product(test_inst.obj, test_inst.x, test_inst.ncols)) < test_inst.objval / 10000);
 		check_bounds(test_inst.x, test_inst.lb, test_inst.ub, test_inst.ncols);
-		check_constraints(test_inst.x, test_inst.ncols, test_inst.nrows, test_inst.nzcnt, test_inst.rmatbeg,
-						  test_inst.rmatind, test_inst.rmatval, test_inst.sense, test_inst.rhs);
-
-		// if (VERBOSE >= 10) plot(&test_inst);
+		check_constraints(test_inst.x, test_inst.ncols, test_inst.nrows, test_inst.nzcnt, test_inst.rmatbeg, test_inst.rmatind, test_inst.rmatval, test_inst.sense, test_inst.rhs);
 
 		// Print test results to file
 		output = fopen(output_path, "a");
