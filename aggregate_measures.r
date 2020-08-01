@@ -1,7 +1,7 @@
 #! COMPUTE AGGREGATE MEASURES OF A TEST-BED FROM THE TEST_RESULTS.csv FILE
 
 # Read test results data and set column names
-data <- read.csv("test_results_nogap.csv", header=T, sep=";")
+data <- read.csv("test_results_nogap(default)(seed_0).csv", header=T, sep=";")
 colnames(data) <- c("Instance","Seed","Cost","Fractionality","Rounds","LPtime(ms)","ZItime(ms)","LP+ZItime(ms)")
 
 #! Compute success rate = number of rows with zero fractionality / total number of rows
@@ -37,7 +37,7 @@ sgm_ratio <- sgm_zitime / sgm_lptime * 100
 #Add the gap column to the test results dataframe
 append(colnames(data),"Gap(%)")
 # Read optimal solutions data and set column names
-optimal <- read.csv("optimal-miplib2003.csv", header=F, sep=";")
+optimal <- read.csv("tested-instances-optimal.csv", header=F, sep=";")
 colnames(optimal) <- c("Flag","Name","Opt")
 # Build unnamed data
 named <- optimal[, c("Flag","Opt")]
@@ -49,12 +49,28 @@ for (i in 1:dim(data)[1]) {
     inst <- data[i,"Instance"]
     if (fracs[i] == 0) {
         # ZI-Round succeeded: compute actual gap
-        flag <- optimal[i,"Flag"]
+        flag <- named[inst,"Flag"]
         if (flag == "opt" || flag == "best") {
             # Optimal or best solution exists
-            opt <- optimal[i,"Opt"]
-            gap <- (data[i,"Cost"] - opt) / abs(opt) * 100
-            data[i,"Gap(%)"] <- min(round(gap, digits=2), 100)
+            opt <- named[inst,"Opt"]
+            cost <- data[i,"Cost"]
+            if (cost < opt) {
+                data[i,"Gap(%)"] <- 0
+                print(paste("Found cost",cost,"<",opt,"for",inst))
+            } else {
+                if (opt != 0) {
+                    gap <- (cost - opt) / abs(opt) * 100
+                    data[i,"Gap(%)"] <- min(round(gap, digits=2), 100)
+                } else {
+                     # Opt is zero
+                    if (cost == 0) {
+                        data[i,"Gap(%)"] <- 0
+                    } else {
+                        data[i,"Gap(%)"] <- 100
+                    }
+                    gap <- (cost - opt) / abs(opt) * 100
+                }
+            }
         } else {
             # No optimal or best solution exists
             data[i,"Gap(%)"] <- 0
@@ -67,13 +83,13 @@ for (i in 1:dim(data)[1]) {
 # Compute the average gap
 avg_gap <- mean(data[,"Gap(%)"])
 # Print the complete test results file
-write.table(data, file="test_results.csv", row.names=FALSE, dec=".", sep=";", quote=FALSE)
+write.table(data, file="test_results(default)(seed_0).csv", row.names=FALSE, dec=".", sep=";", quote=FALSE)
 
 #! Print aggregate measures to file
 names <- c("SuccessRate(%)","SGM-LPtime(ms)","SGM-ZItime(ms)","SGM-ratio(ZI/LP)","AvgGap(%)")
 aggr <- c(succ_rate, sgm_lptime, sgm_zitime, sgm_ratio, avg_gap)
 df <- t(data.frame(names, aggr))
-write.table(df, file="aggregate_measures.csv", row.names=FALSE, col.names=FALSE, dec=".", sep=";", quote=FALSE)
+write.table(df, file="aggregate_measures(default)(seed_0).csv", row.names=FALSE, col.names=FALSE, dec=".", sep=";", quote=FALSE)
 
 
 #! Print aggregate measures to video
