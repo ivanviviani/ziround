@@ -949,9 +949,8 @@ void update_slacks(INSTANCE* inst, int j, double signed_delta) {
 						update_singletons(inst, rowind, delta_ss);
 					}
 					else {
-						// Enough row slack, update it
-						(inst->sense[rowind] == 'L') ? assert(non_negative(inst->slack[rowind] - delta_slack)) : assert(non_positive(inst->slack[rowind] - delta_slack));
-						inst->slack[rowind] -= delta_slack;
+						// Row slack was enough, already updated
+						(inst->sense[rowind] == 'L') ? assert(non_negative(inst->slack[rowind])) : assert(non_positive(inst->slack[rowind]));
 					}
 				}
 				else {
