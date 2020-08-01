@@ -69,6 +69,7 @@ opt;n5-3;8105
 opt;neos-1425699;3179698977
 opt;ta2-UUE;37871728.59
 opt;misc07;2810
+opt;dsbmip;-305.19817501
 opt;air03;340160
 best;neos-848198;51837.0
 opt;fiball;138
@@ -83,6 +84,7 @@ opt;rout;1077.56
 opt;CMS750_4;252
 opt;neos-1599274;32075.6
 opt;nh97_potential;1418
+opt;mod011;-54558535.59
 best;bley_xs1noM;3874310.51
 opt;neos-787933;30
 opt;sp97ic;427684487.68
@@ -229,6 +231,7 @@ opt;disctom;-5000
 opt;dcmulti;188182
 opt;neos-555343;1512800
 best;core2586-950;948
+opt;neos-1223462;-751.0000000645
 opt;neos-960392;-238
 opt;neos-574665;5761665.2169
 opt;cap6000;-2451377
@@ -273,6 +276,7 @@ opt;gen;112313.362718
 opt;dano3_5;576.924915956562
 opt;neos-633273;6996841098
 opt;neos-957323;-237.7566815
+opt;rentacar;30356760.9838
 opt;neos9;797.999999999987
 opt;neos17;0.1500025774
 opt;trento1;5189487
@@ -297,6 +301,7 @@ opt;stp3d;493.71965
 opt;map06;-289
 best;usafa;160.1671357657
 opt;acc-tight5;0
+opt;hawaiiv10-130;52425028.9449536
 opt;neos6;83
 opt;s250r10;-0.1717804834232
 opt;mzzv11;-21718
@@ -387,6 +392,7 @@ opt;neos-3048764-nadi;-3883988306.4
 opt;neos-5076235-embley;2362
 opt;neos-5116085-kenana;602
 opt;neos-4736745-arroux;247345269.52
+best;neos-4535459-waipa;26192754
 opt;neos-3699377-maori;135877.224265
 opt;neos-3530903-gauja;168
 opt;neos-3592146-hawea;15465800.718
@@ -411,6 +417,7 @@ opt;neos-3656078-kumeu;-13172.2
 opt;neos-3610051-istra;49
 opt;neos-4972461-bolong;534
 opt;neos-4722843-widden;25009.662227
+opt;neos-3045796-mogo;-175
 opt;neos-5078479-escaut;9682.3381787
 opt;neos-3075395-nile;6021720
 opt;neos-5108386-kalang;730
@@ -424,7 +431,6 @@ opt;neos-2978193-inde;-2.38806169
 opt;neos-5188808-nattai;0.110283623
 opt;neos-3118745-obra;255
 opt;neos-5051588-culgoa;134.5
-opt;neos-3734794-moppy;5900905694.59
 opt;neos-4387871-tavua;33.384729927
 opt;neos-3083819-nubu;6307996
 opt;neos-4333596-skien;-14610731.01
@@ -586,6 +592,7 @@ opt;decomp2;-160
 unkn;lr2-22dr3-333vc4v17a-t60;
 opt;neos18;16
 best;supportcase39;-1085069.602859
+best;ns930473;821466
 opt;reblock354;-39280521.2281657
 opt;b-ball;-1.50000000000001
 best;comp16-3idx;24
@@ -774,6 +781,7 @@ opt;usAbbrv-8-25_70;120
 opt;lotsize;1480195
 opt;rail02;-200.4499077
 opt;gmu-35-40;-2406733.3688
+opt;gus-sch;-1167
 best;s82;-33.7852376465887
 opt;ns1952667;0
 opt;ger50_17_trans;7393.2618
@@ -897,6 +905,11 @@ opt;pw-myciel4;10
 opt;reblock166;-600052168.91
 opt;timtab1;764772
 opt;n9-3;14409
+opt;square47;15.99999999979
+opt;square31;15
+opt;square41;15
+opt;square37;14.9999997973
+opt;square23;13
 opt;gasprod2-1;1628548.2968
 opt;gasprod2-2;1375631.6625
 opt;ej;25508
@@ -921,6 +934,7 @@ best;set3-16;134040.409752288
 opt;satellites2-40;-19
 opt;satellites2-25;-19
 opt;satellites3-25;-25
+opt;ns1644855;-1524.33333333333
 best;polygonpack4-15;-59923296.24180551
 best;polygonpack3-15;-54680307.392604
 best;polygonpack4-7;-51837707.9503404

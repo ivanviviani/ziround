@@ -38,9 +38,13 @@ X Preparare il testbed: MIPLIB 2003 + 2010 + 2017 (senza duplicati)
 X Una volta creato il test-bed definitivo, creare un file di testo con l'elenco delle istanze usate
 X Discutere della scelta degli shift per le SGM
 X [IMPORTANTE] Indaga su presunto bug su slack negativo vincolo <= per istanza splan1.mps -> slack errati in lettura dopo lp (read_row_slacks)
+X Indaga sulle istanze "strange":
+   different objval: ns2017839 (RISOLTO)
+   small constraint violation: ofi (RISOLTO)
+   violated constraint after lp: neos-...-moppy (RIMOSSA)
+X Fai test di debug sulla variante default
 
-?? Indaga sulle istanze "strange"
-?? Fai test di debug sulle 5 varianti: default, noshift, after0frac, sortsingletons, worseobj
+?? Fai test Release seed 0 sulle 5 varianti: default, noshift, after0frac, sortsingletons, worseobj
 ?? Converti il test-bed nella sua versione presolved (batch scripts)
 ?? Fare i test sul test-bed definitivo
 
