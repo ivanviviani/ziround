@@ -42,19 +42,19 @@ void check_constraints(double* x, int ncols, int nrows, int nzcnt, int* rmatbeg,
 		// Check compliance with the constraint sense
 		switch (sense[i]) {
 			case 'L':
-				if (rowact > rhs[i] + fabs(rhs[i]) / 1000 + TOLERANCE) {
+				if (rowact > rhs[i] + fabs(rhs[i]) / 1000 + TOLERANCE*1000) {
 					printf("___ L! %d ___ %f > %f", i, rowact, rhs[i]);
 					violated = 1;
 				}
 				break;
 			case 'G':
-				if (rowact < rhs[i] - fabs(rhs[i]) / 1000 - TOLERANCE) {
+				if (rowact < rhs[i] - fabs(rhs[i]) / 1000 - TOLERANCE*1000) {
 					printf("___ G! ___ %f < %f", rowact, rhs[i]);
 					violated = 1;
 				}
 				break;
 			case 'E':
-				if (fabs(rowact - rhs[i]) > fabs(rhs[i]) / 1000 + TOLERANCE) {
+				if (fabs(rowact - rhs[i]) > fabs(rhs[i]) / 1000 + TOLERANCE*1000) {
 					printf("___ E! ___ %f != %f", rowact, rhs[i]);
 					violated = 1;
 				}
