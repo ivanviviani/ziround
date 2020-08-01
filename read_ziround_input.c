@@ -16,9 +16,10 @@ void populate_inst(INSTANCE* inst) {
 		positive_integer(inst->ncols)
 	);
 
+	// Read solution info
 	read_solution(inst);
-
 	read_variable_bounds(inst);
+	check_bounds(inst->x, inst->lb, inst->ub, inst->ncols);
 
 	// Read objective info
 	inst->objsen = CPXgetobjsen(inst->env, inst->lp);
@@ -31,6 +32,7 @@ void populate_inst(INSTANCE* inst) {
 	read_constraints_senses(inst);
 	read_constraints_right_hand_sides(inst);
 	read_row_slacks(inst);
+	check_constraints(inst->x, inst->ncols, inst->nrows, inst->nzcnt, inst->rmatbeg, inst->rmatind, inst->rmatval, inst->sense, inst->rhs);
 
 	// Extension (if enabled)
 	if (inst->singletons) {
