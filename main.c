@@ -130,7 +130,7 @@ void test_folder(INSTANCE* inst, const char* test_type) {
 		test_inst.rseed = inst->rseed;
 
 		print_verbose(10, "TEST INSTANCE ------------------------------------------------------------------\n");
-		print_verbose(1,  "[%d] Instance name: %s\n", test_inst.input_file, count++);
+		print_verbose(1,  "[%d] Instance name: %s\n", ++count, test_inst.input_file);
 		print_verbose(10, "[] Use singletons: %d\n", test_inst.singletons);
 		print_verbose(10, "[] Shift non-fractional integer variables: %d\n", test_inst.shift_nonfracvars);
 		print_verbose(10, "[] Random seed: %d\n", test_inst.rseed);
