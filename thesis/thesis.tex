@@ -77,7 +77,7 @@
 
 %* \chapter{Definitions}
 
-\chapter{ZI-Round MIP rounding heuristic}
+\chapter{ZI-Round MIP rounding heuristic} \label{ch:ziround}
 
 ZI-round is a MIP rounding heuristic introduced by C. Wallace \cite{wallace2010} as an extension of the Simple Rounding heuristic, which was introduced in the non-commercial solver SCIP \cite{scip}.
 From a primal feasible solution of the MIP continuous relaxation, both heuristics aim at rounding all the fractional integer variables, in order to obtain a feasible solution of the MIP. Simple Rounding is a pure integer rounding heuristic because it only rounds fractional integer variables, while ZI-Round also takes other factors into account, such as the singletons of the constraints, where a singleton is defined as a continuous variable that appears in only one constraint. \par
@@ -343,7 +343,39 @@ Note that since the singletons of the constraint are actual variables of the MIP
 
 On a final note, the observations and experimental results of C. Wallace \cite{wallace2010} show that ZI-Round can round any variable that Simple Rounding can round, while maintaining similar overall running times, but ZI-Round can find more solutions.
 
-\chapter{Computational results}
+\chapter{ZI-Round extensions}
+In this thesis the implementation of ZI-Round that takes the singletons into account and employs the extension of improving the objective value by shifting non-fractional integer variables while rounding the fractional ones is referred to as the default version, i.e. the one described in Chapter~\ref{ch:ziround}. \par
+In this chapter, some variations and extensions of the ZI-Round heuristic are presented. Note that only one feature at a time is changed from the default ZI-Round implementation: all the features of default ZI-Round are kept except for the one changed by the extension.
+
+\section{Sorted singletons}
+A first simple extension follows from a possible improvement on the order in which the singletons of a given constraint are considered when distributing the singletons slack on them, with the aim of worsening the objective value as little as possible. \par 
+
+In the default implementation of ZI-Round the singletons are considered in their natural order. The proposed improvement consists in sorting the singletons of each constraint in ascending order of their objective function coefficients, so that the first singleton variables to be updated are the ones that affect the objective value the least. \par
+
+We recognize that this greedy approach does not ensure to always affect the objective value in a positive way, since the current possible singleton variations would need to be taken into account at each iteration, and those variations depend on the bounds of the singleton and its coefficient in the constraint. However, this simple extension is tested with the aim of showing whether and in what amount the order in which the singletons are considered influences the end results.
+
+\section{No objective improvement}
+Another extension of ZI-Round worth analyzing is the shift of non-fractional integer variables to improve the objective value as much as possible. Since this extension is part of the default version of ZI-Round, its complementary counterpart is considered, i.e. the absence of it. \par
+
+The rationale behind this non-extension is the following. First, observe that the overall slack of a constraint can be viewed as its capacity to cover the possible shift of one of its variables, and a variable shift can either increase or decrease that capacity. Also, in a way, the constraints of a MIP should generally go against the objective function, otherwise the problem would be unbounded. It follows that shifting non-fractional integer variables to improve the objective value should contribute to the saturation of the shift coverage capacity of the constraints, which could not be able to allow all the fractional integer variables to be rounded. \par
+
+This non-extension that avoids shifting non-fractional integer variables is tested with the aim of showing whether and in what amount the attempt to improve the objective value while rounding all the integer variables influences the end results, especially in terms of quality of the solutions found.
+
+\section{Objective improvement after zero fractionality}
+The previous non-extension is a rather conservative approach that avoids any objective value imrovement from start to finish. \par 
+
+A very reasonable extension that allows the fractional integer variables to fully rely on the slacks in order to be rounded and the objective value to be improved consists in starting to shift the non-fractional integer variables only after all the fractional ones have been rounded. In other words, this extension would follow the previous one until the fractionality of the solution reaches zero, and then start improving the objective value by shifting all the integer variables, which would all be non-fractional at that point. \par
+
+This two-phased extension that first concentrates on rounding all the fractional integer variables and only after succeeding proceeds to improve the objective value is tested with the aim of showing whether and in what amount dividing the rounding phase and the objective improvement phase affects the end results.
+
+\section{Worst objective fractionality tie-breaks}
+The final extension we propose follows from the observation any attempt at improving the objective value generally goes against the capacity of the constraints to compensate for the shifts of the variables they contain. \par 
+
+As reported in Algorithm~\ref{alg:ziround}, the default behavior of ZI-Round when fractionality tie-breaks occur during the rounding process of a fractional integer variable is to prefer the rounding direction that improves the objective value the most, or worsens it the least. This proposed extension, instead, in such cases would choose to round the variable in the direction that worsens the objective value the most, or improves it the least. This behavior would in fact favor the constraints, thus the possibility of rounding more fractional integer variables. \par
+
+Note that the shifting of non-fractional integer variables of the default ZI-Round implementation is maintained. This mixed extension that favors both the objective function and the constraints is tested with the aim of showing whether and in what amount favoring the constraints when either direction can be chosen while rounding a fractional integer variable affects the end results.
+
+\chapter{Computational results} \label{ch:compresults}
 %! Descrizione (specifiche) del computer usato per fare le run
 The following tests are performed on a Dell XPS $15$ $7590$ exa-core $4.5$ GHz i$7$-$9750$H processor with $10$ Gigabytes of available RAM, using the Windows $10$ Pro (version $2004$) operating system.
 %! Funzioni usate per misurare il tempo di esecuzione
