@@ -1,7 +1,12 @@
 #! COMPUTE AGGREGATE MEASURES OF A TEST-BED FROM THE TEST_RESULTS.csv FILE
 
+# Test type string
+testype <- "default"
+# Random seed used (string)
+rseed <- "0"
+
 # Read test results data and set column names
-data <- read.csv("test_results_nogap(default)(seed_0).csv", header=T, sep=";")
+data <- read.csv(paste("test_results_nogap(",testype,")(seed_",rseed,").csv",sep=""), header=T, sep=";")
 colnames(data) <- c("Instance","Seed","Cost","Fractionality","Rounds","LPtime(ms)","ZItime(ms)","LP+ZItime(ms)")
 
 #! Compute success rate = number of rows with zero fractionality / total number of rows
@@ -37,7 +42,7 @@ sgm_ratio <- sgm_zitime / sgm_lptime * 100
 #Add the gap column to the test results dataframe
 append(colnames(data),"Gap(%)")
 # Read optimal solutions data and set column names
-optimal <- read.csv("tested-instances-optimal.csv", header=F, sep=";")
+optimal <- read.csv("optimal-values.csv", header=F, sep=";")
 colnames(optimal) <- c("Flag","Name","Opt")
 # Build unnamed data
 named <- optimal[, c("Flag","Opt")]
@@ -83,13 +88,13 @@ for (i in 1:dim(data)[1]) {
 # Compute the average gap
 avg_gap <- mean(data[,"Gap(%)"])
 # Print the complete test results file
-write.table(data, file="test_results(default)(seed_0).csv", row.names=FALSE, dec=".", sep=";", quote=FALSE)
+write.table(data, file=paste("test_results(",testype,")(seed_",rseed,").csv",sep=""), row.names=FALSE, dec=".", sep=";", quote=FALSE)
 
 #! Print aggregate measures to file
 names <- c("SuccessRate(%)","SGM-LPtime(ms)","SGM-ZItime(ms)","SGM-ratio(ZI/LP)","AvgGap(%)")
 aggr <- c(succ_rate, sgm_lptime, sgm_zitime, sgm_ratio, avg_gap)
 df <- t(data.frame(names, aggr))
-write.table(df, file="aggregate_measures(default)(seed_0).csv", row.names=FALSE, col.names=FALSE, dec=".", sep=";", quote=FALSE)
+write.table(df, file=paste("aggregate_measures(",testype,")(seed_",rseed,").csv",sep=""), row.names=FALSE, col.names=FALSE, dec=".", sep=";", quote=FALSE)
 
 
 #! Print aggregate measures to video
