@@ -633,9 +633,6 @@ int round_xj_worstobj(INSTANCE* inst, int j, double objcoef, double delta_up, do
 		obj_deltaminus = -(objcoef * delta_down);
 	}
 
-	// If xj is non-fractional and objcoef is zero, return 0
-	if (!xj_fractional && zero(objcoef)) return 0;
-
 	// Check obj sense, then update xj, update slacks and update objective value
 	switch (inst->objsen) {
 
