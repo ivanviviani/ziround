@@ -344,6 +344,9 @@ int round_xj_bestobj(INSTANCE* inst, int j, double objcoef, double delta_up, dou
 		obj_deltaminus = -(objcoef * delta_down);
 	}
 
+	// If xj is non-fractional and objcoef is zero, return 0
+	if (!xj_fractional && zero(objcoef)) return 0;
+
 	// Check obj sense, then update xj, update slacks and update objective value
 	switch (inst->objsen) {
 
@@ -450,6 +453,8 @@ int round_xj_bestobj(INSTANCE* inst, int j, double objcoef, double delta_up, dou
 
 				// Skip variable if delta_up = 0
 				if (zero(delta_up)) return 0;
+				// Then objcoef must be zero
+				assert(zero(objcoef));
 
 				print_verbose(20, "[round_xj_bestobj]: >>> Round x_%d = %f + %f = %f\n", j + 1, inst->x[j], delta_up, inst->x[j] + delta_up);
 				

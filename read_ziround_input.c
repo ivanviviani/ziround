@@ -89,6 +89,9 @@ void read_objective_value(INSTANCE* inst) {
 
 	// Get objective value
 	if (CPXgetobjval(inst->env, inst->lp, &(inst->objval))) print_error("[read_objective_value]: Failed to obtain objective value.\n");
+
+	// [DEBUG ONLY] Print objective value for the solution of the continuous relaxation
+	print_verbose(100, "[INFO]: Continuous relaxation objective value: %f\n", inst->objval);
 }
 
 void read_objective_coefficients(INSTANCE* inst) {
