@@ -6,6 +6,7 @@
 # Ignore miplib2003 folder, test-bed folder and mps/txt files
 MIPLIBS/*
 *.mps
+*.pre
 
 #Ignore latex auxiliary files
 *.aux
