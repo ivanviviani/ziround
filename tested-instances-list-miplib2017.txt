@@ -737,8 +737,6 @@ piperout-08
 piperout-27
 piperout-d20
 piperout-d27
-pizza27i
-pizza78i
 pk1
 polygonpack3-15
 polygonpack4-10
@@ -886,12 +884,10 @@ supportcase18
 supportcase19
 supportcase2
 supportcase20
-supportcase21i
 supportcase23
 supportcase25
 supportcase26
 supportcase27i
-supportcase28i
 supportcase3
 supportcase30
 supportcase31
