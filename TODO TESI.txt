@@ -44,8 +44,9 @@ X Indaga sulle istanze "strange":
    violated constraint after lp: neos-...-moppy (RIMOSSA)
 X Fai test di debug sulla variante default
 X Misure aggregate + ultimo test con seed 0
+X Indaga su istanze strange (vedi check_opt_values) - TOLTE
 
-?? Indaga su istanze strange (vedi check_opt_values)
+?? Fai test Release su PRESOLVED testbed con seed 0 sulle altre 4 varianti + segna istanze strange
 ?? Fai test Release seed 0 sulle 5 varianti: default, noshift, after0frac, sortsingletons, worseobj
 ?? Converti il test-bed nella sua versione presolved (batch scripts)
 ?? Fare i test sul test-bed definitivo
