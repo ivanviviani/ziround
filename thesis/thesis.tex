@@ -376,22 +376,54 @@ As reported in Algorithm~\ref{alg:ziround}, the default behavior of ZI-Round whe
 Note that the shifting of non-fractional integer variables of the default ZI-Round implementation is maintained. This mixed extension that favors both the objective function and the constraints is tested with the aim of showing whether and in what amount favoring the constraints when either direction can be chosen while rounding a fractional integer variable affects the end results.
 
 \chapter{Computational results} \label{ch:compresults}
-%! Descrizione (specifiche) del computer usato per fare le run
-The following tests are performed on a Dell XPS $15$ $7590$ exa-core $4.5$ GHz i$7$-$9750$H processor with $10$ Gigabytes of available RAM, using the Windows $10$ Pro (version $2004$) operating system.
-%! Funzioni usate per misurare il tempo di esecuzione
-...
-%! Descrizione del test-bed usato (MIPLIB 2003 + 2010 + 2017)
-%! + uso di 3/5 random seeds diversi per espanderlo ulteriormente e verificare l'effetto della performance variability
-...
-%* Elenco delle varianti di ZI-Round testate
-%? Sezioni separate ?
-We investigate how the single features influence the performance of ZI-Round by testing the following variants:
-\begin{enumerate}
-	\item At the start, the singletons of each row are sorted in ascending order of their objective coefficients, so that when a singletons slack shift has to be distributed the singletons that lightly influence the objective value are updated first;
-	\item Once rounded, non-fractional integer variables are not shifted by one to improve the objective value, so to see how those $1$-OPT shifts influence the success rate of ZI-Round;
-	\item The $1$-OPT shifting of non-fractional integer variables is activated as soon as the solution fractionality reaches zero, so to let the slacks be used for rounding all fractional integer variables first;
-	\item In case of ties on the fractionality improvement when rounding fractional integer variables, choose the direction that worsens the objective value, following the assumption that generally the satisfiability of the constraints is greater when the objective value is worse.
-\end{enumerate}
+%! Scopo degli esperimenti: analizzare la performance di ZI-Round nelle sue varie estensioni/varianti in termini di numero di soluzioni intere trovate e tempo di esecuzione.
+The performance of the ZI-Round heuristic is analyzed in the following experiments, in which one extension at a time is changed from the default version. The main measures of interest are the number or percentage of integer solutions found, the quality of those solutions and the execution time of ZI-Round. \par
+
+In Section~\ref{sec:expsetup}, the experimental setup used for the set of experiments on the different versions of ZI-Round is presented. In particular, it comprises the specification of the hardware and software tools used, the description of the test-beds used for the experiments, the specification of the single measures performed on the instances and the aggregate measures computed on the test-beds. Also, a second interesting set of experiments that exploit the shift of dimensional space seen in the presolving process of CPLEX is introduced. \par 
+
+In Section~\ref{sec:expresults} \dots
+
+\section{Experimental setup} \label{sec:expsetup}
+%! Strumenti: specifiche PC, software/tools usati
+All the experiments are performed on a Dell XPS $15$ $7590$, with an exa-core $4.5$ GHz i$7$-$9750$H processor and $16$ GB of RAM, using the Windows $10$ Pro version $2004$ operating system. \par
+
+%! Software/tools usati
+The solver used for obtaining the solutions of the continuous relaxations is CPLEX version $12$.$10$.$0$ with an academic license \cite{cplex}. Its interactive optimizer is also used for presolving problems and writing them to \texttt{mps} files.
+The Dirent C API \cite{dirent} is used for easily scanning the instance files to read in the test folder.
+The Gnuplot \cite{gnuplot} graphing utility is used to programmatically create the charts presented in this thesis using pipes to pass commands and data points to it directly from the main program.
+The R language \cite{rlang} is used to easily manipulate the test results and compute the aggregate measures of interest. \par 
+
+%! Testbed: MIPLIBS + tipologie di istanze rimosse + numero istanze testate
+The test-bed used for the experiments comprises the instances from the MIPLIB 2003 \cite{miplib2003}, MIPLIB 2010 \cite{miplib2010} and MIPLIB 2017 \cite{miplib2017} problem collections, from which the instances that are incompatible with ZI-Round are removed.
+The removed instances include: instances that are infeasible or unbounded, instances that have ranged constraints, instances that have semi-integer or semi-continuous variables according to the terminology used by CPLEX, and instances for which CPLEX is unable to solve the continuous relaxation or exceeds a set time limit of $300$ seconds. To simplify the detection of removable instances, a single run in which only the continuous relaxations are solved is performed: the function \texttt{CPXgetstat} of the CPLEX C API is used to get the solution status and the instances that do not have the status \texttt{CPX\_STAT\_OPTIMAL} are removed from the test-bed. After this pre-processing run, the test-bed obtained contains $1102$ instances.
+To virtually increase the size of the test-bed and at the same time test the effect of the performance variability on the end results, the experiments are done using three random seeds. So the actual independent instances are instance-seed pairs, bringing the test-bed size to $3306$. The three chosen random seeds are $0$, $1206151$ and $37029$. \par 
+
+%! Idea: vedere come cambia la performance lavorando nello spazio dei problemi presolved  creazione di un test-bed presolved usando l’interactive optimizer di CPLEX (breve descrizione), poi gli stessi test sono fatti su questo secondo test-bed
+An interesting observation about the way in which CPLEX operates gives rise to an alternative test-bed that can easily be derived from the original one previously described.
+When CPLEX solves the continuous relaxation of a problem instance, it applies a presolving process that skims through the problem at hand and reduces it to a different dimensional space in terms of number of variables and/or constraints, usually with a more compact matrix that can make the problem more easily solvable. However, after finding a solution for the modified problem, it converts it back to the original problem space and returns it. This behavior led the supervisor of this thesis D. Salvagnin to suggest performing a second set of experiments on the presolved version of the test-bed, exploiting the more compact formulations of the problems in the hope that ZI-Round could perform differently on the presolved test-bed. The interactive optimizer of CPLEX is used for the test-bed conversion: each instance file in \texttt{mps} format is read, the problem is presolved, written back in \texttt{pre} format, then read again and finally written back in \texttt{mps} format. This conversion process can be automated easily with a simple script, since the interactive optimizer of CPLEX is command line driven and accepts sequences of command strings in input. As done for the original one, the presolved test-bed undergoes the same pre-processing run that filters the instances by the continuous relaxation solution status, leading to the removal of $10$ more instances. So the presolved test-bed has a size of $1092$, which is increased to $3276$ by the use of the three random seeds. \par 
+
+%! modalità di test (test_folder), reporting dei risultati (file csv perché sono facilmente manipolabili)
+The runs for the experiments on the test-bed folder rely on the Dirent C API to scan the instance files in a way that is easy to code. When each instance has been processed, its related measures are appended to a \texttt{csv} file that holds the test results. The choice of using \texttt{csv} files follows from the ease of processing that software tools as the R language provide for this file extension. \par 
+
+%! Misure riportate nei csv
+The actual data reported in the test results files comprises: the name of the instance, the random seed used, the final solution cost, the final solution fractionality, the number of rounds performed by ZI-Round, the execution time taken by CPLEX to solve the continuous relaxation, the execution time of ZI-Round, the sum of the two times, and the gap of the solution found with respect to the optimal or best solution available for the given problem. \par 
+
+%! Performance measures (misure aggregate) + come sono calcolate, specificando che sono state calcolate usando scripting in R
+In order to evaluate the performance of ZI-Round on the test-beds, the following aggregate measures are computed by means of a script in the R language that processes the files of the test results and of the optimal or best objective values of the instances. 
+The first aggregate measure is the success rate, which evaluates the number of integer solutions found by ZI-Round as a percentage and is computed as the ratio between the number of instances whose solution has a zero fractionality and the total number of instances. 
+The quality of the solutions found by ZI-Round is evaluated by the gap with respect to the optimal or the best solution available, which is computed as a percentage. When an optimal objective value is available, the gap is $0$\% if the optimal solution is found and $100$\% if the objective value is more than twice the optimal one. In case the optimal objective value is zero, the gap can only be either $0$\% for the optimal value or $100$\% for any other value found by ZI-Round. When an optimal objective value is not available but the best one found so far is, the gap is $0$\% if the value found by ZI-Round is less than or equal to it, and $100$\% otherwise. When no solutions have ever been found for the problem, thus no best objective value is available, the gap is $0$\% if any solution is even found and $100$\% otherwise. Programmatically, the script first computes the gap for each tested instance and adds the gap column to the test results file; then computes the average gap, which is the aggregate measure for the test-bed.
+To evaluate the performance of ZI-Round in terms of execution time, two phases are taken into account: the phase in which CPLEX solves the continuous relaxation to produce the input initial solution for ZI-Round and the actual execution of the heuristic. Execution times are measured by means of calls to the functions \texttt{QueryPerformanceCounter} and \texttt{QueryPerformanceFrequency}, included in the \texttt{windows.h} header file, and are expressed in milliseconds. The aggregate measure involving execution times used to convey information about the performance of ZI-Round on the whole test-bed is the shifted geometric mean (SGM). 
+%! Perchè usare la media geometrica shiftata
+\\ \dots \\ \dots 
+
+For a sequence of measured execution times $\{t_i\}_{i=1}^{n}$ and a shift $s$, the SGM is given by:
+\begin{equation}
+	\sqrt[n]{\prod_{i=1}^{n}(t_i+s)} - s = e^{\dfrac{\sum_{i=1}^{n}(t_i+s)}{n}}-s
+\end{equation}
+The shifts used for the SGM of the continuous relaxation and ZI-Round execution times are of 1000 and 10 milliseconds, respectively.
+A composite aggregate measure that is derived from the SGMs of the two execution times is the ratio between the SGM of the ZI-Round and continuous relaxation execution times, which gives an idea of the fraction of time used by ZI-Round with respect to the time taken to solve the continuous relaxation of the problem.
+
+\section{Experimental results} \label{sec:expresults}
 
 \nocite{*}
 \renewcommand{\bibname}{References}
@@ -406,8 +438,22 @@ We investigate how the single features influence the performance of ZI-Round by 
 	%* SITOGRAPHY %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	\textsc{\Large \textbf{Sitography}}
 	%*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-	
-	\bibitem{scip} SCIP MIP solver (non-commercial). \\ URL: \url{https://www.scipopt.org/}
+
+	\bibitem{cplex} IBM ILOG CPLEX Optimization Studio. \\ URL: \url{https://www.ibm.com/products/ilog-cplex-optimization-studio} \\ (last visited: )
+
+	\bibitem{scip} SCIP MIP solver (non-commercial). \\ URL: \url{https://www.scipopt.org/} \\ (last visited: )
+
+	\bibitem{dirent} Dirent C API. \\ URL: \url{https://github.com/tronkko/dirent} \\ (last visited: )
+
+	\bibitem{gnuplot} Gnuplot graphing utility. \\ URL: \url{http://www.gnuplot.info/} \\ (last visited: )
+
+	\bibitem{rlang} R project. \\ URL: \url{https://www.r-project.org/} \\ (last visited: )
+
+	\bibitem{miplib2003} MIPLIB 2003. \\ URL: \url{http://miplib2010.zib.de/miplib2003/} \\ (last visited: )
+
+	\bibitem{miplib2010} MIPLIB 2010. \\ URL: \url{http://miplib2010.zib.de/} \\ (last visited: )
+
+	\bibitem{miplib2017} MIPLIB 2017. \\ URL: \url{http://miplib.zib.de/} \\ (last visited: )
 	
 \end{thebibliography}
 
