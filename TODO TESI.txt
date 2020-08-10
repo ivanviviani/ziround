@@ -45,14 +45,13 @@ X Indaga sulle istanze "strange":
 X Fai test di debug sulla variante default
 X Misure aggregate + ultimo test con seed 0
 X Indaga su istanze strange (vedi check_opt_values) - TOLTE
+X Fai test Release su PRESOLVED testbed con seed 0 sulle altre 4 varianti + segna istanze strange
+X Fai test Release seed 0 sulle 5 varianti: default, noshift, after0frac, sortsingletons, worseobj
+X Converti il test-bed nella sua versione presolved (batch scripts)
+X Fare i test sul test-bed definitivo
 
-?? Fai test Release su PRESOLVED testbed con seed 0 sulle altre 4 varianti + segna istanze strange
-?? Fai test Release seed 0 sulle 5 varianti: default, noshift, after0frac, sortsingletons, worseobj
-?? Converti il test-bed nella sua versione presolved (batch scripts)
-?? Fare i test sul test-bed definitivo
-
-
-?? Pensare se per ordinare i singletons occorre considerare anche i loro upper/lower bounds (nel senso capacità di variare objval)
-
-OBSERVATIONS:
-?? Alcune iterazioni del ciclo interno azzerano la solfrac e trovano un costo minore, poi l'iter successiva cambia altre variabili lasciando la solfrac a zero ma il costo aumenta. Quindi non viene trovato il minimo valore di objval.
+?? Grafici solfrac e solcost delle 5 varianti su fast0507 e seymour sovrapposte (5 solfrac sovrapposte e 5 solcost sovrapposti)
+?? Inserire solo tabelle con dati misure aggregate (stile booktabs)
+?? Aggiungere descrizione estensione proposta (sortsinglet + after0frac + fractieworstobj) + relativi grafici come per le altre
+?? Tenere un solo grafico con solfrac sovrapposta a solcost per far vedere il comportamento delle due quantità
+?? Scrivere sezione risultati sperimentali con tabelle + commenti sui risultati
