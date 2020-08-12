@@ -49,8 +49,9 @@ X Fai test Release su PRESOLVED testbed con seed 0 sulle altre 4 varianti + segn
 X Fai test Release seed 0 sulle 5 varianti: default, noshift, after0frac, sortsingletons, worseobj
 X Converti il test-bed nella sua versione presolved (batch scripts)
 X Fare i test sul test-bed definitivo
+X Fare i test della versione proposed
+X Grafici solfrac e solcost delle 5 varianti su fast0507 e seymour sovrapposte (5 solfrac sovrapposte e 5 solcost sovrapposti)
 
-?? Grafici solfrac e solcost delle 5 varianti su fast0507 e seymour sovrapposte (5 solfrac sovrapposte e 5 solcost sovrapposti)
 ?? Inserire solo tabelle con dati misure aggregate (stile booktabs)
 ?? Aggiungere descrizione estensione proposta (sortsinglet + after0frac + fractieworstobj) + relativi grafici come per le altre
 ?? Tenere un solo grafico con solfrac sovrapposta a solcost per far vedere il comportamento delle due quantità
