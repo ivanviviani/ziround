@@ -1,7 +1,7 @@
 #! COMPUTE AGGREGATE MEASURES OF A TEST-BED FROM THE TEST_RESULTS.csv FILE
 
 # Test type string
-testype <- "noshiftnonfrac"
+testype <- "proposed"
 
 # Read test results data and set column names
 data <- read.csv(paste("test_results_nogap(",testype,").csv",sep=""), header=T, sep=";")
@@ -89,7 +89,7 @@ avg_gap <- mean(data[,"Gap(%)"])
 write.table(data, file=paste("test_results(",testype,").csv",sep=""), row.names=FALSE, dec=".", sep=";", quote=FALSE)
 
 #! Print aggregate measures to file
-names <- c("SuccessRate(%)","SGM-LPtime(ms)","SGM-ZItime(ms)","SGM-ratio(ZI/LP)","AvgGap(%)")
+names <- c("SuccessRate(%)","SGM-LPtime(ms)","SGM-ZItime(ms)","SGM-ratio(ZI/LP)(%)","AvgGap(%)")
 aggr <- c(succ_rate, sgm_lptime, sgm_zitime, sgm_ratio, avg_gap)
 df <- t(data.frame(names, aggr))
 write.table(df, file=paste("aggregate_measures(",testype,").csv",sep=""), row.names=FALSE, col.names=FALSE, dec=".", sep=";", quote=FALSE)

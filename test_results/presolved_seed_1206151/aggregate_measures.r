@@ -1,7 +1,7 @@
 #! COMPUTE AGGREGATE MEASURES OF A TEST-BED FROM THE TEST_RESULTS.csv FILE
 
 # Test type string
-testype <- "fractieworstobj"
+testype <- "proposed"
 # Random seed used (string)
 rseed <- "1206151"
 
@@ -91,7 +91,7 @@ avg_gap <- mean(data[,"Gap(%)"])
 write.table(data, file=paste("test_results(pre_",testype,")(seed_",rseed,").csv",sep=""), row.names=FALSE, dec=".", sep=";", quote=FALSE)
 
 #! Print aggregate measures to file
-names <- c("SuccessRate(%)","SGM-LPtime(ms)","SGM-ZItime(ms)","SGM-ratio(ZI/LP)","AvgGap(%)")
+names <- c("SuccessRate(%)","SGM-LPtime(ms)","SGM-ZItime(ms)","SGM-ratio(ZI/LP)(%)","AvgGap(%)")
 aggr <- c(succ_rate, sgm_lptime, sgm_zitime, sgm_ratio, avg_gap)
 df <- t(data.frame(names, aggr))
 write.table(df, file=paste("aggregate_measures(pre_",testype,")(seed_",rseed,").csv",sep=""), row.names=FALSE, col.names=FALSE, dec=".", sep=";", quote=FALSE)
