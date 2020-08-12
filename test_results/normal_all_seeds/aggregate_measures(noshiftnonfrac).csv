@@ -1,2 +1,2 @@
-SuccessRate(%);SGM-LPtime(ms);SGM-ZItime(ms);SGM-ratio(ZI/LP);AvgGap(%)
+SuccessRate(%);SGM-LPtime(ms);SGM-ZItime(ms);SGM-ratio(ZI/LP)(%);AvgGap(%)
 19.8304572;1000.5708313;1.5693233;0.1568428;91.9039903
