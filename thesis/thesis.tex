@@ -435,7 +435,7 @@ The performance of the ZI-Round heuristic is analyzed in the following experimen
 
 In Section~\ref{sec:expsetup}, the experimental setup used for the set of experiments on the different versions of ZI-Round is presented. In particular, it comprises the specification of the hardware and software tools used, the description of the test-beds used for the experiments, the specification of the single measures performed on the instances and the aggregate measures computed on the test-beds. Also, a second interesting set of experiments that exploit the shift of dimensional space seen in the presolving process of CPLEX is introduced. \par 
 
-In Section~\ref{sec:expresults} \dots
+In Section~\ref{sec:expresults} the experimental results on the test-beds described are presented and discussed, together with some example charts showing the behavior of the ZI-Round versions tested in terms of solution fractionality and solution cost, on two reference instances.
 
 \section{Experimental setup} \label{sec:expsetup}
 
@@ -479,10 +479,113 @@ For a sequence of measured execution times $\{t_i\}_{i=1}^{n}$ and a shift $s$, 
 \end{equation}
 %! Perchè usare la media geometrica shiftata
 The geometric mean is used in its shifted version to avoid giving the same relevancy, for example, to an improvement from $20$ to $10$ milliseconds and an improvement from $2000$ to $1000$ milliseconds.
-The shifts used for the SGM of the continuous relaxation and ZI-Round execution times are of $1000$ and $10$ milliseconds, respectively.
+The shifts used for the SGM of the continuous relaxation and ZI-Round execution times are of $1000$ and $10$ milliseconds, respectively. \par 
+
 A composite aggregate measure that is derived from the SGMs of the two execution times is the ratio between the SGM of the ZI-Round and continuous relaxation execution times, expressed as a percentage, which gives an idea of the fraction of time used by ZI-Round with respect to the time taken to solve the continuous relaxation of the problem.
 
 \section{Experimental results} \label{sec:expresults}
+
+\begin{table}[]
+	\centering
+	\begin{tabular}{@{}llllll@{}}
+	\toprule
+	Version  & SuccRate(\%) & SGM-LP(ms) & SGM-ZI(ms) & SGMratio(\%) & AvgGap(\%) \\ \midrule
+	Default  & 19.800      & 993.652    & 3.544      & 0.357            & 89.856 \\
+	NSNF     & 19.830      & 1000.571   & 1.569      & 0.157            & 91.904 \\
+	A0F      & 19.830      & 989.142    & 1.858      & 0.188            & 89.833 \\
+	WOBJ     & 20.073      & 997.646    & 3.606      & 0.361            & 89.870 \\
+	SS       & 19.800      & 998.354    & 3.595      & 0.360            & 89.856 \\
+	Proposed & 20.103      & 998.812    & 2.039      & 0.204            & 89.664 \\ \bottomrule
+	\end{tabular}
+	\caption{Aggregate measures of the experimental results for the normal test-bed. The ZI-Round version acronyms stand for, respectively: NSNF as in "No Shift Non-Fractional", i.e. no objective improvement; A0F as in "After 0 Fractionality", i.e. objective improvement after zero fractionality; WOBJ as in "Worst OBJ", i.e. worst-objective fractionality tie-breaks; SS as in "Sort Singletons".}
+	\label{tb:results-normal}
+\end{table}
+
+\begin{table}[]
+	\centering
+	\begin{tabular}{@{}llllll@{}}
+	\toprule
+	Version  & SuccRate(\%) & SGM-LP(ms) & SGM-ZI(ms) & SGMratio(\%) & AvgGap(\%) \\ \midrule
+	Default  & 17.613      & 865.126    & 2.315      & 0.268            & 90.928 \\
+	NSNF     & 17.613      & 867.309    & 0.926      & 0.107            & 92.844 \\
+	A0F      & 17.613      & 868.319    & 1.125      & 0.130            & 90.919 \\
+	WOBJ     & 17.705      & 864.727    & 2.352      & 0.272            & 91.084 \\
+	SS       & 17.613      & 865.622    & 2.333      & 0.269            & 90.928 \\
+	Proposed & 17.705      & 864.226    & 1.131      & 0.131            & 91.063 \\ \bottomrule
+	\end{tabular}
+	\caption{Aggregate measures of the experimental results for the presolved test-bed. For the ZI-Round version acronyms refer to Table~\ref{tb:results-normal}.}
+	\label{tb:results-presolved}
+\end{table}
+
+%\begin{figure}[ht]
+%	\centering
+%	\includegraphics[width=0.85\textwidth]{fast0507-solfrac-all.png}
+%	\caption{Solution fractionality of ZI-Round executions for the %instance \texttt{fast0507}: all versions.}
+%	\label{fig:fast0507-solfrac-all}
+%\end{figure}
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=0.85\textwidth]{fast0507-solfrac-worst.png}
+	\caption{Solution fractionality of ZI-Round executions for the instance \texttt{fast0507}: worst versions.}
+	\label{fig:fast0507-solfrac-worst}
+\end{figure}
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=0.85\textwidth]{fast0507-solfrac-best.png}
+	\caption{Solution fractionality of ZI-Round executions for the instance \texttt{fast0507}: best versions.}
+	\label{fig:fast0507-solfrac-best}
+\end{figure}
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=0.85\textwidth]{seymour-solfrac-all.png}
+	\caption{Solution fractionality of ZI-Round executions for the instance \texttt{seymour}: all versions.}
+	\label{fig:seymour-solfrac-all}
+\end{figure}
+
+%\begin{figure}[ht]
+%	\centering
+%	\includegraphics[width=0.85\textwidth]{seymour-solfrac-worst.png}
+%	\caption{Solution fractionality of ZI-Round executions for the %instance \texttt{seymour}: worst versions.}
+%	\label{fig:seymour-solfrac-worst}
+%\end{figure}
+
+%\begin{figure}[ht]
+%	\centering
+%	\includegraphics[width=0.85\textwidth]{seymour-solfrac-best.png}
+%	\caption{Solution fractionality of ZI-Round executions for the %instance \texttt{seymour}: best versions.}
+%	\label{fig:seymour-solfrac-best}
+%\end{figure}
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=0.85\textwidth]{fast0507-solcost-all.png}
+	\caption{Solution cost of ZI-Round executions for the instance \texttt{fast0507}: all versions.}
+	\label{fig:fast0507-solcost-all}
+\end{figure}
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=0.85\textwidth]{fast0507-solcost-nsnf.png}
+	\caption{Solution cost of ZI-Round execution for the instance \texttt{fast0507}: no objective improvement.}
+	\label{fig:fast0507-solcost-nsnf}
+\end{figure}
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=0.85\textwidth]{seymour-solcost-all.png}
+	\caption{Solution cost of ZI-Round executions for the instance \texttt{seymour}: all versions.}
+	\label{fig:seymour-solcost-all}
+\end{figure}
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=0.85\textwidth]{seymour-solcost-nsnf.png}
+	\caption{Solution cost of ZI-Round executions for the instance \texttt{seymour}: no objective improvement.}
+	\label{fig:seymour-solcost-nsnf}
+\end{figure}
 
 \nocite{*}
 \renewcommand{\bibname}{References}
