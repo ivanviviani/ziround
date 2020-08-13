@@ -509,7 +509,7 @@ When CPLEX solves the continuous relaxation of a problem instance, it applies a 
 %! modalità di test (test_folder), reporting dei risultati (file csv perché sono facilmente manipolabili)
 The runs for the experiments on the test-bed folder rely on the Dirent C API to scan the instance files in a way that is easy to code. When each instance has been processed, its related measures are appended to a \texttt{csv} file that holds the test results. The choice of using \texttt{csv} files follows from the ease of processing that software tools as the R language provide for this file extension.
 
-\subsection{Performance and aggregate measures}
+\subsection{Performance measures and aggregate measures}
 
 %! Misure riportate nei csv
 The actual data reported in the test results files comprises: the name of the instance, the random seed used, the final solution cost, the final solution fractionality, the number of rounds performed by ZI-Round, the execution time taken by CPLEX to solve the continuous relaxation, the execution time of ZI-Round, the sum of the two times, and the gap of the solution found with respect to the optimal or best solution available for the given problem. \par 
@@ -531,7 +531,25 @@ A composite aggregate measure that is derived from the SGMs of the two execution
 
 \section{Experimental results} \label{sec:expresults}
 
-%!
+%* COMMENTI TABELLE
+
+%! Testbed normale vs presolved: sul testbed normale tutte le versioni ottengono success rate più alti e average gap più bassi rispetto a quanto ottenuto sul testbed presolved. --> Questa differenza supporta l'ipotesi che il presolving dei problemi porti ad vere formulazioni più compatte ma non necessariamente meno complesse da risolvere.
+
+%! SuccRate testbed normale: WOBJ è l'estensione che riesce a migliorare maggiormente il success rate, mentre NSNF e A0F danno solo dei piccoli miglioramenti. --> L'unione delle 3 estensioni A0F,WOBJ,SS nella versione PROPOSED permette di migliorare il success rate sul testbed normale più di quanto faccia ogni estensione singolarmente.
+
+%! SuccRate testbed presolved: WOBJ in questo caso è l'unica estensione che riesce a migliorare il success rate, con le altre 3 che ottengono lo stesso success rate della versione default. --> La versione PROPOSED, che include l'estensione WOBJ, presenta lo stesso miglioramento al success rate. Rispetto al testbed normale, il miglioramento è minore.
+
+%! Default vs SS: molto simili perchè la maggior parte delle istanze del testbed non hanno alcun singleton, e le istanze che hanno dei singleton ne hanno quasi tutte uno per riga, rendendo l'ordinamento dei singleton per riga inefficace.
+
+%! Generale, sia per il test-bed normale che per quello presolved: I tempi di esecuzione della risoluzione del rilassamento continuo e l'euristico ZI-Round confermano che il tempo dedicato a ZI-Round è trascurabile rispetto a quello dedicato al rilassamento continuo. Questo è ancora più immediato guardando gli SGM ratio percentuali, che mostrano come ZI-Round richieda neanche lo 0.5\% del tempo speso sul rilassamento continuo.
+
+%! Effetto delle due fasi (rounding e miglioramento obj) sui tempi di esecuzione di ZI-Round, sia per il testbed normale che per quello presolved: si vede come per le 3 versioni in cui le due fasi agiscono insieme interferendo l'una con l'altra i tempi SGM siano raddoppiati rispetto alle 2 versioni in cui si applica solo una fase o entrambe in sequenza senza sovrapposizioni. --> Infatti la versione PROPOSED beneficia della miglior performance in termini di tempo di esecuzione data dall'estensione A0F, ottenendo tempi di esecuzione simili
+
+%! AvgGap NSNF, sia per il testbed normale che per quello presolved: come ci si aspettava dalla teoria, evitare di migliorare la funzione obiettivo può solo portare ad un average gap peggiore.
+
+%! AvgGap testbed normale: in termini di average gap per il testbed normale, l'utilizzo delle 3 estensioni A0F,WOBJ,SS permette di ottenere un gap minore di quelli ottenuti dalle stesse estensioni singolarmente. La separazione delle due fasi unita all'aiuto ai constraint dato da WOBJ, con la possibile partecipazione di SS in pochi casi, permette di trovare soluzioni migliori.
+
+%! AvgGap testbed presolved: in termini di average gap per il testbed presolved, l'utilizzo delle 3 estensioni peggiora il gap ottenuto.: tale peggiormaneto sembra causato dal contributo di WOBJ, l'unica delle 3 estensioni che singolarmente ottiene un gap simile, mentre le altre due ottengono un gap minore. --> Il presolving del testbed porta ad avere problemi sicuramente più compatti, ma non necessariamente più semplici da risolvere, e questo fatto può influire sulla performance dell''euristico su alcune istanze particolari.
 
 \begin{table}[]
 	\centering
@@ -564,6 +582,10 @@ A composite aggregate measure that is derived from the SGMs of the two execution
 	\caption{Aggregate measures of the experimental results for the presolved test-bed. For the ZI-Round version acronyms refer to Table~\ref{tb:results-normal}.}
 	\label{tb:results-presolved}
 \end{table}
+
+%* COMMENTI GRAFICI
+
+%! 
 
 %\begin{figure}[ht]
 %	\centering
