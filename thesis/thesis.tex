@@ -431,11 +431,57 @@ The behavior of the solution cost and fractionality for the instance \texttt{fas
 
 \chapter{Computational results} \label{ch:compresults}
 %! Scopo degli esperimenti: analizzare la performance di ZI-Round nelle sue varie estensioni/varianti in termini di numero di soluzioni intere trovate e tempo di esecuzione.
-The performance of the ZI-Round heuristic is analyzed in the following experiments, in which one extension at a time is changed from the default version. The main measures of interest are the number or percentage of integer solutions found, the quality of those solutions and the execution time of ZI-Round. \par
+The performance of the ZI-Round heuristic is analyzed in the following experiments, in which one extension at a time is changed from the default version. The main measures of interest are the number or percentage of integer solutions found, the quality of those solutions and the execution time of ZI-Round. \par 
+
+First, in Section~\ref{sec:preliminary-exp}, two preliminary experiments are carried out: the first one concerning the comparison between the results obtained by default ZI-Round and those reported by C. Wallace  for the successful instances in \cite{wallace2010}; the second one concerning the comparison between the results obtained by default ZI-Round and those obtained by the \textit{zirounding} heuristic implemented in the non-commercial solver SCIP, on the same test-bed used by C. Wallace. These experiments serve as confirmation of the reliability of the ZI-Round implementation made by the author of this thesis. \par
 
 In Section~\ref{sec:expsetup}, the experimental setup used for the set of experiments on the different versions of ZI-Round is presented. In particular, it comprises the specification of the hardware and software tools used, the description of the test-beds used for the experiments, the specification of the single measures performed on the instances and the aggregate measures computed on the test-beds. Also, a second interesting set of experiments that exploit the shift of dimensional space seen in the presolving process of CPLEX is introduced. \par 
 
 In Section~\ref{sec:expresults} the experimental results on the test-beds described are presented and discussed, together with some example charts showing the behavior of the ZI-Round versions tested in terms of solution fractionality and solution cost, on two reference instances.
+
+\section{Preliminary experiments} \label{sec:preliminary-exp}
+After implementing the default version of the ZI-Round heuristic, referred to as ZI-Round version $2$ in the original work by C. Wallace \cite{wallace2010}, a quick replicability experiment is carried out to check whether the custom implementation of the author of this thesis finds similar resulting objective values to those found by the implementation of C. Wallace, for the successful instances reported in the article. In particular, the test-bed contains $18$ instances taken from the MIPLIB $2003$ problem set \cite{miplib2003}, from which one instance is removed since it has ranged constraints that make it incompatible with the custom implementation. \par
+The results of the replicability experiment are reported in Table~\ref{tb:exp-prelim-1}: the implemented default version of ZI-Round found a solution for $13$ of the $17$ instances for which ZI-Round v$2$ found a solution.
+\begin{table}[]
+	\centering
+	\begin{tabular}{@{}lrrr@{}}
+	\toprule
+	Instance   & ZI-Round(implemented) & ZI-Round(v2) & zirounding(SCIP) \\ \midrule
+	cap6000    & -2446875              & -2446875     & -2442801         \\
+	fast0507   & 221                   & 200          & 288              \\
+	fixnet6    & 12170                 & 4536         & 4482             \\
+	manna81    & -11868                & -13164       & -13150           \\
+	markshare1 & 230                   & 230          & 418              \\
+	markshare2 & 167                   & 674          & 375              \\
+	mkc        & Failed                & -346      & Failed           \\
+	modglob    & 20786787           & 20786788     & 20757201      \\
+	nsrand-ipx & 754880                & 69600        & Failed           \\
+	pp08a      & 15000                 & 14300        & 13940            \\
+	pp08aCUTS  & 16630           & 16630      & 15147      \\
+	qiu        & 1805           & 1805      & 1805      \\
+	set1ch     & 110242              & 107692     & 106027           \\
+	seymour    & 454                   & 450          & 615              \\
+	sp97ar     & Failed                & 1094926720   & Failed           \\
+	timtab1    & Failed                & 1719551      & Failed           \\
+	timtab2    & Failed                & 2449798      & Failed           \\ \bottomrule
+	\end{tabular}
+	\caption{Objective values obtained by different implementations of the default ZI-Round heuristic.}
+	\label{tb:exp-prelim-1}
+\end{table}
+The failure of the custom implementation in $4$ instances is further analyzed, in a second experiment, by comparing the results with those obtained by the \textit{zirounding} heuristic integrated in the non-commercial solver SCIP version $7$.$0$.$0$ \cite{scip}, which could not be exctracted from the code of the version used in \cite{wallace2010}, leading to the implementation of ZI-Round v$2$. \par 
+
+To double check the reliability of the previous results, the test-bed is extended to the whole MIPLIB $2003$ problem set, which is the complete test-bed actually used by C. Wallace, from which the instances that are incompatible with ZI-Round are removed. The extended test-bed contains $59$ instances. The second preliminary experiment involves the comparison between default ZI-Round and \textit{zirounding}, to confirm the reliability of the implementation. \par 
+
+The solver SCIP was downloaded with an academic license and set up to use only the \textit{zirounding} heuristic and stop at the root node of the decision tree. In particular, the following commands are issued:
+\begin{enumerate}
+	\item Disable all the heuristics: "\texttt{set heuristics emphasis off}"
+	\item Enable only the \textit{zirounding} heuristic: "\texttt{set heuristics zirounding freq 1}"
+	\item Set node limit to $1$: "\texttt{set limits nodes 1}"
+	\item Disable all cut separators: "\texttt{set separating emphasis off}"
+\end{enumerate}
+Once SCIP is set up, the command to optimize a given problem is the following: "\texttt{read filename.mps optimize}". The execution and success of \textit{zirounding} can be verified by issuing the command "\texttt{disp stats}" after the problem optimization. \par
+
+The complete results of the second experiment are omitted since almost all the additional instances not reported in Table~\ref{tb:exp-prelim-1} are unsuccessful for both the implementations being compared: the results obtained by SCIP present the same $4$ failures mentioned above. With some slight differences, which could be due to the newer versions of the solvers being used or performance variability factors, the custom implementation of ZI-Round made by the author of this thesis can be deemed as a reliable instance of the heuristic to be tested in the following experiments.
 
 \section{Experimental setup} \label{sec:expsetup}
 
@@ -452,7 +498,7 @@ The R language \cite{rlang} is used to easily manipulate the test results and co
 \subsection{Test-bed collection}
 
 %! Testbed: MIPLIBS + tipologie di istanze rimosse + numero istanze testate
-The test-bed used for the experiments comprises the instances from the MIPLIB 2003 \cite{miplib2003}, MIPLIB 2010 \cite{miplib2010} and MIPLIB 2017 \cite{miplib2017} problem collections, from which the instances that are incompatible with ZI-Round are removed.
+The test-bed used for the experiments comprises the instances from the MIPLIB $2003$ \cite{miplib2003}, MIPLIB $2010$ \cite{miplib2010} and MIPLIB $2017$ \cite{miplib2017} problem collections, from which the instances that are incompatible with ZI-Round are removed.
 The removed instances include: instances that are infeasible or unbounded, instances that have ranged constraints, instances that have semi-integer or semi-continuous variables according to the terminology used by CPLEX, and instances for which CPLEX is unable to solve the continuous relaxation or exceeds a set time limit of $300$ seconds. To simplify the detection of removable instances, a single run in which only the continuous relaxations are solved is performed: the function \texttt{CPXgetstat} of the CPLEX C API is used to get the solution status and the instances that do not have the status \texttt{CPX\_STAT\_OPTIMAL} are removed from the test-bed. After this pre-processing run, the test-bed obtained contains $1102$ instances.
 To virtually increase the size of the test-bed and at the same time test the effect of the performance variability on the end results, the experiments are done using three random seeds. So the actual independent instances are instance-seed pairs, bringing the test-bed size to $3306$. \par 
 
@@ -485,9 +531,11 @@ A composite aggregate measure that is derived from the SGMs of the two execution
 
 \section{Experimental results} \label{sec:expresults}
 
+%!
+
 \begin{table}[]
 	\centering
-	\begin{tabular}{@{}llllll@{}}
+	\begin{tabular}{@{}lccccc@{}}
 	\toprule
 	Version  & SuccRate(\%) & SGM-LP(ms) & SGM-ZI(ms) & SGMratio(\%) & AvgGap(\%) \\ \midrule
 	Default  & 19.800      & 993.652    & 3.544      & 0.357            & 89.856 \\
@@ -503,7 +551,7 @@ A composite aggregate measure that is derived from the SGMs of the two execution
 
 \begin{table}[]
 	\centering
-	\begin{tabular}{@{}llllll@{}}
+	\begin{tabular}{@{}lccccc@{}}
 	\toprule
 	Version  & SuccRate(\%) & SGM-LP(ms) & SGM-ZI(ms) & SGMratio(\%) & AvgGap(\%) \\ \midrule
 	Default  & 17.613      & 865.126    & 2.315      & 0.268            & 90.928 \\
