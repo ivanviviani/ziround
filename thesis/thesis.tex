@@ -521,7 +521,7 @@ The quality of the solutions found by ZI-Round is evaluated by the gap with resp
 To evaluate the performance of ZI-Round in terms of execution time, two phases are taken into account: the phase in which CPLEX solves the continuous relaxation to produce the input initial solution for ZI-Round and the actual execution of the heuristic. Execution times are measured by means of calls to the functions \texttt{QueryPerformanceCounter} and \texttt{QueryPerformanceFrequency}, included in the \texttt{windows.h} header file, and are expressed in milliseconds. The aggregate measure involving execution times used to convey information about the performance of ZI-Round on the whole test-bed is the shifted geometric mean (SGM). 
 For a sequence of measured execution times $\{t_i\}_{i=1}^{n}$ and a shift $s$, the SGM is given by:
 \begin{equation}
-	\sqrt[n]{\prod_{i=1}^{n}(t_i+s)} - s = e^{\dfrac{\sum_{i=1}^{n}(t_i+s)}{n}}-s
+	\sqrt[n]{\prod_{i=1}^{n}(t_i+s)} - s = e^{\dfrac{\sum_{i=1}^{n}\ln(t_i+s)}{n}}-s
 \end{equation}
 %! Perchè usare la media geometrica shiftata
 The geometric mean is used in its shifted version to avoid giving the same relevancy, for example, to an improvement from $20$ to $10$ milliseconds and an improvement from $2000$ to $1000$ milliseconds.
