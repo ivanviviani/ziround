@@ -437,7 +437,7 @@ First, in Section~\ref{sec:preliminary-exp}, two preliminary experiments are car
 
 In Section~\ref{sec:expsetup}, the experimental setup used for the set of experiments on the different versions of ZI-Round is presented. In particular, it comprises the specification of the hardware and software tools used, the description of the test-beds used for the experiments, the specification of the single measures performed on the instances and the aggregate measures computed on the test-beds. Also, a second interesting set of experiments that exploit the shift of dimensional space seen in the presolving process of CPLEX is introduced. \par 
 
-In Section~\ref{sec:expresults} the experimental results on the test-beds described are presented and discussed, together with some example charts showing the behavior of the ZI-Round versions tested in terms of solution fractionality and solution cost, on two reference instances.
+In Section~\ref{sec:expresults} the experimental results on the test-beds described are presented and discussed, together with some example charts showing the behavior of the ZI-Round versions tested in terms of solution fractionality and solution cost, on two reference instances. The charts presented are made by the author of this thesis using the Gnuplot graphing utility \cite{gnuplot}, called directly from the main program through a pipe. The data portrayed by the charts is obtained from the experiments conducted.
 
 \section{Preliminary experiments} \label{sec:preliminary-exp}
 After implementing the default version of the ZI-Round heuristic, referred to as ZI-Round version $2$ in the original work by C. Wallace \cite{wallace2010}, a quick replicability experiment is carried out to check whether the custom implementation of the author of this thesis finds similar resulting objective values to those found by the implementation of C. Wallace, for the successful instances reported in the article. In particular, the test-bed contains $18$ instances taken from the MIPLIB $2003$ problem set \cite{miplib2003}, from which one instance is removed since it has ranged constraints that make it incompatible with the custom implementation. \par
@@ -532,6 +532,7 @@ A composite aggregate measure that is derived from the SGMs of the two execution
 \section{Experimental results} \label{sec:expresults}
 
 %* COMMENTI TABELLE
+The results of the experiments conducted are reported in Table~\ref{tb:results-normal} and Table~\ref{tb:results-presolved}, for the two test-beds, respectively.
 
 %! Testbed normale vs presolved: sul testbed normale tutte le versioni ottengono success rate più alti e average gap più bassi rispetto a quanto ottenuto sul testbed presolved. --> Questa differenza supporta l'ipotesi che il presolving dei problemi porti ad vere formulazioni più compatte ma non necessariamente meno complesse da risolvere.
 
@@ -583,9 +584,73 @@ A composite aggregate measure that is derived from the SGMs of the two execution
 	\label{tb:results-presolved}
 \end{table}
 
-%* COMMENTI GRAFICI
+%* COMMENTI GRAFICI: 
+Two reference instances, \texttt{fast0507} and \texttt{seymour}, are used to compare how the different ZI-Round extensions affect the behavior of the solution fractionality and solution cost. Note that, for the following comparisons, the charts of the default version and the version with sorted singletons are equivalent, since the two reference instances chosen do not have any singleton. \par
 
-%! 
+%! Solution fractionality fast0507
+For the instance \texttt{fast0507}, the solution fractionality curves of all the ZI-Round versions tested cannot fit into a single chart, due to the high scale difference between some versions. For simplicity and better readability, the worst-performing and best-performing versions in terms of number of iterations taken to round all the fractional integer variables are shown in two separated charts in Figure~\ref{fig:fast0507-solfrac-worst} and Figure~\ref{fig:fast0507-solfrac-best}.
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=0.85\textwidth]{fast0507-solfrac-worst.png}
+	\caption{Solution fractionality of ZI-Round executions for the instance \texttt{fast0507}: worst-performing versions, in terms of number of iterations taken to round all the fractional integer variables.}
+	\label{fig:fast0507-solfrac-worst}
+\end{figure}
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=0.85\textwidth]{fast0507-solfrac-best.png}
+	\caption{Solution fractionality of ZI-Round executions for the instance \texttt{fast0507}: best-performing versions, in terms of number of iterations taken to round all the fractional integer variables.}
+	\label{fig:fast0507-solfrac-best}
+\end{figure}
+All the three worst-performing versions present the two interfering phases of rounding and objective improvement, whereas all the three best-performing versions present a clear separation of the two phases, or the lack of one. The proposed version of ZI-Round clearly inherits the fast rounding phase from the extension that avoids improving the objective value while roundable fractional integer variables are still available. Notice the high delay in the rounding phase caused by the interference of the objective improvement phase for the instance \texttt{fast0507}: from $275$ iterations in Figure~\ref{fig:fast0507-solfrac-best} to more than $60000$ iterations in Figure~\ref{fig:fast0507-solfrac-worst}. \par
+
+%! Solution fractionality seymour
+For the instance \texttt{seymour}, the solution fractionality curves of all the ZI-Round versions tested are presented in a single chart in Figure~\ref{fig:seymour-solfrac-all}.
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=0.85\textwidth]{seymour-solfrac-all.png}
+	\caption{Solution fractionality of ZI-Round executions for the instance \texttt{seymour}: all versions.}
+	\label{fig:seymour-solfrac-all}
+\end{figure}
+The same distinction of the worst-performing and best-performing versions made for the instance \texttt{fast0507} applies. In this case, though, the delay in the rounding phase caused by the interference of the objective improvement phase is less significative but still not negligible. As stated before, the proposed version of ZI-Round inherits the fast rounding phase from the extension that avoids improving the objective value while roundable fractional integer variables are stil available. \par
+
+%! Solution cost fast0507
+For the instance \texttt{fast0507}, the solution cost curves of all the ZI-Round versions tested are presented in a single chart in Figure~\ref{fig:fast0507-solcost-all}. The chart corresponding to the version that does not improve the objective value is also presented as a standalone chart in Figure~\ref{fig:fast0507-solcost-nsnf}, since it is not visible in the main chart, due to its high scale difference with respect to the charts of all the other versions.
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=0.85\textwidth]{fast0507-solcost-all.png}
+	\caption{Solution cost of ZI-Round executions for the instance \texttt{fast0507}: all versions.}
+	\label{fig:fast0507-solcost-all}
+\end{figure}
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=0.85\textwidth]{fast0507-solcost-nsnf.png}
+	\caption{Solution cost of ZI-Round execution for the instance \texttt{fast0507}: no objective improvement.}
+	\label{fig:fast0507-solcost-nsnf}
+\end{figure}
+The three versions in which the two phases interfere with each other present a slow worsening of the objective value as the fractional integer variables are being rounded. When the solution fractionality finally reaches zero after more than $60000$ iterations, the objective improvement phase operates alone. 
+The effect of rounding variables in the direction that worsens the objective value when fractionality tie-breaks occur is clearly visible in the solution cost curve of the corresponding version.
+The two versions in which the two phases are separated, instead, present a fast worsening of the objective value, in terms of number of iterations. As soon as the fast rounding phase ends, the solution cost starts being improved. \par
+
+%! Solution cost seymour
+For the instance \texttt{fast0507}, the solution cost curves of all the ZI-Round versions tested are presented in a single chart in Figure~\ref{fig:seymour-solcost-all}. The chart corresponding to the version that does not improve the objective value is also presented as a standalone chart in Figure~\ref{fig:seymour-solcost-nsnf}, since it is not visible in the main chart, due to its high scale difference with respect to the charts of all the other versions.
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=0.85\textwidth]{seymour-solcost-all.png}
+	\caption{Solution cost of ZI-Round executions for the instance \texttt{seymour}: all versions.}
+	\label{fig:seymour-solcost-all}
+\end{figure}
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=0.85\textwidth]{seymour-solcost-nsnf.png}
+	\caption{Solution cost of ZI-Round executions for the instance \texttt{seymour}: no objective improvement.}
+	\label{fig:seymour-solcost-nsnf}
+\end{figure}
+The three versions in which the two phases interfere with each other present the same behavior observed for the instance \texttt{fast0507}, as well as the two versions in which the two phases are separated. \par 
+
+The results obtained and the observations made allow to conclude that the proposed version of ZI-Round inherits its behaviors from the extension that penalizes the objective value when fractionality tie-breaks occur and the extension that keeps the two phases separated, namely: the magnitude of the objective worsening from the former extension; the faster objective worsening from both extensions; the faster rounding phase from the latter extension.
 
 %\begin{figure}[ht]
 %	\centering
@@ -593,27 +658,6 @@ A composite aggregate measure that is derived from the SGMs of the two execution
 %	\caption{Solution fractionality of ZI-Round executions for the %instance \texttt{fast0507}: all versions.}
 %	\label{fig:fast0507-solfrac-all}
 %\end{figure}
-
-\begin{figure}[ht]
-	\centering
-	\includegraphics[width=0.85\textwidth]{fast0507-solfrac-worst.png}
-	\caption{Solution fractionality of ZI-Round executions for the instance \texttt{fast0507}: worst versions.}
-	\label{fig:fast0507-solfrac-worst}
-\end{figure}
-
-\begin{figure}[ht]
-	\centering
-	\includegraphics[width=0.85\textwidth]{fast0507-solfrac-best.png}
-	\caption{Solution fractionality of ZI-Round executions for the instance \texttt{fast0507}: best versions.}
-	\label{fig:fast0507-solfrac-best}
-\end{figure}
-
-\begin{figure}[ht]
-	\centering
-	\includegraphics[width=0.85\textwidth]{seymour-solfrac-all.png}
-	\caption{Solution fractionality of ZI-Round executions for the instance \texttt{seymour}: all versions.}
-	\label{fig:seymour-solfrac-all}
-\end{figure}
 
 %\begin{figure}[ht]
 %	\centering
@@ -629,34 +673,6 @@ A composite aggregate measure that is derived from the SGMs of the two execution
 %	\label{fig:seymour-solfrac-best}
 %\end{figure}
 
-\begin{figure}[ht]
-	\centering
-	\includegraphics[width=0.85\textwidth]{fast0507-solcost-all.png}
-	\caption{Solution cost of ZI-Round executions for the instance \texttt{fast0507}: all versions.}
-	\label{fig:fast0507-solcost-all}
-\end{figure}
-
-\begin{figure}[ht]
-	\centering
-	\includegraphics[width=0.85\textwidth]{fast0507-solcost-nsnf.png}
-	\caption{Solution cost of ZI-Round execution for the instance \texttt{fast0507}: no objective improvement.}
-	\label{fig:fast0507-solcost-nsnf}
-\end{figure}
-
-\begin{figure}[ht]
-	\centering
-	\includegraphics[width=0.85\textwidth]{seymour-solcost-all.png}
-	\caption{Solution cost of ZI-Round executions for the instance \texttt{seymour}: all versions.}
-	\label{fig:seymour-solcost-all}
-\end{figure}
-
-\begin{figure}[ht]
-	\centering
-	\includegraphics[width=0.85\textwidth]{seymour-solcost-nsnf.png}
-	\caption{Solution cost of ZI-Round executions for the instance \texttt{seymour}: no objective improvement.}
-	\label{fig:seymour-solcost-nsnf}
-\end{figure}
-
 \nocite{*}
 \renewcommand{\bibname}{References}
 \begin{thebibliography}{9}
@@ -664,6 +680,12 @@ A composite aggregate measure that is derived from the SGMs of the two execution
 	\bibitem{wallace2010} C. Wallace, \textit{ZI round, a MIP rounding heuristic}. Journal of Heuristics, vol. 16, pp. 715–722 (2010). \\ DOI: \url{https://doi.org/10.1007/s10732-009-9114-6}
 
 	\bibitem{linker1973} S. Lin, B. W. Kernighan, \textit{An Effective Heuristic Algorithm for the Traveling-Salesman Problem}. Operations Research, vol. 21, no. 2, pp. 498-516, INFORMS (1973). \\ DOI: \url{https://doi.org/10.1287/opre.21.2.498}
+
+	\bibitem{christophel2005} P. M. Christophel, \textit{An Improved Heuristic for the MOPS Mixed-Integer Programming Solver}. University of Paderborn-DS\&OR Lab, Diplomarbeit (2005).
+
+	\bibitem{berthold2006} T. Berthold, \textit{Primal Heuristics for Mixed Integer Programs}. Technische Universität Berlin, Diplomarbeit (2006).
+
+	\bibitem{hendel2011} G. Hendel, \textit{New Rounding and Propagation Heuristics for Mixed Integer Programming}. Technische Universität Berlin, Bachelorarbeit (2011).
 	
 	% \newpage
 	\vspace{0.5cm}
