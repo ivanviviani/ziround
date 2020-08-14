@@ -531,28 +531,11 @@ A composite aggregate measure that is derived from the SGMs of the two execution
 
 \section{Experimental results} \label{sec:expresults}
 
+\subsection{Aggregate results on the test-beds}
+
 %* COMMENTI TABELLE
 The results of the experiments conducted are reported in Table~\ref{tb:results-normal} and Table~\ref{tb:results-presolved}, for the two test-beds, respectively.
-
-%! Testbed normale vs presolved: sul testbed normale tutte le versioni ottengono success rate più alti e average gap più bassi rispetto a quanto ottenuto sul testbed presolved. --> Questa differenza supporta l'ipotesi che il presolving dei problemi porti ad vere formulazioni più compatte ma non necessariamente meno complesse da risolvere.
-
-%! SuccRate testbed normale: WOBJ è l'estensione che riesce a migliorare maggiormente il success rate, mentre NSNF e A0F danno solo dei piccoli miglioramenti. --> L'unione delle 3 estensioni A0F,WOBJ,SS nella versione PROPOSED permette di migliorare il success rate sul testbed normale più di quanto faccia ogni estensione singolarmente.
-
-%! SuccRate testbed presolved: WOBJ in questo caso è l'unica estensione che riesce a migliorare il success rate, con le altre 3 che ottengono lo stesso success rate della versione default. --> La versione PROPOSED, che include l'estensione WOBJ, presenta lo stesso miglioramento al success rate. Rispetto al testbed normale, il miglioramento è minore.
-
-%! Default vs SS: molto simili perchè la maggior parte delle istanze del testbed non hanno alcun singleton, e le istanze che hanno dei singleton ne hanno quasi tutte uno per riga, rendendo l'ordinamento dei singleton per riga inefficace.
-
-%! Generale, sia per il test-bed normale che per quello presolved: I tempi di esecuzione della risoluzione del rilassamento continuo e l'euristico ZI-Round confermano che il tempo dedicato a ZI-Round è trascurabile rispetto a quello dedicato al rilassamento continuo. Questo è ancora più immediato guardando gli SGM ratio percentuali, che mostrano come ZI-Round richieda neanche lo 0.5\% del tempo speso sul rilassamento continuo.
-
-%! Effetto delle due fasi (rounding e miglioramento obj) sui tempi di esecuzione di ZI-Round, sia per il testbed normale che per quello presolved: si vede come per le 3 versioni in cui le due fasi agiscono insieme interferendo l'una con l'altra i tempi SGM siano raddoppiati rispetto alle 2 versioni in cui si applica solo una fase o entrambe in sequenza senza sovrapposizioni. --> Infatti la versione PROPOSED beneficia della miglior performance in termini di tempo di esecuzione data dall'estensione A0F, ottenendo tempi di esecuzione simili
-
-%! AvgGap NSNF, sia per il testbed normale che per quello presolved: come ci si aspettava dalla teoria, evitare di migliorare la funzione obiettivo può solo portare ad un average gap peggiore.
-
-%! AvgGap testbed normale: in termini di average gap per il testbed normale, l'utilizzo delle 3 estensioni A0F,WOBJ,SS permette di ottenere un gap minore di quelli ottenuti dalle stesse estensioni singolarmente. La separazione delle due fasi unita all'aiuto ai constraint dato da WOBJ, con la possibile partecipazione di SS in pochi casi, permette di trovare soluzioni migliori.
-
-%! AvgGap testbed presolved: in termini di average gap per il testbed presolved, l'utilizzo delle 3 estensioni peggiora il gap ottenuto.: tale peggiormaneto sembra causato dal contributo di WOBJ, l'unica delle 3 estensioni che singolarmente ottiene un gap simile, mentre le altre due ottengono un gap minore. --> Il presolving del testbed porta ad avere problemi sicuramente più compatti, ma non necessariamente più semplici da risolvere, e questo fatto può influire sulla performance dell''euristico su alcune istanze particolari.
-
-\begin{table}[]
+\begin{table}[ht]
 	\centering
 	\begin{tabular}{@{}lccccc@{}}
 	\toprule
@@ -564,11 +547,10 @@ The results of the experiments conducted are reported in Table~\ref{tb:results-n
 	SS       & 19.800      & 998.354    & 3.595      & 0.360            & 89.856 \\
 	Proposed & 20.103      & 998.812    & 2.039      & 0.204            & 89.664 \\ \bottomrule
 	\end{tabular}
-	\caption{Aggregate measures of the experimental results for the normal test-bed. The ZI-Round version acronyms stand for, respectively: NSNF as in "No Shift Non-Fractional", i.e. no objective improvement; A0F as in "After 0 Fractionality", i.e. objective improvement after zero fractionality; WOBJ as in "Worst OBJ", i.e. worst-objective fractionality tie-breaks; SS as in "Sort Singletons".}
+	\caption{Aggregate measures of the experimental results for the regular test-bed. The ZI-Round version acronyms stand for, respectively: NSNF as in "No Shift Non-Fractional", i.e. no objective improvement; A0F as in "After 0 Fractionality", i.e. objective improvement after zero fractionality; WOBJ as in "Worst OBJ", i.e. worst-objective fractionality tie-breaks; SS as in "Sort Singletons".}
 	\label{tb:results-normal}
 \end{table}
-
-\begin{table}[]
+\begin{table}[ht]
 	\centering
 	\begin{tabular}{@{}lccccc@{}}
 	\toprule
@@ -584,11 +566,47 @@ The results of the experiments conducted are reported in Table~\ref{tb:results-n
 	\label{tb:results-presolved}
 \end{table}
 
+%! Testbed normale vs presolved: sul testbed normale tutte le versioni ottengono success rate più alti e average gap più bassi rispetto a quanto ottenuto sul testbed presolved. --> Questa differenza supporta l'ipotesi che il presolving dei problemi porti ad vere formulazioni più compatte ma non necessariamente meno complesse da risolvere.
+The results on the regular test-bed show that all the ZI-Round versions tested obtain higher success rates and lower average gaps with respect to the presolved test-bed. This difference of performance supports the hypothesis that the presolving process leads to problem formulations that are indeed more compact, but not necessarily less complex to solve. \par
+
+%! SuccRate testbed normale: WOBJ è l'estensione che riesce a migliorare maggiormente il success rate, mentre NSNF e A0F danno solo dei piccoli miglioramenti. --> L'unione delle 3 estensioni A0F,WOBJ,SS nella versione PROPOSED permette di migliorare il success rate sul testbed normale più di quanto faccia ogni estensione singolarmente.
+The success rates obtained on the regular test-bed show that the extension that allows to improve this aggregate measure the most is the one that favors the constraints, i.e. penalizes the objective value, when fractionality tie-breaks occur. A minor improvement to the success rate is also given by the extension that keeps the two phases separated and the one that only performs the rounding phase, it being a subset of the former.
+The three extensions used by the proposed version of ZI-Round, namely the two mentioned before and the one that sorts the singletons, allow it to improve the success rate on the normal test-bed more than any single extension does by itself. \par 
+
+%! SuccRate testbed presolved: WOBJ in questo caso è l'unica estensione che riesce a migliorare il success rate, con le altre 3 che ottengono lo stesso success rate della versione default. --> La versione PROPOSED, che include l'estensione WOBJ, presenta lo stesso miglioramento al success rate. Rispetto al testbed normale, il miglioramento è minore.
+The success rates obtained on the presolved test-bed show that the only extension that allows to improve this aggregate measure the most is the one that favors the constraints, i.e. penalizes the objective value, when fractionality tie-breaks occur. All the other single extensions obtain the same success rate as the default version.
+The proposed version of ZI-Round, which includes the aforementioned extension, shows the same success rate improvement. \par
+
+%! Default vs SS: molto simili perchè la maggior parte delle istanze del testbed non hanno alcun singleton, e le istanze che hanno dei singleton ne hanno quasi tutte uno per riga, rendendo l'ordinamento dei singleton per riga inefficace.
+On both test-beds, the default version of ZI-Round and the extension that sorts the singletons of each constraint obtain almost identical results. This is due to the fact that the majority of the instances considered in the test-beds do not have any singletons, and those that do have singletons usually have only one singleton in the affected constraints, making the sorting ineffective. \par 
+
+%! Generale, sia per il test-bed normale che per quello presolved: I tempi di esecuzione della risoluzione del rilassamento continuo e l'euristico ZI-Round confermano che il tempo dedicato a ZI-Round è trascurabile rispetto a quello dedicato al rilassamento continuo. Questo è ancora più immediato guardando gli SGM ratio percentuali, che mostrano come ZI-Round richieda neanche lo 0.5\% del tempo speso sul rilassamento continuo.
+Also, on both test-beds, the average execution times for solving the continuous relaxation and applying the ZI-Round heuristic in any version confirm that the time spent on ZI-Round is negligible with respect to the time spent on the continuous relaxation. This is even more clear by looking at the percentage SGM ratios, which show how ZI-Round uses less than $0.5\%$ of the time spent on the continuous relaxation. \par
+
+%! Effetto delle due fasi (rounding e miglioramento obj) sui tempi di esecuzione di ZI-Round, sia per il testbed normale che per quello presolved: si vede come per le 3 versioni in cui le due fasi agiscono insieme interferendo l'una con l'altra i tempi SGM siano raddoppiati rispetto alle 2 versioni in cui si applica solo una fase o entrambe in sequenza senza sovrapposizioni. --> Infatti la versione PROPOSED beneficia della miglior performance in termini di tempo di esecuzione data dall'estensione A0F, ottenendo tempi di esecuzione simili
+The SGM times obtained for the execution of the versions of ZI-Round tested are affected by how the two phases of rounding and objective improvement operate, for both test-beds. The results show how the three versions in which the two phases operate concurrently, interfering with one another, take twice the time of those in which the two phases are separated or only one of them is applied.
+In fact, the proposed version of ZI-Round benefits from the lower execution time given by the extension that separates the two phases. \par
+
+%! AvgGap NSNF, sia per il testbed normale che per quello presolved: come ci si aspettava dalla teoria, evitare di migliorare la funzione obiettivo può solo portare ad un average gap peggiore.
+The results on the average gaps obtained by the version of ZI-Round that only performs the rounding phase show, as expected from the theory, that avoiding the improvement of the objective value can only lead to worse gaps. \par 
+
+%! AvgGap testbed normale: in termini di average gap per il testbed normale, l'utilizzo delle 3 estensioni A0F,WOBJ,SS permette di ottenere un gap minore di quelli ottenuti dalle stesse estensioni singolarmente. La separazione delle due fasi unita all'aiuto ai constraint dato da WOBJ, con la possibile partecipazione di SS in pochi casi, permette di trovare soluzioni migliori.
+Regarding the average gaps obtained on the regular test-bed, the use of the three extensions included in the proposed version of ZI-Round allows it to obtain a lower average gap than the ones obtained by the single extensions by themselves. The separation of the two phases, the constraints being favored when fractionality tie-breaks occur, and possibly the singletons being sorted for each constraint, allow to find better solutions on average. \par 
+
+%! AvgGap testbed presolved: in termini di average gap per il testbed presolved, l'utilizzo delle 3 estensioni peggiora il gap ottenuto.: tale peggiormaneto sembra causato dal contributo di WOBJ, l'unica delle 3 estensioni che singolarmente ottiene un gap simile, mentre le altre due ottengono un gap minore.
+Regarding the average gaps obtained on the presolved test-bed, the use of the three extensions included in the proposed versions of ZI-Round worsens the average gap. The contribution to such worsening seems to come from the extension that favors the constraints when fractionality tie-breaks occur, since the other two extensions obtain a better gap by themselves. \par 
+
+%!--> Il presolving del testbed porta ad avere problemi sicuramente più compatti, ma non necessariamente più semplici da risolvere, e questo fatto può influire sulla performance dell''euristico su alcune istanze particolari.
+As observed previously, the results obtained on the presolved test-bed support the hypothesis that the presolving process leads to problem formulations that are indeed more compact, but not necessarily less complex to solve.
+
+\subsection{Fractionality and cost behavior}
+
 %* COMMENTI GRAFICI: 
 Two reference instances, \texttt{fast0507} and \texttt{seymour}, are used to compare how the different ZI-Round extensions affect the behavior of the solution fractionality and solution cost. Note that, for the following comparisons, the charts of the default version and the version with sorted singletons are equivalent, since the two reference instances chosen do not have any singleton. \par
 
 %! Solution fractionality fast0507
 For the instance \texttt{fast0507}, the solution fractionality curves of all the ZI-Round versions tested cannot fit into a single chart, due to the high scale difference between some versions. For simplicity and better readability, the worst-performing and best-performing versions in terms of number of iterations taken to round all the fractional integer variables are shown in two separated charts in Figure~\ref{fig:fast0507-solfrac-worst} and Figure~\ref{fig:fast0507-solfrac-best}.
+
 \begin{figure}[ht]
 	\centering
 	\includegraphics[width=0.85\textwidth]{fast0507-solfrac-worst.png}
@@ -602,20 +620,24 @@ For the instance \texttt{fast0507}, the solution fractionality curves of all the
 	\caption{Solution fractionality of ZI-Round executions for the instance \texttt{fast0507}: best-performing versions, in terms of number of iterations taken to round all the fractional integer variables.}
 	\label{fig:fast0507-solfrac-best}
 \end{figure}
-All the three worst-performing versions present the two interfering phases of rounding and objective improvement, whereas all the three best-performing versions present a clear separation of the two phases, or the lack of one. The proposed version of ZI-Round clearly inherits the fast rounding phase from the extension that avoids improving the objective value while roundable fractional integer variables are still available. Notice the high delay in the rounding phase caused by the interference of the objective improvement phase for the instance \texttt{fast0507}: from $275$ iterations in Figure~\ref{fig:fast0507-solfrac-best} to more than $60000$ iterations in Figure~\ref{fig:fast0507-solfrac-worst}. \par
 
+All the three worst-performing versions present the two interfering phases of rounding and objective improvement, whereas all the three best-performing versions present a clear separation of the two phases, or the lack of one. The proposed version of ZI-Round clearly inherits the fast rounding phase from the extension that avoids improving the objective value while roundable fractional integer variables are still available. Notice the high delay in the rounding phase caused by the interference of the objective improvement phase for the instance \texttt{fast0507}: from $275$ iterations in Figure~\ref{fig:fast0507-solfrac-best} to more than $60000$ iterations in Figure~\ref{fig:fast0507-solfrac-worst}. \par
+ 
 %! Solution fractionality seymour
 For the instance \texttt{seymour}, the solution fractionality curves of all the ZI-Round versions tested are presented in a single chart in Figure~\ref{fig:seymour-solfrac-all}.
+
 \begin{figure}[ht]
 	\centering
 	\includegraphics[width=0.85\textwidth]{seymour-solfrac-all.png}
 	\caption{Solution fractionality of ZI-Round executions for the instance \texttt{seymour}: all versions.}
 	\label{fig:seymour-solfrac-all}
 \end{figure}
+
 The same distinction of the worst-performing and best-performing versions made for the instance \texttt{fast0507} applies. In this case, though, the delay in the rounding phase caused by the interference of the objective improvement phase is less significative but still not negligible. As stated before, the proposed version of ZI-Round inherits the fast rounding phase from the extension that avoids improving the objective value while roundable fractional integer variables are stil available. \par
 
 %! Solution cost fast0507
 For the instance \texttt{fast0507}, the solution cost curves of all the ZI-Round versions tested are presented in a single chart in Figure~\ref{fig:fast0507-solcost-all}. The chart corresponding to the version that does not improve the objective value is also presented as a standalone chart in Figure~\ref{fig:fast0507-solcost-nsnf}, since it is not visible in the main chart, due to its high scale difference with respect to the charts of all the other versions.
+
 \begin{figure}[ht]
 	\centering
 	\includegraphics[width=0.85\textwidth]{fast0507-solcost-all.png}
@@ -629,12 +651,14 @@ For the instance \texttt{fast0507}, the solution cost curves of all the ZI-Round
 	\caption{Solution cost of ZI-Round execution for the instance \texttt{fast0507}: no objective improvement.}
 	\label{fig:fast0507-solcost-nsnf}
 \end{figure}
+
 The three versions in which the two phases interfere with each other present a slow worsening of the objective value as the fractional integer variables are being rounded. When the solution fractionality finally reaches zero after more than $60000$ iterations, the objective improvement phase operates alone. 
 The effect of rounding variables in the direction that worsens the objective value when fractionality tie-breaks occur is clearly visible in the solution cost curve of the corresponding version.
 The two versions in which the two phases are separated, instead, present a fast worsening of the objective value, in terms of number of iterations. As soon as the fast rounding phase ends, the solution cost starts being improved. \par
 
 %! Solution cost seymour
-For the instance \texttt{fast0507}, the solution cost curves of all the ZI-Round versions tested are presented in a single chart in Figure~\ref{fig:seymour-solcost-all}. The chart corresponding to the version that does not improve the objective value is also presented as a standalone chart in Figure~\ref{fig:seymour-solcost-nsnf}, since it is not visible in the main chart, due to its high scale difference with respect to the charts of all the other versions.
+For the instance \texttt{seymour}, the solution cost curves of all the ZI-Round versions tested are presented in a single chart in Figure~\ref{fig:seymour-solcost-all}. The chart corresponding to the version that does not improve the objective value is also presented as a standalone chart in Figure~\ref{fig:seymour-solcost-nsnf}, since it is not visible in the main chart, due to its high scale difference with respect to the charts of all the other versions.
+
 \begin{figure}[ht]
 	\centering
 	\includegraphics[width=0.85\textwidth]{seymour-solcost-all.png}
@@ -648,6 +672,7 @@ For the instance \texttt{fast0507}, the solution cost curves of all the ZI-Round
 	\caption{Solution cost of ZI-Round executions for the instance \texttt{seymour}: no objective improvement.}
 	\label{fig:seymour-solcost-nsnf}
 \end{figure}
+
 The three versions in which the two phases interfere with each other present the same behavior observed for the instance \texttt{fast0507}, as well as the two versions in which the two phases are separated. \par 
 
 The results obtained and the observations made allow to conclude that the proposed version of ZI-Round inherits its behaviors from the extension that penalizes the objective value when fractionality tie-breaks occur and the extension that keeps the two phases separated, namely: the magnitude of the objective worsening from the former extension; the faster objective worsening from both extensions; the faster rounding phase from the latter extension.
