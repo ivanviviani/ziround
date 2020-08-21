@@ -8,3 +8,4 @@
 \contentsline {table}{\numberline {6.1}{\ignorespaces Objective values obtained by different implementations of the default ZI-Round heuristic.\relax }}{24}{table.caption.10}%
 \contentsline {table}{\numberline {6.2}{\ignorespaces Aggregate measures of the experimental results for the regular test-bed. The ZI-Round version acronyms stand for, respectively: NSNF as in "No Shift Non-Fractional", i.e. no objective improvement; A0F as in "After 0 Fractionality", i.e. objective improvement after zero fractionality; WOBJ as in "Worst OBJ", i.e. worst-objective fractionality tie-breaks; SS as in "Sort Singletons".\relax }}{28}{table.caption.11}%
 \contentsline {table}{\numberline {6.3}{\ignorespaces Aggregate measures of the experimental results for the presolved test-bed. For the ZI-Round version acronyms refer to Table~\ref {tb:results-normal}.\relax }}{28}{table.caption.12}%
+\addvspace {10\p@ }
