@@ -82,7 +82,38 @@
 
 \mainmatter
 
-%* \chapter{Definitions}
+\chapter{Introduction}
+%! Introduzione agli argomenti trattati nella tesi (ordine logico)
+
+%! Organizzazione della tesi: presentazione in sequenza di quanto trattat nei singoli capitoli
+
+\chapter{Mixed integer programming}
+%! Small intro ??
+
+\section{Mixed integer problems (MIPs)}
+%! Definizione di MIP, tanti problemi reali (alcuni esempi) possono essere modellati con dei MIP -> bisogno di sviluppare algoritmi di risoluzione sempre più sofisticati -> MIP solvers (CPLEX, SCIP, Gurobi)
+
+\section{MIP solvers}
+%! MIP solvers: intro, test-bed selection, performance variability, branching and cutting planes (briefly, cite), presolving, primal heuristics (briefly, algorithmic/pragmatic), cite the others
+
+\chapter{Primal heuristics}
+%! Primal heuristics (Starting vs improvement in CPLEX) + general comments
+
+\section{Start heuristics}
+%! Aim of start heuristics
+
+\subsection{Diving heuristics}
+%! General description + cite examples (non sono il focus di questa tesi)
+
+\subsection{Rounding heuristics}
+%! Structure of rounding heuristics
+%! Rounding strategies
+%! Simple Rounding (brief) → Mention ZI-Round (extension introduced by Wallace)
+%! Rounding
+%! Shifting
+
+\section{Improvement heuristics}
+%! General description + brief examples
 
 \chapter{ZI-Round MIP rounding heuristic} \label{ch:ziround}
 
@@ -739,6 +770,8 @@ The results obtained and the observations made allow to conclude that the propos
 	\bibitem{hendel2011} G. Hendel, \textit{New Rounding and Propagation Heuristics for Mixed Integer Programming}. Technische Universität Berlin, Bachelorarbeit (2011).
 
 	\bibitem{achterberg2012} T. Achterberg, T. Berthold, G. Hendel, \textit{Rounding and Propagation Heuristics for Mixed Integer Programming}. In: D. Klatte, HJ. Lüthi, K. Schmedders (eds) "Operations Research Proceedings 2011". Operations Research Proceedings (GOR (Gesellschaft für Operations Research e.V.)). Springer, Berlin, Heidelberg (2012). \\ DOI: \url{https://doi.org/10.1007/978-3-642-29210-1_12}
+
+	\bibitem{achterberg2013} T. Achterberg, R. Wunderling. \textit{Mixed Integer Programming: Analyzing 12 Years of Progress}. In: M. Jünger, G. Reinelt (eds) "Facets of Combinatorial Optimization". Springer, Berlin, Heidelberg (2013). \\ DOI: \url{https://doi.org/10.1007/978-3-642-38189-8_18}
 	
 	% \newpage
 	\vspace{0.5cm}
