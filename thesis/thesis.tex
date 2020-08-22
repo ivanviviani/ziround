@@ -89,13 +89,13 @@
 
 \chapter{Mixed integer programming}
 %! Introduction to mixed integer programming
-Mixed integer programming is the process of solving combinatorial optimization problems involving an objective function and a finite number of variables and constraints. Prior to solving any real practical problem at hand, it has to be translated into the suitable formulation for mixed integer programming, i.e. in the form of a Mixed Integer Program (MIP). \par 
+Mixed integer programming is the process of solving combinatorial optimization problems involving an objective function and a finite number of variables and constraints. Prior to solving any real practical problem at hand, it has to be translated into the suitable formulation for mixed integer programming, i.e. in the form of a Mixed Integer Program (MIP). Section~\ref{sec:mip} provides a basic definition of MIP. \par 
 Solving a MIP problem is an $\mathcal{NP}$-hard task that is usually tackled with branch-and-bound or branch-and-cut algorithms.
 When those general algorithms fail, one might need to develop a specific algorithm that takes into account the particular properties of the problem.
 For a detailed introduction into linear and integer programming and combinatorial optimization we refer the reader for example to \cite{fischetti2019}.
-In the context of general MIP solving, numerous software solutions, called MIP solvers, have been developed over the years and are still being improved.
+In the context of general MIP solving, numerous software solutions, called MIP solvers, have been developed over the years and are still being improved. In Section~\ref{sec:mipsolvers} MIP solvers are introduced.
 
-\section{Mixed Integer Programs (MIPs)}
+\section{Mixed Integer Programs (MIPs)} \label{sec:mip}
 %! Definizione di MIP, tanti problemi reali (alcuni esempi) possono essere modellati con dei MIP -> bisogno di sviluppare algoritmi di risoluzione sempre più sofisticati -> MIP solvers (CPLEX, SCIP, Gurobi)
 The term MIP is often used in place of MILP to denote linear problem formulations in which both the objective function and the constraints are linear, whereas their natural counterparts are referred to as MINLPs.
 Given a number of variables $n$, a number of constraints $m$, a set of integer variables indices $I \subseteq N = \{1, \dots, n\}$, a constraint coefficients matrix $A \in \mathbb{R}^{m \times n}$, a variables vector $x \in \mathbb{R}^n$, a right hand sides vector $b \in \mathbb{R}^m$, an objective function coefficients vector $c \in \mathbb{R}^n$, a lower bounds vector $l \in \mathbb{R}^n$ and an upper bounds vector $u \in \mathbb{R}^n$, the corresponding MIP problem is defined as:
@@ -110,11 +110,11 @@ Given a number of variables $n$, a number of constraints $m$, a set of integer v
 
 Many practical problems can be formulated as MIPS, such as crew scheduling, vehicle routing, production planning, network flow, capital budgeting, and several more. The wide range of applications of mixed integer programming contributed to the development of MIP solvers, whose integrated algorithms are continuously improved and new ones are added.
 
-\section{MIP solvers}
+\section{MIP solvers} \label{sec:mipsolvers}
 %! MIP solvers: intro, test-bed selection, performance variability, branching and cutting planes (briefly, cite), presolving, primal heuristics (briefly, algorithmic/pragmatic), cite the others
 MIP solvers are high-end sophisticated software solutions that use the branch-and-cut algorithm at their core, with the aid of a variety of techniques and heuristics, to solve a given MIP problem in input. In the context of this thesis, the commercial MIP solver CPLEX \cite{cplex} and the non-commercial MIP solver SCIP \cite{scip} have been used with an academic license. Another MIP solver worth mentioning is Gurobi \cite{gurobi}. \par 
 
-In the following, an overview of the main concepts around a MIP solver is presented. For the detailed explanation, referring to CPLEX in particular, we refer the reader to the analysis of the performance of CPLEX versions over the years made by T. Achterberg and R. Wunderling \cite{achterberg2013}. \par
+In the following, an overview of some concepts of interest for the scope of this thesis regarding MIP solvers is presented. For a comprehensive view of MIP solvers, referring to CPLEX in particular, we refer the reader to the analysis of the performance of CPLEX versions over the years made by T. Achterberg and R. Wunderling in \cite{achterberg2013}. \par
 
 The first important concept to take into consideration before diving into the computational performance analysis of a MIP solver, or in general, of an algorithm, is the \textit{benchmarking methodology}. The successful solving of a MIP problem is influenced by factors that seem not to be performance-related, such as the initial random seed used by the algorithm or the permutation of the variables or constraints in the problem formulation. Such factors give rise to the phenomenon of \textit{performance variability}, whose effects on the experimental results can be limited by selecting an appropriate and sufficiently large test-bed, as well as by repeating the experiment with different random seeds. The latter countermeasure also allows to artificially increase the size of the test-bed even more. In contrast, the size of the test-bed is limited by the available computing resources and possibly by a chosen time limit. \par 
 
@@ -127,8 +127,8 @@ As defined in \cite{achterberg2013}:
 	different but equivalent problem instance $P'$ that is hopefully easier to solve by the subsequently invoked solution algorithm."
 In CPLEX, at its early stages, presolving consisted in simple reductions such as removing fixed variables and redundant constraints. Over the years, significant advances have been made, and nowadays presolving also tightens the LP relaxation and extracts information that is exploited later during the solving process \cite{achterberg2013}. \par 
 
-Finally, MIP solvers also rely on several \textit{primal heuristics}, which aim at quickly finding feasible solutions that have not been found yet in the sub-problems of the decision tree.
-As stated in \cite{achterberg2013}, primal heuristics serve two goals:
+MIP solvers also rely on several \textit{primal heuristics}, which aim at quickly finding feasible solutions that have not been found yet in the sub-problems of the decision tree.
+As stated in \cite{achterberg2013}, in the context of general MIP optimization, primal heuristics serve two goals:
 \begin{itemize}
 	\item \textit{algorithmic}: The earlier good incumbent solutions are available during the branch-and-cut search, the earlier subtrees can be pruned, thus reducing the size of the decision tree.
 	\item \textit{pragmatic}: It is often sufficient, in practice, to provide a good solution, whereas a proof of optimality may not even be computationally tractable.
@@ -136,25 +136,38 @@ As stated in \cite{achterberg2013}, primal heuristics serve two goals:
 
 \chapter{Primal heuristics}
 %! Primal heuristics (Starting vs improvement in CPLEX) + general comments
+Primal heuristics for MIP problems are algorithms that aim at finding and improving integer feasible solutions in the first stages of the branch-and-cut search, usually before they are found directly when solving the sub-problems of the decision tree. Having early integer feasible solutions results in the pruning of the decision tree, which allows the optimization process to avoid visiting certain subtrees, thus the overall MIP has more chances to be solved to optimality. \par 
+Primal heuristics can be classified into two main categories, namely \textit{start heuristics} and \textit{improvement heuristics}, which are presented in Section~\ref{sec:startheur} and~\ref{sec:improvementheur}, respectively. As noted by T. Achterberg and R. Wunderling in \cite{achterberg2013}, start and improvement heuristics mutually depend on one another: by definition, an improvement heuristic needs a solution to work on, which can be provided by a start heuristic. The solutions produced by start heuristics are usually of poor quality, so they need improvement heuristics to turn them into better ones.
 
-\section{Start heuristics}
+\section{Start heuristics} \label{sec:startheur}
 %! Aim of start heuristics
+Start heuristics aim at just finding a feasible solution as early as possible in the branch-and-cut search, without any attempt to improve it. As the name says, most of them are already applied at the root node of the decision tree, and they take the solution of the LP relaxation as input to hopefully produce integer feasible solutions. \par 
+This category of primal heuristics can be split into two sub-categories, namely \textit{diving heuristics} and \textit{rounding heuristics}, which are presented in Section~\ref{sec:divingheur} and~\ref{sec:roundingheur}, respectively. Both diving and rounding heuristics try to find integer feasible solutions by focusing on driving the fractional integer variables of an LP solution towards integrality, while maintaining feasibility. What differentiates these two types of heuristics is how they attempt to do so.
 
-\subsection{Diving heuristics}
+\subsection{Diving heuristics} \label{sec:divingheur}
 %! General description + cite examples (non sono il focus di questa tesi)
+Diving heuristics bound or fix the fractional integer variables, thus modifying the MIP problem formulation, and solve the new LP iteratively to regain linear feasibility, which is usually done with the dual simplex algorithm, since the dual LP solution stays feasible if changing a bound \cite{berthold2006}. This behavior can be seen as a simulation of the exploration of a possible root-leaf path of the decision tree. In other words, the strong bounding or fixing of variables allows the optimization process to "dive" down the decision tree from the root node to the leaves. \par 
+As stated by T. Berthold in \cite{berthold2006}, the diving process terminates as soon as one of the following conditions holds:
+\begin{itemize}
+	\item the LP relaxation gets infeasible;
+	\item the optimum of the LP relaxation is worse than the incumbent solution of the MIP problem in terms of the objective function;
+	\item some iteration limit or some limit on the LP relaxation solving process is reached.
+\end{itemize}
+In the first two cases, since no better solutions can be produced, the heuristic should be aborted. The third case refers to situations in which the execution time of the heuristic has to be kept under control. For the pseudocode of a general diving heuristic, which is not in the scope of this thesis, we refer the reader to \cite{berthold2006}. \par 
+One source of diversity for diving heuristics is the selection strategy of the variable that should be bounded at each iteration. Several selection strategies for this matter have been proposed and implemented, some of which are known as: \textit{fractional diving}, \textit{coefficient diving}, \textit{line search diving}, \textit{guided diving}, \textit{pseudocost diving} and \textit{vector length diving}. For a comprehensive presentation we refer the reader to \cite{berthold2006} and \cite{hendel2011}. \par 
+The category of diving heuristics includes also what are known as \textit{objective diving heuristics}, which modify the objective coefficients of a selected variable instead of its bounds, in the hope of driving it towards its lower or upper bound. Since in this case the variable bounds are not changed, the solution obtained by the previous iteration remains feasible for the modified problem. Some known objective diving heuristics are: \textit{objective pseudocost diving}, \textit{root solution diving} and \textit{feasibility pump}. The feasibility pump heuristic was proposed originally by M. Fischetti, F. Glover and A. Lodi in \cite{fischetti2005}; then generalized to MIPs by L. Bertacco, M. Fischetti and A. Lodi in \cite{bertacco2007}; and later modified by T. Achterberg and T. Berthold in \cite{achterberg2007}.
 
-\subsection{Rounding heuristics}
+\subsection{Rounding heuristics} \label{sec:roundingheur}
 %! Structure of rounding heuristics
 %! Rounding strategies
 %! Simple Rounding (brief) → Mention ZI-Round (extension introduced by Wallace)
 %! Rounding
 %! Shifting
 
-\section{Improvement heuristics}
+\section{Improvement heuristics} \label{sec:improvementheur}
 %! General description + brief examples
 
 \chapter{ZI-Round MIP rounding heuristic} \label{ch:ziround}
-
 ZI-round is a MIP rounding heuristic introduced by C. Wallace \cite{wallace2010} as an extension of the Simple Rounding heuristic, which was introduced in the non-commercial solver SCIP \cite{scip}.
 From a primal feasible solution of the MIP continuous relaxation, both heuristics aim at rounding all the fractional integer variables, in order to obtain a feasible solution of the MIP. Simple Rounding is a pure integer rounding heuristic because it only rounds fractional integer variables, while ZI-Round also takes other factors into account, such as the singletons of the constraints, where a singleton is defined as a continuous variable that appears in only one constraint. \par
 
@@ -802,7 +815,7 @@ The results obtained and the observations made allow to conclude that the propos
 \renewcommand{\bibname}{References}
 \begin{thebibliography}{9}
 	
-	\bibitem{wallace2010} C. Wallace, \textit{ZI round, a MIP rounding heuristic}. Journal of Heuristics, vol. 16, pp. 715–722 (2010). \\ DOI: \url{https://doi.org/10.1007/s10732-009-9114-6}
+	\bibitem{wallace2010} C. Wallace, \textit{ZI round, a MIP rounding heuristic}. Journal of Heuristics, vol. 16, pp. 715-722 (2010). \\ DOI: \url{https://doi.org/10.1007/s10732-009-9114-6}
 
 	\bibitem{linker1973} S. Lin, B. W. Kernighan, \textit{An Effective Heuristic Algorithm for the Traveling-Salesman Problem}. Operations Research, vol. 21, no. 2, pp. 498-516, INFORMS (1973). \\ DOI: \url{https://doi.org/10.1287/opre.21.2.498}
 
@@ -817,6 +830,12 @@ The results obtained and the observations made allow to conclude that the propos
 	\bibitem{achterberg2013} T. Achterberg, R. Wunderling. \textit{Mixed Integer Programming: Analyzing 12 Years of Progress}. In: M. Jünger, G. Reinelt (eds) "Facets of Combinatorial Optimization". Springer, Berlin, Heidelberg (2013). \\ DOI: \url{https://doi.org/10.1007/978-3-642-38189-8_18}
 
 	\bibitem{fischetti2019} M. Fischetti. \textit{Introduction to Mathematical Optimization}. Independently published (2019). \\ ISBN-13: \texttt{978-1692792022}
+
+	\bibitem{fischetti2005} M. Fischetti, F. Glover, A. Lodi. 2005. \textit{The feasibility pump}. Mathematical Programming, vol. 104, no. 1, pp. 91–104. Springer, Berlin, Heidelberg (2005). \\ DOI: \url{https://doi.org/10.1007/s10107-004-0570-3}
+
+	\bibitem{bertacco2007} L. Bertacco, M. Fischetti, A. Lodi. \textit{A feasibility pump heuristic for general mixed-integer problems}. Discrete Optimization, vol. 4, no. 1, pp. 63-76 (2007). \\ DOI: \url{https://doi.org/10.1016/j.disopt.2006.10.001}
+
+	\bibitem{achterberg2007} T. Achterberg, T. Berthold. \textit{Improving the feasibility pump}. Discrete Optimization, vol. 4, no. 1, pp. 77-86 (2007). \\ DOI: \url{https://doi.org/10.1016/j.disopt.2006.10.004}
 	
 	% \newpage
 	\vspace{0.5cm}
