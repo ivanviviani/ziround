@@ -1,16 +1,15 @@
-\documentclass[a4paper,12pt]{book}
+\documentclass[a4paper,12pt,twoside]{scrbook}
 % packages
 \usepackage[utf8]{inputenc}
 \usepackage[english]{babel}
 \usepackage{fancyhdr}
 \usepackage{bm}
-\usepackage[a4paper]{geometry}
-\geometry{margin=1in}
+\usepackage[a4paper,bmargin=3.7cm]{geometry}
 \usepackage{graphicx}
 \graphicspath{{./images/}}
 \usepackage[font=small,labelfont=bf]{caption}
 \usepackage{subcaption}
-\usepackage{fullpage}
+\linespread{1.1}
 \usepackage{setspace}
 \usepackage{amsthm}
 \usepackage{amsmath}
@@ -21,7 +20,6 @@
 \usepackage{booktabs}
 \usepackage{commath}
 \usepackage{multirow}
-%\usepackage[newfloat]{minted}
 \usepackage{csquotes}
 \usepackage[hidelinks]{hyperref}
 \usepackage[ruled,vlined]{algorithm2e}
@@ -32,6 +30,7 @@
 \AtBeginEnvironment{algorithm}{\SetArgSty{textrm} \SetAlgoLined \DontPrintSemicolon \SetNoFillComment}
 \usepackage[table,xcdraw]{xcolor}
 
+\setlength{\headheight}{15pt}
 \begin{document}
 	
 \begin{titlepage}
@@ -74,11 +73,12 @@
 	
 \tableofcontents
 
-\pagestyle{fancy}
-\fancyhf{}
-\fancyhead[RE,LO]{\rightmark}
-\fancyfoot[CE,CO]{\thepage}
-\renewcommand{\headrulewidth}{0pt}
+\pagestyle{headings}
+%\pagestyle{fancy}
+%\fancyhf{}
+%\fancyhead[RE,LO]{\rightmark}
+%\fancyfoot[CE,CO]{\thepage}
+%\renewcommand{\headrulewidth}{0pt}
 
 \mainmatter
 
@@ -146,7 +146,7 @@ This category of primal heuristics can be split into two sub-categories, namely 
 
 \subsection{Diving heuristics} \label{sec:divingheur}
 %! General description + cite examples (non sono il focus di questa tesi)
-Diving heuristics bound or fix the fractional integer variables, thus modifying the MIP problem formulation, and solve the new LP iteratively to regain linear feasibility, which is usually done with the dual simplex algorithm, since the dual LP solution stays feasible if changing a bound \cite{berthold2006}. This behavior can be seen as a simulation of the exploration of a possible root-leaf path of the decision tree. In other words, the strong bounding or fixing of variables allows the optimization process to "dive" down the decision tree from the root node to the leaves. \par 
+Diving heuristics bound the fractional integer variables, thus modifying the MIP problem formulation, and solve the new LP iteratively to regain linear feasibility, which is usually done with the dual simplex algorithm, since the dual LP solution stays feasible if changing a bound \cite{berthold2006}. This behavior can be seen as a simulation of the exploration of a possible root-leaf path of the decision tree. In other words, the strong bounding or fixing of variables allows the optimization process to "dive" down the decision tree from the root node to the leaves. \par 
 As stated by T. Berthold in \cite{berthold2006}, the diving process terminates as soon as one of the following conditions holds:
 \begin{itemize}
 	\item the LP relaxation gets infeasible;
@@ -158,8 +158,15 @@ One source of diversity for diving heuristics is the selection strategy of the v
 The category of diving heuristics includes also what are known as \textit{objective diving heuristics}, which modify the objective coefficients of a selected variable instead of its bounds, in the hope of driving it towards its lower or upper bound. Since in this case the variable bounds are not changed, the solution obtained by the previous iteration remains feasible for the modified problem. Some known objective diving heuristics are: \textit{objective pseudocost diving}, \textit{root solution diving} and \textit{feasibility pump}. The feasibility pump heuristic was proposed originally by M. Fischetti, F. Glover and A. Lodi in \cite{fischetti2005}; then generalized to MIPs by L. Bertacco, M. Fischetti and A. Lodi in \cite{bertacco2007}; and later modified by T. Achterberg and T. Berthold in \cite{achterberg2007}.
 
 \subsection{Rounding heuristics} \label{sec:roundingheur}
-%! Structure of rounding heuristics
-%! Rounding strategies
+Unlike diving heuristics, which modify the MIP problem formulation operating on the variable bounds or on the objective function coefficients, rounding heuristics only change the values taken by the variables, while maintaining primal feasibility. As a consequence, rounding heuristics require the LP relaxation to be solved only once, since they work on the LP solution without changing the MIP problem formulation. The rounding heuristics that only round the fractional values taken by the integer variables, without shifting the already integral values, are referred to as "pure" rounding heuristics. There exist, in fact, rounding heuristics that also try to shift non-fractional integer variables, for example to improve the objective value or to possibly provoke some subsequent roundings that were not possible before. \par
+%! Rounding directions
+When rounding or shifting a given integer variable, be it fractional in a pure rounding heuristic or non-fractional, the chosen rounding direction can affect the quality, or even the success, of the heuristic. Among the factors that can be considered when choosing a rounding direction are the cost value of the variable, the distance to the next integer value, or other values. The following list briefly presents three rounding strategies, as reported by P. M. Christophel in \cite{christophel2005}, to which one that favors the objective value is added:
+\begin{itemize}
+	\item \textit{favorable rounding strategy}:
+	\item \textit{unfavorable rounding strategy}:
+	\item \textit{nearest integer rounding strategy}:
+	\item \textit{gap rounding strategy}:
+\end{itemize}
 %! Simple Rounding (brief) → Mention ZI-Round (extension introduced by Wallace)
 %! Rounding
 %! Shifting
