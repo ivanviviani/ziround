@@ -99,7 +99,7 @@ In the context of general MIP solving, numerous software solutions, called MIP s
 %! Definizione di MIP, tanti problemi reali (alcuni esempi) possono essere modellati con dei MIP -> bisogno di sviluppare algoritmi di risoluzione sempre più sofisticati -> MIP solvers (CPLEX, SCIP, Gurobi)
 The term MIP is often used in place of MILP to denote linear problem formulations in which both the objective function and the constraints are linear, whereas their natural counterparts are referred to as MINLPs.
 Given a number of variables $n$, a number of constraints $m$, a set of integer variables indices $I \subseteq N = \{1, \dots, n\}$, a constraint coefficients matrix $A \in \mathbb{R}^{m \times n}$, a variables vector $x \in \mathbb{R}^n$, a right hand sides vector $b \in \mathbb{R}^m$, an objective function coefficients vector $c \in \mathbb{R}^n$, a lower bounds vector $l \in \mathbb{R}^n$ and an upper bounds vector $u \in \mathbb{R}^n$, the corresponding MIP problem is defined as:
-\begin{align}
+\begin{align} \label{eq:mip}
 	\begin{cases}
 	\textbf{min} \quad & c^Tx \qquad \mbox{subject to} \\
 				 & Ax \leq b \\
@@ -162,27 +162,41 @@ Unlike diving heuristics, which modify the MIP problem formulation operating on 
 %! Rounding directions
 When rounding or shifting a given integer variable, be it fractional in a pure rounding heuristic or non-fractional, the chosen rounding direction can affect the quality, or even the success, of the heuristic. Among the factors that can be considered when choosing a rounding direction are the cost value of the variable, the distance to the next integer value, or other values. The following list briefly presents three rounding strategies, as reported by P. M. Christophel in \cite{christophel2005}, to which one that favors the objective value is added:
 \begin{itemize}
-	\item \textit{favorable rounding strategy}:
-	\item \textit{unfavorable rounding strategy}:
-	\item \textit{nearest integer rounding strategy}:
-	\item \textit{gap rounding strategy}:
+	\item \textit{favorable rounding strategy}: choose the direction that improves the objective value;
+	\item \textit{unfavorable rounding strategy}: choose the direction that worsens the objective value;
+	\item \textit{nearest integer rounding strategy}: choose the direction corresponding to the nearest integer value;
+	\item \textit{gap rounding strategy}: for all the variables that are within a certain gap around an integer value choose the direction corresponding to their nearest integer, whereas for the remaining variables choose the direction that worsens the objective value.
 \end{itemize}
+In the context of finding an integer feasible solution, the favorable rounding strategy is counterintuitive, because favoring the objective function entails penalizing the feasibility of the solution, otherwise if the constraints did not limit the objective function then the MIP problem would be unbounded. In contrast, the unfavorable rounding strategy favors the feasibility of the solution, at the cost of a worse final objective value. Instead, the nearest integer rounding strategy is more likely to produce good solutions. As described, the gap rounding strategy is a combination of the unfavorable and nearest integer rounding strategies. \par
+Two important properties of a variable that are used by rounding heuristics are the number of \textit{up-locks} and \textit{down-locks}, which are defined as the number of positive and negative coefficients, respectively, in the constraints where the variable appears. \par 
 %! Simple Rounding (brief) → Mention ZI-Round (extension introduced by Wallace)
+A basic rounding heuristic is \textit{simple rounding}, which iterates over the fractional integer variables of an LP feasible solution just once and performs only trivial roundings, taking the number of up-locks and down-locks into account. If the number of down-locks of a variable is zero, then it can be rounded down without violating any constraint. If the number of up-locks of a variable is zero, then it can be rounded up without violating any constraint.
+Note, however, that those numbers can be exploited successfully only under the assumption that the constraints are formulated in the form $Ax \leq b$ as in Equation~\ref{eq:mip}. In the rest of this thesis such assumption does not hold, thus the criteria that defines whether a variable can be trivially rounded is slightly more complex, as described in Section~\ref{sec:trivialround}. \par 
+The main subject of this thesis, i.e. the rounding heuristic ZI-Round, is an extension of simple rouding, thus the latter is discussed more thoroughly in Chapter~\ref{ch:ziround}. For the pseudocode of the simple rounding heuristic, we refer the reader to \cite{berthold2006}. \par 
 %! Rounding
+In constrast to simple rounding, as stated by G. Hendel in \cite{hendel2011}, the \textit{rounding} heuristic also performs roundings which potentially lead to a violation of some constraints, trying to recover from this infeasibility by further roundings later on. More specifically, it scans the fractional integer variables and at each step chooses the rounding direction of fewer locks. If there is a violated constraint, the heuristic tries to reduce the constraint violation by finding another fractional integer variable to round in the direction that fulfills that purpose, using the number of up-locks and down-locks as tie-breakers. The procedure is aborted when some constraint violation cannot be reduced anymore. For the pseudocode and a thorough explanation of the rounding heuristic presented in this paragraph, we refer the reader to \cite{berthold2006}. \par
 %! Shifting
+Drifting away from pure rounding heuristics, the \textit{shifting} heuristic does not only round fractional integer variables, but can also shift the non-fractional ones and even continuous variables, if necessary.
+As stated by T. Berthold in \cite{berthold2006}, a "shift" of a variable denotes:
+\begin{itemize}
+	\item a rounding to its ceiling or floor for a fractional integer variable;
+	\item a variation within its bounds for a continuous variable;
+	\item a variation within its bounds preserving the integrality for a non-fractional integer variable.
+\end{itemize}
+The shifting heuristic follows different variable selection strategies depending on the existence of a violated constraint and terminates if an integer feasible solution is found, or if no more fractional integer variables can be rounded, or if the number of violated constraints cannot be reduced. For the details about the variable selection strategies and the pseudocode of the shifting heuristic, we refer the reader to \cite{berthold2006}. 
 
 \section{Improvement heuristics} \label{sec:improvementheur}
 %! General description + brief examples
 
 \chapter{ZI-Round MIP rounding heuristic} \label{ch:ziround}
-ZI-round is a MIP rounding heuristic introduced by C. Wallace \cite{wallace2010} as an extension of the Simple Rounding heuristic, which was introduced in the non-commercial solver SCIP \cite{scip}.
+ZI-round is a MIP rounding heuristic introduced by C. Wallace \cite{wallace2010} as an extension of the \textit{simple rounding} heuristic, which was introduced in the non-commercial solver SCIP \cite{scip}.
 From a primal feasible solution of the MIP continuous relaxation, both heuristics aim at rounding all the fractional integer variables, in order to obtain a feasible solution of the MIP. Simple Rounding is a pure integer rounding heuristic because it only rounds fractional integer variables, while ZI-Round also takes other factors into account, such as the singletons of the constraints, where a singleton is defined as a continuous variable that appears in only one constraint. \par
 
-\section{Simple Rounding}
-As its name suggests, Simple Rounding is the most straightforward approach: it scans the integer variables once and only rounds those that can be trivially rounded, keeping all the constraints satisfied without affecting other factors such as the constraint slacks and singletons.
+\section{Simple Rounding} \label{sec:simplerounding}
+As its name suggests, \textit{simple rounding} is the most straightforward rounding heuristic: it scans the integer variables once and only rounds those that can be trivially rounded, keeping all the constraints satisfied without affecting other factors such as the constraint slacks and singletons.
 Recall that a variable can be trivially rounded up or down only if any up-shift or down-shift within its bounds keeps all the constraints satisfied. \par
 
-\subsection{Trivial roundability}
+\subsection{Trivial roundability} \label{sec:trivialround}
 Consider a "less than" constraint in which the fractional integer variable $x_j$ appears with a positive coefficient $a_{ij} > 0$. Since this constraint is satisfied as long as its row activity is less than its right hand side, $x_j$ could only be rounded down, causing the row activity to decrease without affecting the constraint satisfiability. For the same constraint, if the variable $x_j$ appears with a negative coefficient $a_{ij} < 0$ instead, $x_j$ could only be rounded up, with the same outcome.
 Now consider a "greater than" constraint in which the fractional integer variable $x_j$ appears with a negative coefficient $a_{ij} < 0$. Since this constraint is satisfied as long as its row activity is greater than its right hand side, $x_j$ could only be rounded down, causing the row activity to increase without affecting the constraint satisfiability. For the same constraint, if the variable $x_j$ appears with a positive coefficient $a_{ij} > 0$, $x_j$ could only be rounded up, with the same outcome.
 Finally, consider an equality constraint in which the fractional integer variable $x_j$ appears. Since this constraint is satisfied as long as its row activity is equal to its right hand side, $x_j$ cannot be rounded in either direction without affecting other factors. \par
