@@ -1,7 +1,7 @@
 #! COMPUTE AGGREGATE MEASURES OF A TEST-BED FROM THE TEST_RESULTS.csv FILE
 
 # Test type string
-testype <- "proposed"
+testype <- "sortsingletons"
 
 # Read test results data and set column names
 data <- read.csv(paste("test_results_nogap(",testype,").csv",sep=""), header=T, sep=";")
@@ -18,8 +18,8 @@ succ_rate <- num_succ / length(fracs) * 100
 #! Compute the shifted geometric means (SGM) of the LP solve and ZI-Round times, and their ratio ZI/LP
 
 # Get LP solve times and ZI-Round times
-lptimes <- data$LPtime
-zitimes <- data$ZItime
+lptimes <- data[,6]
+zitimes <- data[,7]
 # Shifts for the shifted geometric means (in milliseconds)
 lpshift <- 1000
 zishift <- 10
@@ -88,12 +88,24 @@ avg_gap <- mean(data[,"Gap(%)"])
 # Print the complete test results file
 write.table(data, file=paste("test_results(",testype,").csv",sep=""), row.names=FALSE, dec=".", sep=";", quote=FALSE)
 
+#! Compute the shifted geometric mean (SGM) of the number of rounds (outer loops)
+
+# Get the numbers of rounds
+numrounds <- data$Rounds
+# Shifts for the shifted geometric means (in milliseconds)
+nrshift <- 10
+# Apply shift
+shifted_numrounds <- numrounds + nrshift
+# Compute geometric mean
+geom_numrounds <- exp(mean(log(shifted_numrounds)))
+# Revert initial shifts
+sgm_numrounds <- geom_numrounds - nrshift
+
 #! Print aggregate measures to file
-names <- c("SuccessRate(%)","SGM-LPtime(ms)","SGM-ZItime(ms)","SGM-ratio(ZI/LP)(%)","AvgGap(%)")
-aggr <- c(succ_rate, sgm_lptime, sgm_zitime, sgm_ratio, avg_gap)
+names <- c("SuccessRate(%)","SGM-LPtime(ms)","SGM-ZItime(ms)","SGM-ratio(ZI/LP)(%)","AvgGap(%)","SGM-Rounds")
+aggr <- c(succ_rate, sgm_lptime, sgm_zitime, sgm_ratio, avg_gap, sgm_numrounds)
 df <- t(data.frame(names, aggr))
 write.table(df, file=paste("aggregate_measures(",testype,").csv",sep=""), row.names=FALSE, col.names=FALSE, dec=".", sep=";", quote=FALSE)
-
 
 #! Print aggregate measures to video
 print(paste("Test type:", testype), quote=FALSE)
@@ -102,3 +114,4 @@ print(paste("SGM LP solve time (ms):", sgm_lptime), quote=FALSE)
 print(paste("SGM ZI-Round time (ms):", sgm_zitime), quote=FALSE)
 print(paste("SGM ratio ZI/LP (%):", sgm_ratio, "%"), quote=FALSE)
 print(paste("ZI-Round avg opt gap(%):", avg_gap, "%"), quote=FALSE)
+print(paste("SGM number of rounds (outer loops):", sgm_numrounds), quote=FALSE)
