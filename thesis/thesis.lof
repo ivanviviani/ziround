@@ -4,17 +4,17 @@
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {5.1}{\ignorespaces ZI-Round execution for the instance \texttt {fast0507}: default.\relax }}{24}{figure.caption.14}%
-\contentsline {figure}{\numberline {5.2}{\ignorespaces ZI-Round execution for the instance \texttt {fast0507}: no objective improvement.\relax }}{25}{figure.caption.15}%
-\contentsline {figure}{\numberline {5.3}{\ignorespaces ZI-Round execution for the instance \texttt {fast0507}: objective improvement after zero fractionality.\relax }}{27}{figure.caption.16}%
-\contentsline {figure}{\numberline {5.4}{\ignorespaces ZI-Round execution for the instance \texttt {fast0507}: worst-objective fractionality tie-breaks.\relax }}{28}{figure.caption.17}%
-\contentsline {figure}{\numberline {5.5}{\ignorespaces ZI-Round execution for the instance \texttt {fast0507}: proposed.\relax }}{29}{figure.caption.18}%
+\contentsline {figure}{\numberline {5.1}{\ignorespaces ZI-Round execution for the instance \texttt {fast0507}: default.\relax }}{24}{figure.caption.18}%
+\contentsline {figure}{\numberline {5.2}{\ignorespaces ZI-Round execution for the instance \texttt {fast0507}: no objective improvement.\relax }}{25}{figure.caption.19}%
+\contentsline {figure}{\numberline {5.3}{\ignorespaces ZI-Round execution for the instance \texttt {fast0507}: objective improvement after zero fractionality.\relax }}{27}{figure.caption.20}%
+\contentsline {figure}{\numberline {5.4}{\ignorespaces ZI-Round execution for the instance \texttt {fast0507}: worst-objective fractionality tie-breaks.\relax }}{28}{figure.caption.21}%
+\contentsline {figure}{\numberline {5.5}{\ignorespaces ZI-Round execution for the instance \texttt {fast0507}: proposed.\relax }}{29}{figure.caption.22}%
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {6.1}{\ignorespaces Solution fractionality of ZI-Round executions for the instance \texttt {fast0507}: worst-performing versions, in terms of number of iterations taken to round all the fractional integer variables.\relax }}{39}{figure.caption.26}%
-\contentsline {figure}{\numberline {6.2}{\ignorespaces Solution fractionality of ZI-Round executions for the instance \texttt {fast0507}: best-performing versions, in terms of number of iterations taken to round all the fractional integer variables.\relax }}{40}{figure.caption.27}%
-\contentsline {figure}{\numberline {6.3}{\ignorespaces Solution fractionality of ZI-Round executions for the instance \texttt {seymour}: all versions.\relax }}{41}{figure.caption.28}%
-\contentsline {figure}{\numberline {6.4}{\ignorespaces Solution cost of ZI-Round executions for the instance \texttt {fast0507}: all versions.\relax }}{42}{figure.caption.29}%
-\contentsline {figure}{\numberline {6.5}{\ignorespaces Solution cost of ZI-Round executions for the instance \texttt {seymour}: all versions.\relax }}{42}{figure.caption.30}%
-\contentsline {figure}{\numberline {6.6}{\ignorespaces Solution cost of ZI-Round execution for the instance \texttt {fast0507}: no objective improvement.\relax }}{43}{figure.caption.31}%
-\contentsline {figure}{\numberline {6.7}{\ignorespaces Solution cost of ZI-Round executions for the instance \texttt {seymour}: no objective improvement.\relax }}{43}{figure.caption.32}%
+\contentsline {figure}{\numberline {6.1}{\ignorespaces Solution fractionality of ZI-Round executions for the instance \texttt {fast0507}: worst-performing versions, in terms of number of iterations taken to round all the fractional integer variables.\relax }}{39}{figure.caption.30}%
+\contentsline {figure}{\numberline {6.2}{\ignorespaces Solution fractionality of ZI-Round executions for the instance \texttt {fast0507}: best-performing versions, in terms of number of iterations taken to round all the fractional integer variables.\relax }}{40}{figure.caption.31}%
+\contentsline {figure}{\numberline {6.3}{\ignorespaces Solution fractionality of ZI-Round executions for the instance \texttt {seymour}: all versions.\relax }}{41}{figure.caption.32}%
+\contentsline {figure}{\numberline {6.4}{\ignorespaces Solution cost of ZI-Round executions for the instance \texttt {fast0507}: all versions.\relax }}{42}{figure.caption.33}%
+\contentsline {figure}{\numberline {6.5}{\ignorespaces Solution cost of ZI-Round executions for the instance \texttt {seymour}: all versions.\relax }}{42}{figure.caption.34}%
+\contentsline {figure}{\numberline {6.6}{\ignorespaces Solution cost of ZI-Round execution for the instance \texttt {fast0507}: no objective improvement.\relax }}{43}{figure.caption.35}%
+\contentsline {figure}{\numberline {6.7}{\ignorespaces Solution cost of ZI-Round executions for the instance \texttt {seymour}: no objective improvement.\relax }}{43}{figure.caption.36}%
 \addvspace {10\p@ }
