@@ -664,7 +664,7 @@ The runs for the experiments on the test-bed folder rely on the Dirent C API to 
 \subsection{Performance measures and aggregate measures}
 
 %! Misure riportate nei csv
-The actual data reported in the test results files comprises: the name of the instance, the random seed used, the final solution cost, the final solution fractionality, the number of rounds performed by ZI-Round, the execution time taken by CPLEX to solve the continuous relaxation, the execution time of ZI-Round, the sum of the two times, and the gap of the solution found with respect to the optimal or best solution available for the given problem. \par 
+The actual data reported in the test results files comprises: the name of the instance, the random seed used, the final solution cost, the final solution fractionality, the number of rounds performed by ZI-Round (outer loop iterations), the execution time taken by CPLEX to solve the continuous relaxation, the execution time of ZI-Round, the sum of the two times, and the gap of the solution found with respect to the optimal or best solution available for the given problem. \par 
 
 %! Performance measures (misure aggregate) + come sono calcolate, specificando che sono state calcolate usando scripting in R
 In order to evaluate the performance of ZI-Round on the test-beds, the following aggregate measures are computed by means of a script in the R language that processes the files of the test results and of the optimal or best objective values of the instances. \par
@@ -682,43 +682,45 @@ The second formulation of the SGM, i.e. the right member of Equation~\ref{eq:sgm
 %! Perchè usare la media geometrica shiftata
 The geometric mean is used in its shifted version to avoid giving the same relevancy, for example, to an improvement from $20$ to $10$ milliseconds and an improvement from $2000$ to $1000$ milliseconds.
 The shifts used for the SGM of the continuous relaxation and ZI-Round execution times are of $1000$ and $10$ milliseconds, respectively. \par 
-\subsubsection{Shifted geometric mean ratio}
+\subsubsection{Shifted geometric mean ratio of execution times}
 A composite aggregate measure that is derived from the SGMs of the two execution times is the ratio between the SGM of the ZI-Round and continuous relaxation execution times, expressed as a percentage, which gives an idea of the fraction of time used by ZI-Round with respect to the time taken to solve the continuous relaxation of the problem.
+\subsubsection{Shifted geometric mean of the number of rounds}
+The shifted geometric mean is also used to compute the aggregate measure regarding the number of rounds, i.e. outer loop iterations, performed by ZI-Round. The shift used for this SGM is of $10$, since for most instances the number of rounds is less than $10$ but there are some outliers for which ZI-Round performs hundreds or thousands of rounds.
 
 \section{Experimental results} \label{sec:expresults}
 
 \subsection{Aggregate results on the test-beds}
 
 %* COMMENTI TABELLE
-The results of the experiments conducted are reported in Table~\ref{tb:results-normal} and Table~\ref{tb:results-presolved}, for the two test-beds, respectively.
+The results of the experiments conducted are reported in Table~\ref{tb:results-normal} and Table~\ref{tb:results-presolved}, for the two test-beds, respectively. The ZI-Round version acronyms stand for, respectively: NSNF as in "No Shift Non-Fractional", i.e. no objective improvement; A0F as in "After 0 Fractionality", i.e. objective improvement after zero fractionality; WOBJ as in "Worst OBJ", i.e. worst-objective fractionality tie-breaks; SS as in "Sort Singletons". As for the acronyms of the aggregate measures, SR stands for "Success Rate" and SGM-R refers to the shifted geometric mean of the number of rounds, i.e. iterations of the outer loop of ZI-Round. \par
 \begin{table}[ht]
 	\centering
-	\begin{tabular}{@{}lccccc@{}}
+	\begin{tabular}{@{}lcccccc@{}}
 	\toprule
-	Version  & SuccRate(\%) & SGM-LP(ms) & SGM-ZI(ms) & SGMratio(\%) & AvgGap(\%) \\ \midrule
-	Default  & 19.800      & 993.652    & 3.544      & 0.357            & 89.856 \\
-	NSNF     & 19.830      & 1000.571   & 1.569      & 0.157            & 91.904 \\
-	A0F      & 19.830      & 989.142    & 1.858      & 0.188            & 89.833 \\
-	WOBJ     & 20.073      & 997.646    & 3.606      & 0.361            & 89.870 \\
-	SS       & 19.800      & 998.354    & 3.595      & 0.360            & 89.856 \\
-	Proposed & 20.103      & 998.812    & 2.039      & 0.204            & 89.664 \\ \bottomrule
+	Version  & SR(\%) & SGM-LP(ms) & SGM-ZI(ms) & ZI/LP(\%) & Gap(\%) & SGM-R \\ \midrule
+	Default  & 19.800 & 993.652    & 3.544      & 0.357     & 89.856  & 2.344 \\
+	NSNF     & 19.830 & 1000.571   & 1.569      & 0.157     & 91.904  & 2.322 \\
+	A0F      & 19.830 & 989.142    & 1.858      & 0.188     & 89.833  & 2.399 \\
+	WOBJ     & 20.073 & 997.646    & 3.606      & 0.361     & 89.870  & 2.375 \\
+	SS       & 19.800 & 998.354    & 3.595      & 0.360     & 89.856  & 2.344 \\
+	Prop     & 20.103 & 998.812    & 2.039      & 0.204     & 89.664  & 2.573 \\ \bottomrule
 	\end{tabular}
-	\caption{Aggregate measures of the experimental results for the regular test-bed. The ZI-Round version acronyms stand for, respectively: NSNF as in "No Shift Non-Fractional", i.e. no objective improvement; A0F as in "After 0 Fractionality", i.e. objective improvement after zero fractionality; WOBJ as in "Worst OBJ", i.e. worst-objective fractionality tie-breaks; SS as in "Sort Singletons".}
+	\caption{Aggregate measures of the experimental results for the regular test-bed.}
 	\label{tb:results-normal}
 \end{table}
 \begin{table}[ht]
 	\centering
-	\begin{tabular}{@{}lccccc@{}}
+	\begin{tabular}{@{}lcccccc@{}}
 	\toprule
-	Version  & SuccRate(\%) & SGM-LP(ms) & SGM-ZI(ms) & SGMratio(\%) & AvgGap(\%) \\ \midrule
-	Default  & 17.613      & 865.126    & 2.315      & 0.268            & 90.928 \\
-	NSNF     & 17.613      & 867.309    & 0.926      & 0.107            & 92.844 \\
-	A0F      & 17.613      & 868.319    & 1.125      & 0.130            & 90.919 \\
-	WOBJ     & 17.705      & 864.727    & 2.352      & 0.272            & 91.084 \\
-	SS       & 17.613      & 865.622    & 2.333      & 0.269            & 90.928 \\
-	Proposed & 17.705      & 864.226    & 1.131      & 0.131            & 91.063 \\ \bottomrule
+	Version  & SR(\%) & SGM-LP(ms) & SGM-ZI(ms) & ZI/LP(\%) & Gap(\%) & SGM-R \\ \midrule
+	Default  & 17.613 & 865.126    & 2.315      & 0.268     & 90.928  & 2.268 \\
+	NSNF     & 17.613 & 867.309    & 0.926      & 0.107     & 92.844  & 2.210 \\
+	A0F      & 17.613 & 868.319    & 1.125      & 0.130     & 90.919  & 2.285 \\
+	WOBJ     & 17.705 & 864.727    & 2.352      & 0.272     & 91.084  & 2.310 \\
+	SS       & 17.613 & 865.622    & 2.333      & 0.269     & 90.928  & 2.268 \\
+	Prop     & 17.705 & 864.226    & 1.131      & 0.131     & 91.063  & 2.298 \\ \bottomrule
 	\end{tabular}
-	\caption{Aggregate measures of the experimental results for the presolved test-bed. For the ZI-Round version acronyms refer to Table~\ref{tb:results-normal}.}
+	\caption{Aggregate measures of the experimental results for the presolved test-bed.}
 	\label{tb:results-presolved}
 \end{table}
 
@@ -738,6 +740,9 @@ On both test-beds, the default version of ZI-Round and the extension that sorts 
 
 %! Generale, sia per il test-bed normale che per quello presolved: I tempi di esecuzione della risoluzione del rilassamento continuo e l'euristico ZI-Round confermano che il tempo dedicato a ZI-Round è trascurabile rispetto a quello dedicato al rilassamento continuo. Questo è ancora più immediato guardando gli SGM ratio percentuali, che mostrano come ZI-Round richieda neanche lo 0.5\% del tempo speso sul rilassamento continuo.
 Also, on both test-beds, the average execution times for solving the continuous relaxation and applying the ZI-Round heuristic in any version confirm that the time spent on ZI-Round is negligible with respect to the time spent on the continuous relaxation. This is even more clear by looking at the percentage SGM ratios, which show how ZI-Round uses less than $0.5\%$ of the time spent on the continuous relaxation. \par
+
+%! Commento riguardo SGM-Rounds
+As for the SGM of the number of rounds performed by ZI-Round, no significant differences can be observed for both test-beds and between the versions, indicating that the performance changes caused by the different extensions fundamentally do not impact the number of rounds on average. 
 
 %! Effetto delle due fasi (rounding e miglioramento obj) sui tempi di esecuzione di ZI-Round, sia per il testbed normale che per quello presolved: si vede come per le 3 versioni in cui le due fasi agiscono insieme interferendo l'una con l'altra i tempi SGM siano raddoppiati rispetto alle 2 versioni in cui si applica solo una fase o entrambe in sequenza senza sovrapposizioni. --> Infatti la versione PROPOSED beneficia della miglior performance in termini di tempo di esecuzione data dall'estensione A0F, ottenendo tempi di esecuzione simili
 The SGM times obtained for the execution of the ZI-Round versions tested are affected by how the two phases of rounding and objective improvement operate, for both test-beds. The results show how the three versions in which the two phases operate concurrently, interfering with one another, take twice the time of those in which the two phases are separated or only one of them is applied.
