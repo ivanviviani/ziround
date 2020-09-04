@@ -71,6 +71,13 @@
 	\textsf{Padova, October $XY^{vw}$ 2020}
 \end{center}
 \end{titlepage}
+
+\addchap*{Abstract}
+In the context of mixed integer programming, the advances in computer technology allowed operations research experts to develop software solutions, known as MIP solvers, with the aim of automating and generalizing the solving of mixed integer programs (MIPs) by means of a branch-and-cut algorithm, extended with several heuristics to improve the performance. \par 
+Among heuristics for mixed integer programming, rounding heuristics are important for finding integer feasible solutions early in the solution process, which causes the pruning and a faster exploration of the decision tree. Rounding heuristics work on the solution of the LP relaxation to produce an integer feasible solution. \par 
+This thesis focuses on the study, extension, implementation and testing of the ZI-Round heuristic, originally proposed by C. Wallace ["ZI round, a MIP rounding heuristic". Journal of Heuristics, vol. 16, pp. 715-722 (2010)], with the aim of proposing an improved version of it. \par 
+The thesis starts with an introduction to mixed integer programming and MIP solvers, followed by an overview of heuristics for mixed integer programming. Then, the ZI-Round heuristic is discussed in detail and its extensions are presented. Finally, the computational experiments are described and the experimental results obtained are discussed. \par 
+The results show the improvement of the ZI-Round heuristic, therefore suggesting the use of the proposed version as the new default ZI-Round.
 	
 \tableofcontents
 
@@ -221,7 +228,7 @@ The shifting heuristic follows different variable selection strategies depending
 
 \section{Improvement heuristics} \label{sec:improvementheur}
 %! General description + brief examples
-Improvement heuristics take the current incumbent solution in input and from it try to construct an integer feasible solution with a better objective value. Many improvement heuristics require the solving of a sub-MIP problem after they fix some variables. In the following, a brief overview of some improvement heuristics is presented. For a more thorough explanation, we refer the reader to \cite{hendel2011} and \cite{achterberg2012}. \par 
+Improvement heuristics take the current incumbent solution in input and from it try to construct an integer feasible solution with a better objective value. The ZI-Round heuristic employs an objective improvement procedure, thus it also behaves like an improvement heuristic. Many improvement heuristics require the solving of a sub-MIP problem after they fix some variables. In the following, a brief overview of some improvement heuristics is presented. For a more thorough explanation, we refer the reader to \cite{hendel2011} and \cite{achterberg2012}. \par 
 %! Crossover
 \subsubsection{Crossover}
 The \textit{crossover} heuristic takes three integer feasible solutions in input, fixes all the discrete variables that take the same value in the three solutions, and solves the new sub-MIP problem obtained. As for the choice of the three input solutions, they could be the best ones available or even just randomly selected.
