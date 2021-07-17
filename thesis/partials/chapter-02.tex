@@ -1,0 +1,50 @@
+\chapter{Mixed integer programming} \label{ch:mips}
+%! Introduction to mixed integer programming
+Mixed integer programming is the process of solving combinatorial optimization problems involving an objective function and a finite number of variables and constraints. Prior to solving any real practical problem at hand, it has to be translated into the suitable formulation for mixed integer programming, i.e. in the form of a mixed integer program (MIP). Section~\ref{sec:mip} provides a basic definition of MIP. \par 
+Solving a MIP problem is an $\mathcal{NP}$-hard task that is usually tackled with branch-and-bound or branch-and-cut algorithms.
+When those general algorithms fail, one might need to develop a specific algorithm that takes into account the particular properties of the problem.
+For a detailed introduction into linear and integer programming and combinatorial optimization we refer the reader for example to \cite{fischetti2019}.
+In the context of general MIP solving, numerous software solutions, called MIP solvers, have been developed over the years and are still being improved. In Section~\ref{sec:mipsolvers} MIP solvers are introduced.
+
+\section{Mixed integer programs (MIPs)} \label{sec:mip}
+%! Definizione di MIP, tanti problemi reali (alcuni esempi) possono essere modellati con dei MIP -> bisogno di sviluppare algoritmi di risoluzione sempre più sofisticati -> MIP solvers (CPLEX, SCIP, Gurobi)
+The term MIP is often used in place of MILP to denote linear problem formulations in which both the objective function and the constraints are linear, whereas their natural counterparts are referred to as MINLPs.
+Given a number of variables $n$, a number of constraints $m$, a set of integer variables indices $I \subseteq N = \{1, \dots, n\}$, a constraint coefficients matrix $A \in \mathbb{R}^{m \times n}$, a variables vector $x \in \mathbb{R}^n$, a right hand sides vector $b \in \mathbb{R}^m$, an objective function coefficients vector $c \in \mathbb{R}^n$, a lower bounds vector $l \in \mathbb{R}^n$ and an upper bounds vector $u \in \mathbb{R}^n$, the corresponding MIP problem is defined as:
+\begin{align} \label{eq:mip}
+	\begin{cases}
+	\textbf{min} \quad & c^Tx \qquad \mbox{subject to} \\
+				 & Ax \leq b \\
+				 & l \leq x \leq u \\
+				 & x_j \in \mathbb{Z} \qquad \forall \; j \in I
+	\end{cases}
+\end{align}
+
+Many practical problems can be formulated as MIPS, such as crew scheduling, vehicle routing, production planning, network flow, capital budgeting, and several more. The wide range of applications of mixed integer programming contributed to the development of MIP solvers, whose integrated algorithms are being continuously improved and new ones are added.
+
+\section{MIP solvers} \label{sec:mipsolvers}
+%! MIP solvers: intro, test-bed selection, performance variability, branching and cutting planes (briefly, cite), presolving, primal heuristics (briefly, algorithmic/pragmatic), cite the others
+MIP solvers are high-end sophisticated software solutions that use the branch-and-cut algorithm at their core, with the aid of a variety of techniques and heuristics, to solve a given MIP problem in input. In the context of this thesis, the commercial MIP solver CPLEX \cite{cplex} and the non-commercial MIP solver SCIP \cite{scip} have been used with an academic license. Another MIP solver worth mentioning is Gurobi \cite{gurobi}. \par 
+
+In the following, an overview of some concepts of interest for the scope of this thesis regarding MIP solvers is presented. For a comprehensive view of MIP solvers, referring to CPLEX in particular, we refer the reader to the analysis of the performance of CPLEX versions over the years made by T. Achterberg and R. Wunderling in \cite{achterberg2013}. \par
+
+\subsubsection{Benchmarking and performance variability}
+The first important concept to take into consideration before diving into the computational performance analysis of a MIP solver, or in general, of an algorithm, is the \textit{benchmarking methodology}. The successful solving of a MIP problem is influenced by factors that seem not to be performance-related, such as the initial random seed used by the algorithm or the permutation of the variables or constraints in the problem formulation. Such factors give rise to the phenomenon of \textit{performance variability}, whose effects on the experimental results can be limited by selecting an appropriate and sufficiently large test-bed, as well as by repeating the experiment with different random seeds. The latter countermeasure also allows to artificially increase the size of the test-bed even more. In contrast, the size of the test-bed is limited by the available computing resources and possibly by a chosen time limit. \par 
+
+\subsubsection{Branching and cutting planes}
+The performance of the branch-and-cut algorithms employed by MIP solvers is highly influenced by the \textit{branching strategy} implemented, which determines how each node of the decision tree is split into sub-problems. In particular, the selection of the branching variable can have a significant impact on the size of the decision tree, and thus on the execution time.
+Any branch-and-cut algorithm should also employ clever \textit{cutting plane methods} to refine the feasible solutions space. \par 
+
+\subsubsection{Presolving}
+Among the additional features included in MIP solvers there are pre-processing techniques, used to reduce the size of the problem formulation, that fall under the process named \textit{presolving}.
+As defined in \cite{achterberg2013}:
+	"Presolving means to transform a given problem instance $P$ into a
+	different but equivalent problem instance $P'$ that is hopefully easier to solve by the subsequently invoked solution algorithm".
+In CPLEX, at its early stages, presolving consisted in simple reductions such as removing fixed variables and redundant constraints. Over the years, significant advances have been made, and nowadays presolving also tightens the LP relaxation and extracts information that is exploited later during the solving process \cite{achterberg2013}. \par 
+
+\subsubsection{Primal heuristics}
+MIP solvers also rely on several \textit{primal heuristics}, which aim at quickly finding feasible solutions that have not been found yet in the sub-problems of the decision tree.
+As stated in \cite{achterberg2013}, in the context of general MIP optimization, primal heuristics serve two goals:
+\begin{itemize}
+	\item \textit{algorithmic}: The earlier good incumbent solutions are available during the branch-and-cut search, the earlier subtrees can be pruned, thus reducing the size of the decision tree.
+	\item \textit{pragmatic}: It is often sufficient, in practice, to provide a good solution, whereas a proof of optimality may not even be computationally tractable.
+\end{itemize}

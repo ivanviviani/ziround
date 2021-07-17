@@ -1,0 +1,87 @@
+\chapter{Primal heuristics} \label{ch:primalheur}
+%! Primal heuristics (Starting vs improvement in CPLEX) + general comments
+Primal heuristics for MIP problems are algorithms that aim at finding and improving integer feasible solutions in the first stages of the branch-and-cut search, usually before they are found directly when solving the sub-problems of the decision tree. Having early integer feasible solutions results in the pruning of the decision tree, which allows the optimization process to avoid visiting certain subtrees, thus the overall MIP has more chances to be solved to optimality. \par 
+Primal heuristics can be classified into two main categories, namely \textit{start heuristics} and \textit{improvement heuristics}, which are presented in Section~\ref{sec:startheur} and~\ref{sec:improvementheur}, respectively. As noted by T. Achterberg and R. Wunderling in \cite{achterberg2013}, start and improvement heuristics mutually depend on one another: by definition, an improvement heuristic needs a solution to work on, which can be provided by a start heuristic. The solutions produced by start heuristics are usually of poor quality, so they need improvement heuristics to turn them into better ones.
+
+\section{Start heuristics} \label{sec:startheur}
+%! Aim of start heuristics
+Start heuristics aim at just finding a feasible solution as early as possible in the branch-and-cut search, without any attempt to improve it. As the name says, most of them are already applied at the root node of the decision tree, and they take the solution of the LP relaxation as input to hopefully produce integer feasible solutions. \par 
+This category of primal heuristics can be split into two sub-categories, namely \textit{diving heuristics} and \textit{rounding heuristics}, which are presented in Section~\ref{sec:divingheur} and~\ref{sec:roundingheur}, respectively. Both diving and rounding heuristics try to find integer feasible solutions by focusing on driving the fractional integer variables of an LP solution towards integrality, while maintaining feasibility. What differentiates these two types of heuristics is how they attempt to do so.
+
+\subsection{Diving heuristics} \label{sec:divingheur}
+%! General description + cite examples (non sono il focus di questa tesi)
+Diving heuristics bound the fractional integer variables, thus modifying the MIP problem formulation, and solve the new LP iteratively to regain linear feasibility, which is usually done with the dual simplex algorithm, since the dual LP solution stays feasible if changing a bound \cite{berthold2006}. This behavior can be seen as a simulation of the exploration of a possible root-leaf path of the decision tree. In other words, the strong bounding or fixing of variables allows the optimization process to "dive" down the decision tree from the root node to the leaves. \par 
+As stated by T. Berthold in \cite{berthold2006}, the diving process terminates as soon as one of the following conditions holds:
+\begin{itemize}
+	\item the LP relaxation gets infeasible;
+	\item the optimum of the LP relaxation is worse than the incumbent solution of the MIP problem in terms of the objective function;
+	\item some iteration limit or some limit on the LP relaxation solving process is reached.
+\end{itemize}
+In the first two cases, since no better solutions can be produced, the heuristic should be aborted. The third case refers to situations in which the execution time of the heuristic has to be kept under control. For the pseudocode of a general diving heuristic, which is not in the scope of this thesis, we refer the reader to \cite{berthold2006}. \par 
+One source of diversity for diving heuristics is the selection strategy of the variable that should be bounded at each iteration. Several selection strategies for this matter have been proposed and implemented, some of which are known as: \textit{fractional diving}, \textit{coefficient diving}, \textit{line search diving}, \textit{guided diving}, \textit{pseudocost diving} and \textit{vector length diving}. For a comprehensive presentation we refer the reader to \cite{berthold2006} and \cite{hendel2011}. \par 
+
+\subsubsection{Objective diving heuristics}
+The category of diving heuristics includes also what are known as \textit{objective diving heuristics}, which modify the objective coefficients of a selected variable instead of its bounds, in the hope of driving it towards its lower or upper bound. Since in this case the variable bounds are not changed, the solution obtained by the previous iteration remains feasible for the modified problem. \par
+Some known objective diving heuristics are: \textit{objective pseudocost diving}, \textit{root solution diving} and \textit{feasibility pump}. The feasibility pump heuristic was proposed originally by M. Fischetti, F. Glover and A. Lodi in \cite{fischetti2005}; then generalized to MIPs by L. Bertacco, M. Fischetti and A. Lodi in \cite{bertacco2007}; and later modified by T. Achterberg and T. Berthold in \cite{achterberg2007}.
+
+\subsection{Rounding heuristics} \label{sec:roundingheur}
+Unlike diving heuristics, which modify the MIP problem formulation operating on the variable bounds or on the objective function coefficients, rounding heuristics only change the values taken by the variables, while maintaining primal feasibility. As a consequence, rounding heuristics require the LP relaxation to be solved only once, since they work on the LP solution without changing the MIP problem formulation. \par
+The rounding heuristics that only round the fractional values taken by the integer variables, without shifting the already integral values, are referred to as "pure" rounding heuristics. There exist, in fact, rounding heuristics that also try to shift non-fractional integer variables, for example to improve the objective value or to possibly provoke some subsequent roundings that were not possible before. \par
+Two important properties of a variable that are used by rounding heuristics are the number of \textit{up-locks} and \textit{down-locks}, which are defined as the number of positive and negative coefficients, respectively, in the constraints where the variable appears. \par 
+
+%! Rounding directions
+\subsubsection{Rounding directions}
+When rounding or shifting a given integer variable, be it fractional in a pure rounding heuristic or non-fractional, the chosen rounding direction can affect the quality, or even the success, of the heuristic. \par
+Among the factors that can be considered when choosing a rounding direction are the cost value of the variable, the distance to the next integer value, or other values. The following list briefly presents three rounding strategies, as reported by P. M. Christophel in \cite{christophel2005}, to which one that favors the objective value is added:
+\begin{itemize}
+	\item \textit{favorable rounding strategy}: choose the direction that improves the objective value;
+	\item \textit{unfavorable rounding strategy}: choose the direction that worsens the objective value;
+	\item \textit{nearest integer rounding strategy}: choose the direction corresponding to the nearest integer value;
+	\item \textit{gap rounding strategy}: for all the variables that are within a certain gap around an integer value choose the direction corresponding to their nearest integer, whereas for the remaining variables choose the direction that worsens the objective value.
+\end{itemize}
+In the context of finding an integer feasible solution, the favorable rounding strategy is counter-intuitive, because favoring the objective function entails penalizing the feasibility of the solution, otherwise if the constraints did not limit the objective function then the MIP problem would be unbounded. In contrast, the unfavorable rounding strategy favors the feasibility of the solution, at the cost of a worse final objective value. Instead, the nearest integer rounding strategy is more likely to produce good solutions. As described, the gap rounding strategy is a combination of the unfavorable and nearest integer rounding strategies. \par
+
+%! Simple rounding (brief) → Mention ZI-Round (extension introduced by Wallace)
+\subsubsection{Simple rounding}
+A basic rounding heuristic is \textit{simple rounding}, which iterates over the fractional integer variables of an LP feasible solution just once and performs only trivial roundings, taking the number of up-locks and down-locks into account. If the number of down-locks of a variable is zero, then it can be rounded down without violating any constraint. If the number of up-locks of a variable is zero, then it can be rounded up without violating any constraint. \par
+Note, however, that those numbers can be exploited successfully only under the assumption that the constraints are formulated in the form $Ax \leq b$ as in Equation~\ref{eq:mip}. In the rest of this thesis such assumption does not hold, thus the criteria that defines whether a variable can be trivially rounded is slightly more complex, as described in Section~\ref{sec:trivialround}. \par 
+The main subject of this thesis, i.e. the rounding heuristic ZI-Round, is an extension of simple rounding, thus the latter is discussed more thoroughly in Chapter~\ref{ch:ziround}. For the pseudocode of the simple rounding heuristic, we refer the reader to \cite{berthold2006}. \par 
+%! Rounding
+\subsubsection{Rounding}
+In contrast to simple rounding, as stated by G. Hendel in \cite{hendel2011}, the \textit{rounding} heuristic also performs roundings which potentially lead to a violation of some constraints, trying to recover from this infeasibility by further roundings later on. More specifically, it scans the fractional integer variables and at each step chooses the rounding direction of fewer locks. If there is a violated constraint, the heuristic tries to reduce the constraint violation by finding another fractional integer variable to round in the direction that fulfills that purpose, using the number of up-locks and down-locks as tie-breakers. The procedure is aborted when some constraint violation cannot be reduced anymore. For the pseudocode and a thorough explanation of the rounding heuristic presented in this paragraph, we refer the reader to \cite{berthold2006}. \par
+%! Shifting
+\subsubsection{Shifting}
+Drifting away from pure rounding heuristics, the \textit{shifting} heuristic does not only round fractional integer variables, but can also shift the non-fractional ones and even continuous variables, if necessary.
+As stated by T. Berthold in \cite{berthold2006}, a "shift" of a variable denotes:
+\begin{itemize}
+	\item a rounding to its ceiling or floor for a fractional integer variable;
+	\item a variation within its bounds for a continuous variable;
+	\item a variation within its bounds preserving the integrality for a non-fractional integer variable.
+\end{itemize}
+The shifting heuristic follows different variable selection strategies depending on the existence of a violated constraint and terminates if an integer feasible solution is found, or if no more fractional integer variables can be rounded, or if the number of violated constraints cannot be reduced. For the details about the variable selection strategies and the pseudocode of the shifting heuristic, we refer the reader to \cite{berthold2006}. 
+
+\section{Improvement heuristics} \label{sec:improvementheur}
+%! General description + brief examples
+Improvement heuristics take the current incumbent solution in input and from it try to construct an integer feasible solution with a better objective value. The ZI-Round heuristic employs an objective improvement procedure, thus it also behaves like an improvement heuristic. \par
+Many improvement heuristics require the solving of a sub-MIP problem after they fix some variables. In the following, a brief overview of some improvement heuristics is presented. For a more thorough explanation, we refer the reader to \cite{hendel2011} and \cite{achterberg2012}. \par 
+%! Crossover
+\subsubsection{Crossover}
+The \textit{crossover} heuristic takes three integer feasible solutions in input, fixes all the discrete variables that take the same value in the three solutions, and solves the new sub-MIP problem obtained. As for the choice of the three input solutions, they could be the best ones available or even just randomly selected.
+%! Local branching
+\subsubsection{Local branching}
+The \textit{local branching} heuristic, proposed by M. Fischetti and A. Lodi in \cite{fischetti2003}, requires the MIP problem to have some binary variables. Starting from a given incumbent solution, the heuristic searches its neighborhood, whose size is determined by a parameter $k$, for feasible solutions with a better objective value. Specifically, given an incumbent solution $z$ with variables index $j$, the solutions belonging to the neighborhood of $z$ with parameter $k$ are those that satisfy the local branching constraint $\sum_{j \, : \, x_j \; binary}\abs{x_j - z_j} \leq k$. In other words, the aforementioned neighborhood contains all the solutions whose binary solution values are different from $z$ for at most $k$ binary variables. \par
+As reported in \cite{hendel2011}, denoting the set of indices of binary variables as $\mathcal{B}$ and given the subset of binary variables with solution value one, formally $S = \{j \in \mathcal{B} : z_j = 1\}$, the local branching constraint can be linearized to $\sum_{j \in S}(1 - x_j) + \sum_{j \in \mathcal{B} \setminus S}x_j \leq k$ and added to the original problem formulation to form the sub-MIP whose solutions domain is the neighborhood of $z$ with parameter $k$. \par
+The concept of neighborhood is at the core of the \textit{variable neighborhood search} (VNS) metaheuristic: for a thorough explanation about this subject we refer the reader to \cite{hansen2018}.
+%! 1-OPT
+\subsubsection{1-OPT}
+The \textit{1-OPT} heuristic iteratively shifts the variables of the incumbent solution to improve the objective value. First, it determines the maximum possible shifts in the favorable direction for all the variables that can be feasibly shifted. Those variables are then shifted in non-decreasing order of their impact on the objective value. \par
+As stated by T. Achterberg in \cite{achterberg2012}, 1-OPT often succeeds in improving solutions which were found by rounding heuristics, since their defensive approach to round in the direction of fewer locks tends to over-fulfill linear constraints, sacrificing solution quality. \par
+%! 2-OPT
+\subsubsection{2-OPT}
+The \textit{2-OPT} heuristic, instead, tries to improve the incumbent solution by shifting pairs of variables at a time. It uses a specific criteria to form the variable pairs to operate on, involving a ratio of constraints between the two variables. The heuristic proceeds in steps, each of which shifts the first variable of a pair to improve the objective value and then shifts the second one to compensate for the resulting infeasibilities of the first shift and at the same time maintain some objective improvement. As done by the 1-OPT heuristic, the variable pairs are processed in non-decreasing order of their impact on the objective value. \par
+In his thesis \cite{hendel2011}, G. Hendel presents an implementation of a 2-OPT heuristic for MIPs with a thorough explanation of the criteria used to group the variables in pairs and the respective pseudocodes.
+%! Relaxation induced neighborhood search (RINS)
+\subsubsection{Relaxation induced neighborhood search (RINS)}
+The \textit{relaxation induced neighborhood search} (RINS) heuristic takes in input the current incumbent solution $z$ and the solution $z^*$ of the continuous relaxation at the current node, and then solves the sub-MIP problem obtained from the fixation of the value-matching integer variables of the two solutions. \par
+Denoting the set of indices of the integer variables as $I$ and the set of value-matching integer variables between $z$ and $z^*$ as $E = \{j \in I : z_j = z^*_j\}$, the sub-MIP problem created by RINS contains the additional constraints $x_j = z_j \;\; \forall j \in E$. \par
+E. Danna suggested this approach in \cite{danna2005} and T. Berthold later implemented it in the SCIP solver \cite{berthold2006}.
