@@ -1,5 +1,6 @@
 \documentclass[a4paper,12pt,twoside]{scrbook}
-% packages
+
+%! PACKAGES
 \usepackage[utf8]{inputenc}
 \usepackage[english]{babel}
 \usepackage{fancyhdr}
@@ -29,8 +30,8 @@
 \usepackage{etoolbox}
 \AtBeginEnvironment{algorithm}{\SetArgSty{textrm} \SetAlgoLined \DontPrintSemicolon \SetNoFillComment}
 \usepackage[table,xcdraw]{xcolor}
-
 \setlength{\headheight}{15pt}
+
 \begin{document}
 
 %! TITLE PAGE
@@ -39,6 +40,7 @@
 %! ABSTRACT
 \input{partials/abstract.tex}
 
+%! TABLE OF CONTENTS
 \tableofcontents
 
 \pagestyle{headings}
@@ -61,12 +63,8 @@
 
 \backmatter
 
-\renewcommand{\listalgorithmcfname}{Algorithms}
-\listofalgocfs
-\renewcommand{\listfigurename}{Figures}
-\listoffigures
-\renewcommand{\listtablename}{Tables}
-\listoftables
+%! LISTS
+\input{partials/lists.tex}
 
 %! REFERENCES
 \input{partials/references.tex}
